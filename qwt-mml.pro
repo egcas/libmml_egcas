@@ -2,7 +2,7 @@ TEMPLATE = app
 TARGET   = mathmlview
 
 CONFIG += qt 
-CONFIG += no_keywords
+#CONFIG += no_keywords
 CONFIG += warn_on
 
 QT += xml

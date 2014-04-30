@@ -2009,14 +2009,20 @@ static QString mmlDecodeEntityValue( QString literal )
     return result;
 }
 
-QString QwtMMLEntityTable::entities() const
+QString QwtMMLEntityTable::entities(QStringList list)
 {
     QString result = "<!DOCTYPE math [\n";
 
     const QwtMMLEntityTable::Spec *entity = mml_entity_data;
-    for ( ; entity->name != 0; ++entity )
-    {
-        result += "\t<!ENTITY " + QString( entity->name ) + " \"" + entity->value + "\">\n";
+
+    foreach (const QString &item, list) {
+        entity = mml_entity_data;
+        for ( ; entity->name != 0; ++entity ) {
+            if (QString(entity->name).compare(item) == 0) {
+                result += "\t<!ENTITY " + QString( entity->name ) + " \"" + entity->value + "\">\n";
+                break;
+            }
+        }
     }
 
     result += "]>\n";
