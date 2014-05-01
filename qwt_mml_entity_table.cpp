@@ -2009,9 +2009,24 @@ static QString mmlDecodeEntityValue( QString literal )
     return result;
 }
 
-QString QwtMMLEntityTable::entities(QStringList list)
+QString QwtMMLEntityTable::entities(QString text, uint &prefix_lines)
 {
-    QString result = "<!DOCTYPE math [\n";
+
+
+    QRegExp rx(">&([a-zA-Z]{1}[a-zA-Z0-9]*);<");
+    QStringList list;
+    int pos = 0;
+    while((pos = rx.indexIn(text, pos)) != -1) {
+        list << rx.cap(1);
+        pos += rx.matchedLength();
+    }
+
+    //remove duplicates
+    list.removeDuplicates();
+
+    QString result = "<?xml version=\"2.0\"?>\n";
+
+    result += "<!DOCTYPE math [\n";
 
     const QwtMMLEntityTable::Spec *entity = mml_entity_data;
 
@@ -2026,6 +2041,12 @@ QString QwtMMLEntityTable::entities(QStringList list)
     }
 
     result += "]>\n";
+
+    prefix_lines = 0;
+    for (int i = 0; i < result.length(); ++i) {
+    if (result.at(i) == '\n')
+        ++prefix_lines;
+    }
 
     return result;
 }

@@ -12,7 +12,7 @@ public:
         const char *value;
     };
 
-    static QString entities(QStringList list);
+    static QString entities(QString text, uint &prefix_lines);
     const Spec *search( const QString &value, const Spec *from = 0 ) const;
 };
 

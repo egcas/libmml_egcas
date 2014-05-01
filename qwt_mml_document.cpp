@@ -1247,22 +1247,8 @@ bool QwtMmlDocument::setContent(
 {
     clear();
 
-    QRegExp rx(">&([a-zA-Z]{1}[a-zA-Z0-9]*);<");
-    QStringList list;
-    int pos = 0;
-    while((pos = rx.indexIn(text, pos)) != -1) {
-        list << rx.cap(1);
-        pos += rx.matchedLength();
-    }
-
-    QString prefix = "<?xml version=\"2.0\"?>\n";
-    prefix.append(QwtMMLEntityTable::entities(list));
-
-    uint prefix_lines = 0;
-    for (int i = 0; i < prefix.length(); ++i) {
-    if (prefix.at(i) == '\n')
-        ++prefix_lines;
-    }
+    uint prefix_lines;
+    QString prefix = QwtMMLEntityTable::entities(text, prefix_lines);
 
     QDomDocument dom;
     if (!dom.setContent(prefix + text, false, errorMsg, errorLine, errorColumn)) {
