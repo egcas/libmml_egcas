@@ -63,13 +63,21 @@ public:
     QwtMMLEntityTable();
     virtual ~QwtMMLEntityTable() {}
 
+    struct Spec
+    {
+        const QString name;
+        const QString value;
+    };
+
     QString entities(QString text, uint &prefix_lines);
-    const Spec *search( const QString &value, const Spec *from = 0 ) const;
+    const Spec search(const QString &value) const;
 private:
     static bool alreadyInitialized;
     static QHash<QString,QString> valueLookup;
+    static QHash<QString,QString> nameLookup;
     static void init(void);
     static void initValueLookup(void);
+    static void initNameLookup(void);
 
 };
 

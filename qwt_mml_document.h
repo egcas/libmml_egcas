@@ -44,6 +44,12 @@
 ** 
 ****************************************************************************/
 
+/*Some further improvements done by:
+  Uwe Rat
+  Alan Garny
+  Johannes Maier  03.05.2014
+*/
+
 #ifndef _QWT_MML_DOCUMENT_H_
 #define _QWT_MML_DOCUMENT_H_
 

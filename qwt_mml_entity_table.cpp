@@ -57,6 +57,9 @@
 
 bool QwtMMLEntityTable::alreadyInitialized = false;
 QHash<QString,QString> QwtMMLEntityTable::valueLookup;
+QHash<QString,QString> QwtMMLEntityTable::nameLookup;
+
+static QString mmlDecodeEntityValue( QString literal );
 
 QwtMMLEntityTable::QwtMMLEntityTable()
 {
@@ -69,6 +72,14 @@ void QwtMMLEntityTable::init(void)
         alreadyInitialized = true;
 
         initValueLookup();
+        initNameLookup();
+    }
+}
+
+void QwtMMLEntityTable::initNameLookup(void)
+{
+    for (QHash<QString, QString>::iterator i = valueLookup.begin(); i != valueLookup.end(); i++) {
+        nameLookup.insert(mmlDecodeEntityValue( i.value()) , i.key() );
     }
 }
 
@@ -2020,7 +2031,7 @@ void QwtMMLEntityTable::initValueLookup(void)
     valueLookup.insert("zeetrf",                          "&#x02128;"          );
 }
 
-static QString mmlDecodeEntityValue( QString literal )
+QString mmlDecodeEntityValue( QString literal )
 {
     QString result;
 
@@ -2097,11 +2108,9 @@ QString QwtMMLEntityTable::entities(QString text, uint &prefix_lines)
 
     result += "<!DOCTYPE math [\n";
 
-    const QwtMMLEntityTable::Spec *entity = mml_entity_data;
-
     foreach (const QString &item, list) {
         QHash<QString, QString>::const_iterator i = valueLookup.find(item);
-        while (i != hash.end() && i.key() == item) {
+        while (i != valueLookup.end() && i.key() == item) {
             result += "\t<!ENTITY " + QString( item ) + " \"" + i.value() + "\">\n";
             ++i;
         }
@@ -2118,21 +2127,18 @@ QString QwtMMLEntityTable::entities(QString text, uint &prefix_lines)
     return result;
 }
 
-const QwtMMLEntityTable::Spec *QwtMMLEntityTable::search(
-    const QString &value, const QwtMMLEntityTable::Spec *from ) const
+const QwtMMLEntityTable::Spec QwtMMLEntityTable::search(
+    const QString &value) const
 {
-    const QwtMMLEntityTable::Spec *entity = from;
-    if ( entity == 0 )
-        entity = mml_entity_data;
 
-	// linear search -> bad
+    QHash<QString,QString> i = nameLookup.find(value);
+    const QwtMMLEntityTable::Spec entity;
 
-    for ( ; entity->name != 0; ++entity )
-    {
-        QString ent_value = mmlDecodeEntityValue( entity->value );
-        if ( value == ent_value )
-            return entity;
-    }
+    entity.name = "";
+    entity.value = "";
+    entity.name = i.value();
+    entity.value = i.key();
 
-    return 0;
+    return entity;
+
 }
