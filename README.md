@@ -1,4 +1,4 @@
-qwt-mml-dev
+libmml_egcas
 ===========
 
-Qwt MathML Renderer ( see http://qwt.sourceforge.net )
+Qt MathML Renderer 
