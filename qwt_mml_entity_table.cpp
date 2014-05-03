@@ -1,1955 +1,2024 @@
+/****************************************************************************
+** 
+** Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (qt-info@nokia.com)
+** 
+** This file is part of a Qt Solutions component.
+**
+** Commercial Usage  
+** Licensees holding valid Qt Commercial licenses may use this file in
+** accordance with the Qt Solutions Commercial License Agreement provided
+** with the Software or, alternatively, in accordance with the terms
+** contained in a written agreement between you and Nokia.
+** 
+** GNU Lesser General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** 
+** In addition, as a special exception, Nokia gives you certain
+** additional rights. These rights are described in the Nokia Qt LGPL
+** Exception version 1.1, included in the file LGPL_EXCEPTION.txt in this
+** package.
+** 
+** GNU General Public License Usage 
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 3.0 as published by the Free Software
+** Foundation and appearing in the file LICENSE.GPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU General Public License version 3.0 requirements will be
+** met: http://www.gnu.org/copyleft/gpl.html.
+** 
+** Please note Third Party Software included with Qt Solutions may impose
+** additional restrictions and it is the user's responsibility to ensure
+** that they have met the licensing requirements of the GPL, LGPL, or Qt
+** Solutions Commercial license and the relevant license of the Third
+** Party Software they are using.
+** 
+** If you are unsure which license is appropriate for your use, please
+** contact Nokia at qt-info@nokia.com.
+** 
+****************************************************************************/
+
+/*Some further improvements done by:
+  Uwe Rat
+  Alan Garny
+  Johannes Maier  03.05.2014
+*/
+
+
 #include "qwt_mml_entity_table.h"
 
 #include <qdebug.h>
 
-static const QwtMMLEntityTable::Spec mml_entity_data[] =
+bool QwtMMLEntityTable::alreadyInitialized = false;
+QHash<QString,QString> QwtMMLEntityTable::valueLookup;
+
+QwtMMLEntityTable::QwtMMLEntityTable()
 {
-    { "angzarr",                         "&#x0237C;"          },
-    { "cirmid",                          "&#x02AEF;"          },
-    { "cudarrl",                         "&#x02938;"          },
-    { "cudarrr",                         "&#x02935;"          },
-    { "cularr",                          "&#x021B6;"          },
-    { "cularrp",                         "&#x0293D;"          },
-    { "curarr",                          "&#x021B7;"          },
-    { "curarrm",                         "&#x0293C;"          },
-    { "Darr",                            "&#x021A1;"          },
-    { "dArr",                            "&#x021D3;"          },
-    { "ddarr",                           "&#x021CA;"          },
-    { "DDotrahd",                        "&#x02911;"          },
-    { "dfisht",                          "&#x0297F;"          },
-    { "dHar",                            "&#x02965;"          },
-    { "dharl",                           "&#x021C3;"          },
-    { "dharr",                           "&#x021C2;"          },
-    { "duarr",                           "&#x021F5;"          },
-    { "duhar",                           "&#x0296F;"          },
-    { "dzigrarr",                        "&#x027FF;"          },
-    { "erarr",                           "&#x02971;"          },
-    { "hArr",                            "&#x021D4;"          },
-    { "harr",                            "&#x02194;"          },
-    { "harrcir",                         "&#x02948;"          },
-    { "harrw",                           "&#x021AD;"          },
-    { "hoarr",                           "&#x021FF;"          },
-    { "imof",                            "&#x022B7;"          },
-    { "lAarr",                           "&#x021DA;"          },
-    { "Larr",                            "&#x0219E;"          },
-    { "larrbfs",                         "&#x0291F;"          },
-    { "larrfs",                          "&#x0291D;"          },
-    { "larrhk",                          "&#x021A9;"          },
-    { "larrlp",                          "&#x021AB;"          },
-    { "larrpl",                          "&#x02939;"          },
-    { "larrsim",                         "&#x02973;"          },
-    { "larrtl",                          "&#x021A2;"          },
-    { "lAtail",                          "&#x0291B;"          },
-    { "latail",                          "&#x02919;"          },
-    { "lBarr",                           "&#x0290E;"          },
-    { "lbarr",                           "&#x0290C;"          },
-    { "ldca",                            "&#x02936;"          },
-    { "ldrdhar",                         "&#x02967;"          },
-    { "ldrushar",                        "&#x0294B;"          },
-    { "ldsh",                            "&#x021B2;"          },
-    { "lfisht",                          "&#x0297C;"          },
-    { "lHar",                            "&#x02962;"          },
-    { "lhard",                           "&#x021BD;"          },
-    { "lharu",                           "&#x021BC;"          },
-    { "lharul",                          "&#x0296A;"          },
-    { "llarr",                           "&#x021C7;"          },
-    { "llhard",                          "&#x0296B;"          },
-    { "loarr",                           "&#x021FD;"          },
-    { "lrarr",                           "&#x021C6;"          },
-    { "lrhar",                           "&#x021CB;"          },
-    { "lrhard",                          "&#x0296D;"          },
-    { "lsh",                             "&#x021B0;"          },
-    { "lurdshar",                        "&#x0294A;"          },
-    { "luruhar",                         "&#x02966;"          },
-    { "Map",                             "&#x02905;"          },
-    { "map",                             "&#x021A6;"          },
-    { "midcir",                          "&#x02AF0;"          },
-    { "mumap",                           "&#x022B8;"          },
-    { "nearhk",                          "&#x02924;"          },
-    { "neArr",                           "&#x021D7;"          },
-    { "nearr",                           "&#x02197;"          },
-    { "nesear",                          "&#x02928;"          },
-    { "nhArr",                           "&#x021CE;"          },
-    { "nharr",                           "&#x021AE;"          },
-    { "nlArr",                           "&#x021CD;"          },
-    { "nlarr",                           "&#x0219A;"          },
-    { "nrArr",                           "&#x021CF;"          },
-    { "nrarr",                           "&#x0219B;"          },
-    { "nrarrc",                          "&#x02933;&#x00338;" },
-    { "nrarrw",                          "&#x0219D;&#x00338;" },
-    { "nvHarr",                          "&#x02904;"          },
-    { "nvlArr",                          "&#x02902;"          },
-    { "nvrArr",                          "&#x02903;"          },
-    { "nwarhk",                          "&#x02923;"          },
-    { "nwArr",                           "&#x021D6;"          },
-    { "nwarr",                           "&#x02196;"          },
-    { "nwnear",                          "&#x02927;"          },
-    { "olarr",                           "&#x021BA;"          },
-    { "orarr",                           "&#x021BB;"          },
-    { "origof",                          "&#x022B6;"          },
-    { "rAarr",                           "&#x021DB;"          },
-    { "Rarr",                            "&#x021A0;"          },
-    { "rarrap",                          "&#x02975;"          },
-    { "rarrbfs",                         "&#x02920;"          },
-    { "rarrc",                           "&#x02933;"          },
-    { "rarrfs",                          "&#x0291E;"          },
-    { "rarrhk",                          "&#x021AA;"          },
-    { "rarrlp",                          "&#x021AC;"          },
-    { "rarrpl",                          "&#x02945;"          },
-    { "rarrsim",                         "&#x02974;"          },
-    { "Rarrtl",                          "&#x02916;"          },
-    { "rarrtl",                          "&#x021A3;"          },
-    { "rarrw",                           "&#x0219D;"          },
-    { "rAtail",                          "&#x0291C;"          },
-    { "ratail",                          "&#x0291A;"          },
-    { "RBarr",                           "&#x02910;"          },
-    { "rBarr",                           "&#x0290F;"          },
-    { "rbarr",                           "&#x0290D;"          },
-    { "rdca",                            "&#x02937;"          },
-    { "rdldhar",                         "&#x02969;"          },
-    { "rdsh",                            "&#x021B3;"          },
-    { "rfisht",                          "&#x0297D;"          },
-    { "rHar",                            "&#x02964;"          },
-    { "rhard",                           "&#x021C1;"          },
-    { "rharu",                           "&#x021C0;"          },
-    { "rharul",                          "&#x0296C;"          },
-    { "rlarr",                           "&#x021C4;"          },
-    { "rlhar",                           "&#x021CC;"          },
-    { "roarr",                           "&#x021FE;"          },
-    { "rrarr",                           "&#x021C9;"          },
-    { "rsh",                             "&#x021B1;"          },
-    { "ruluhar",                         "&#x02968;"          },
-    { "searhk",                          "&#x02925;"          },
-    { "seArr",                           "&#x021D8;"          },
-    { "searr",                           "&#x02198;"          },
-    { "seswar",                          "&#x02929;"          },
-    { "simrarr",                         "&#x02972;"          },
-    { "slarr",                           "&#x02190;"          },
-    { "srarr",                           "&#x02192;"          },
-    { "swarhk",                          "&#x02926;"          },
-    { "swArr",                           "&#x021D9;"          },
-    { "swarr",                           "&#x02199;"          },
-    { "swnwar",                          "&#x0292A;"          },
-    { "Uarr",                            "&#x0219F;"          },
-    { "uArr",                            "&#x021D1;"          },
-    { "Uarrocir",                        "&#x02949;"          },
-    { "udarr",                           "&#x021C5;"          },
-    { "udhar",                           "&#x0296E;"          },
-    { "ufisht",                          "&#x0297E;"          },
-    { "uHar",                            "&#x02963;"          },
-    { "uharl",                           "&#x021BF;"          },
-    { "uharr",                           "&#x021BE;"          },
-    { "uuarr",                           "&#x021C8;"          },
-    { "vArr",                            "&#x021D5;"          },
-    { "varr",                            "&#x02195;"          },
-    { "xhArr",                           "&#x027FA;"          },
-    { "xharr",                           "&#x027F7;"          },
-    { "xlArr",                           "&#x027F8;"          },
-    { "xlarr",                           "&#x027F5;"          },
-    { "xmap",                            "&#x027FC;"          },
-    { "xrArr",                           "&#x027F9;"          },
-    { "xrarr",                           "&#x027F6;"          },
-    { "zigrarr",                         "&#x021DD;"          },
-    { "ac",                              "&#x0223E;"          },
-    { "acE",                             "&#x0223E;&#x00333;" },
-    { "amalg",                           "&#x02A3F;"          },
-    { "barvee",                          "&#x022BD;"          },
-    { "Barwed",                          "&#x02306;"          },
-    { "barwed",                          "&#x02305;"          },
-    { "bsolb",                           "&#x029C5;"          },
-    { "Cap",                             "&#x022D2;"          },
-    { "capand",                          "&#x02A44;"          },
-    { "capbrcup",                        "&#x02A49;"          },
-    { "capcap",                          "&#x02A4B;"          },
-    { "capcup",                          "&#x02A47;"          },
-    { "capdot",                          "&#x02A40;"          },
-    { "caps",                            "&#x02229;&#x0FE00;" },
-    { "ccaps",                           "&#x02A4D;"          },
-    { "ccups",                           "&#x02A4C;"          },
-    { "ccupssm",                         "&#x02A50;"          },
-    { "coprod",                          "&#x02210;"          },
-    { "Cup",                             "&#x022D3;"          },
-    { "cupbrcap",                        "&#x02A48;"          },
-    { "cupcap",                          "&#x02A46;"          },
-    { "cupcup",                          "&#x02A4A;"          },
-    { "cupdot",                          "&#x0228D;"          },
-    { "cupor",                           "&#x02A45;"          },
-    { "cups",                            "&#x0222A;&#x0FE00;" },
-    { "cuvee",                           "&#x022CE;"          },
-    { "cuwed",                           "&#x022CF;"          },
-    { "Dagger",                          "&#x02021;"          },
-    { "dagger",                          "&#x02020;"          },
-    { "diam",                            "&#x022C4;"          },
-    { "divonx",                          "&#x022C7;"          },
-    { "eplus",                           "&#x02A71;"          },
-    { "hercon",                          "&#x022B9;"          },
-    { "intcal",                          "&#x022BA;"          },
-    { "iprod",                           "&#x02A3C;"          },
-    { "loplus",                          "&#x02A2D;"          },
-    { "lotimes",                         "&#x02A34;"          },
-    { "lthree",                          "&#x022CB;"          },
-    { "ltimes",                          "&#x022C9;"          },
-    { "midast",                          "&#x0002A;"          },
-    { "minusb",                          "&#x0229F;"          },
-    { "minusd",                          "&#x02238;"          },
-    { "minusdu",                         "&#x02A2A;"          },
-    { "ncap",                            "&#x02A43;"          },
-    { "ncup",                            "&#x02A42;"          },
-    { "oast",                            "&#x0229B;"          },
-    { "ocir",                            "&#x0229A;"          },
-    { "odash",                           "&#x0229D;"          },
-    { "odiv",                            "&#x02A38;"          },
-    { "odot",                            "&#x02299;"          },
-    { "odsold",                          "&#x029BC;"          },
-    { "ofcir",                           "&#x029BF;"          },
-    { "ogt",                             "&#x029C1;"          },
-    { "ohbar",                           "&#x029B5;"          },
-    { "olcir",                           "&#x029BE;"          },
-    { "olt",                             "&#x029C0;"          },
-    { "omid",                            "&#x029B6;"          },
-    { "ominus",                          "&#x02296;"          },
-    { "opar",                            "&#x029B7;"          },
-    { "operp",                           "&#x029B9;"          },
-    { "oplus",                           "&#x02295;"          },
-    { "osol",                            "&#x02298;"          },
-    { "Otimes",                          "&#x02A37;"          },
-    { "otimes",                          "&#x02297;"          },
-    { "otimesas",                        "&#x02A36;"          },
-    { "ovbar",                           "&#x0233D;"          },
-    { "plusacir",                        "&#x02A23;"          },
-    { "plusb",                           "&#x0229E;"          },
-    { "pluscir",                         "&#x02A22;"          },
-    { "plusdo",                          "&#x02214;"          },
-    { "plusdu",                          "&#x02A25;"          },
-    { "pluse",                           "&#x02A72;"          },
-    { "plussim",                         "&#x02A26;"          },
-    { "plustwo",                         "&#x02A27;"          },
-    { "prod",                            "&#x0220F;"          },
-    { "race",                            "&#x029DA;"          },
-    { "roplus",                          "&#x02A2E;"          },
-    { "rotimes",                         "&#x02A35;"          },
-    { "rthree",                          "&#x022CC;"          },
-    { "rtimes",                          "&#x022CA;"          },
-    { "sdot",                            "&#x022C5;"          },
-    { "sdotb",                           "&#x022A1;"          },
-    { "setmn",                           "&#x02216;"          },
-    { "simplus",                         "&#x02A24;"          },
-    { "smashp",                          "&#x02A33;"          },
-    { "solb",                            "&#x029C4;"          },
-    { "sqcap",                           "&#x02293;"          },
-    { "sqcaps",                          "&#x02293;&#x0FE00;" },
-    { "sqcup",                           "&#x02294;"          },
-    { "sqcups",                          "&#x02294;&#x0FE00;" },
-    { "ssetmn",                          "&#x02216;"          },
-    { "sstarf",                          "&#x022C6;"          },
-    { "subdot",                          "&#x02ABD;"          },
-    { "sum",                             "&#x02211;"          },
-    { "supdot",                          "&#x02ABE;"          },
-    { "timesb",                          "&#x022A0;"          },
-    { "timesbar",                        "&#x02A31;"          },
-    { "timesd",                          "&#x02A30;"          },
-    { "tridot",                          "&#x025EC;"          },
-    { "triminus",                        "&#x02A3A;"          },
-    { "triplus",                         "&#x02A39;"          },
-    { "trisb",                           "&#x029CD;"          },
-    { "tritime",                         "&#x02A3B;"          },
-    { "uplus",                           "&#x0228E;"          },
-    { "veebar",                          "&#x022BB;"          },
-    { "wedbar",                          "&#x02A5F;"          },
-    { "wreath",                          "&#x02240;"          },
-    { "xcap",                            "&#x022C2;"          },
-    { "xcirc",                           "&#x025EF;"          },
-    { "xcup",                            "&#x022C3;"          },
-    { "xdtri",                           "&#x025BD;"          },
-    { "xodot",                           "&#x02A00;"          },
-    { "xoplus",                          "&#x02A01;"          },
-    { "xotime",                          "&#x02A02;"          },
-    { "xsqcup",                          "&#x02A06;"          },
-    { "xuplus",                          "&#x02A04;"          },
-    { "xutri",                           "&#x025B3;"          },
-    { "xvee",                            "&#x022C1;"          },
-    { "xwedge",                          "&#x022C0;"          },
-    { "dlcorn",                          "&#x0231E;"          },
-    { "drcorn",                          "&#x0231F;"          },
-    { "gtlPar",                          "&#x02995;"          },
-    { "langd",                           "&#x02991;"          },
-    { "lbrke",                           "&#x0298B;"          },
-    { "lbrksld",                         "&#x0298F;"          },
-    { "lbrkslu",                         "&#x0298D;"          },
-    { "lceil",                           "&#x02308;"          },
-    { "lfloor",                          "&#x0230A;"          },
-    { "lmoust",                          "&#x023B0;"          },
-    { "lparlt",                          "&#x02993;"          },
-    { "ltrPar",                          "&#x02996;"          },
-    { "rangd",                           "&#x02992;"          },
-    { "rbrke",                           "&#x0298C;"          },
-    { "rbrksld",                         "&#x0298E;"          },
-    { "rbrkslu",                         "&#x02990;"          },
-    { "rceil",                           "&#x02309;"          },
-    { "rfloor",                          "&#x0230B;"          },
-    { "rmoust",                          "&#x023B1;"          },
-    { "rpargt",                          "&#x02994;"          },
-    { "ulcorn",                          "&#x0231C;"          },
-    { "urcorn",                          "&#x0231D;"          },
-    { "gnap",                            "&#x02A8A;"          },
-    { "gnE",                             "&#x02269;"          },
-    { "gne",                             "&#x02A88;"          },
-    { "gnsim",                           "&#x022E7;"          },
-    { "gvnE",                            "&#x02269;&#x0FE00;" },
-    { "lnap",                            "&#x02A89;"          },
-    { "lnE",                             "&#x02268;"          },
-    { "lne",                             "&#x02A87;"          },
-    { "lnsim",                           "&#x022E6;"          },
-    { "lvnE",                            "&#x02268;&#x0FE00;" },
-    { "nap",                             "&#x02249;"          },
-    { "napE",                            "&#x02A70;&#x00338;" },
-    { "napid",                           "&#x0224B;&#x00338;" },
-    { "ncong",                           "&#x02247;"          },
-    { "ncongdot",                        "&#x02A6D;&#x00338;" },
-    { "nequiv",                          "&#x02262;"          },
-    { "ngE",                             "&#x02267;&#x00338;" },
-    { "nge",                             "&#x02271;"          },
-    { "nges",                            "&#x02A7E;&#x00338;" },
-    { "nGg",                             "&#x022D9;&#x00338;" },
-    { "ngsim",                           "&#x02275;"          },
-    { "nGt",                             "&#x0226B;&#x020D2;" },
-    { "ngt",                             "&#x0226F;"          },
-    { "nGtv",                            "&#x0226B;&#x00338;" },
-    { "nlE",                             "&#x02266;&#x00338;" },
-    { "nle",                             "&#x02270;"          },
-    { "nles",                            "&#x02A7D;&#x00338;" },
-    { "nLl",                             "&#x022D8;&#x00338;" },
-    { "nlsim",                           "&#x02274;"          },
-    { "nLt",                             "&#x0226A;&#x020D2;" },
-    { "nlt",                             "&#x0226E;"          },
-    { "nltri",                           "&#x022EA;"          },
-    { "nltrie",                          "&#x022EC;"          },
-    { "nLtv",                            "&#x0226A;&#x00338;" },
-    { "nmid",                            "&#x02224;"          },
-    { "npar",                            "&#x02226;"          },
-    { "npr",                             "&#x02280;"          },
-    { "nprcue",                          "&#x022E0;"          },
-    { "npre",                            "&#x02AAF;&#x00338;" },
-    { "nrtri",                           "&#x022EB;"          },
-    { "nrtrie",                          "&#x022ED;"          },
-    { "nsc",                             "&#x02281;"          },
-    { "nsccue",                          "&#x022E1;"          },
-    { "nsce",                            "&#x02AB0;&#x00338;" },
-    { "nsim",                            "&#x02241;"          },
-    { "nsime",                           "&#x02244;"          },
-    { "nsmid",                           "&#x02224;"          },
-    { "nspar",                           "&#x02226;"          },
-    { "nsqsube",                         "&#x022E2;"          },
-    { "nsqsupe",                         "&#x022E3;"          },
-    { "nsub",                            "&#x02284;"          },
-    { "nsubE",                           "&#x02AC5;&#x0338;"  },
-    { "nsube",                           "&#x02288;"          },
-    { "nsup",                            "&#x02285;"          },
-    { "nsupE",                           "&#x02AC6;&#x0338;"  },
-    { "nsupe",                           "&#x02289;"          },
-    { "ntgl",                            "&#x02279;"          },
-    { "ntlg",                            "&#x02278;"          },
-    { "nvap",                            "&#x0224D;&#x020D2;" },
-    { "nVDash",                          "&#x022AF;"          },
-    { "nVdash",                          "&#x022AE;"          },
-    { "nvDash",                          "&#x022AD;"          },
-    { "nvdash",                          "&#x022AC;"          },
-    { "nvge",                            "&#x02265;&#x020D2;" },
-    { "nvgt",                            "&#x0003E;&#x020D2;" },
-    { "nvle",                            "&#x02264;&#x020D2;" },
-    { "nvlt",                            "&#x0003C;&#x020D2;" },
-    { "nvltrie",                         "&#x022B4;&#x020D2;" },
-    { "nvrtrie",                         "&#x022B5;&#x020D2;" },
-    { "nvsim",                           "&#x0223C;&#x020D2;" },
-    { "parsim",                          "&#x02AF3;"          },
-    { "prnap",                           "&#x02AB9;"          },
-    { "prnE",                            "&#x02AB5;"          },
-    { "prnsim",                          "&#x022E8;"          },
-    { "rnmid",                           "&#x02AEE;"          },
-    { "scnap",                           "&#x02ABA;"          },
-    { "scnE",                            "&#x02AB6;"          },
-    { "scnsim",                          "&#x022E9;"          },
-    { "simne",                           "&#x02246;"          },
-    { "solbar",                          "&#x0233F;"          },
-    { "subnE",                           "&#x02ACB;"          },
-    { "subne",                           "&#x0228A;"          },
-    { "supnE",                           "&#x02ACC;"          },
-    { "supne",                           "&#x0228B;"          },
-    { "vnsub",                           "&#x02282;&#x020D2;" },
-    { "vnsup",                           "&#x02283;&#x020D2;" },
-    { "vsubnE",                          "&#x02ACB;&#x0FE00;" },
-    { "vsubne",                          "&#x0228A;&#x0FE00;" },
-    { "vsupnE",                          "&#x02ACC;&#x0FE00;" },
-    { "vsupne",                          "&#x0228B;&#x0FE00;" },
-    { "ang",                             "&#x02220;"          },
-    { "ange",                            "&#x029A4;"          },
-    { "angmsd",                          "&#x02221;"          },
-    { "angmsdaa",                        "&#x029A8;"          },
-    { "angmsdab",                        "&#x029A9;"          },
-    { "angmsdac",                        "&#x029AA;"          },
-    { "angmsdad",                        "&#x029AB;"          },
-    { "angmsdae",                        "&#x029AC;"          },
-    { "angmsdaf",                        "&#x029AD;"          },
-    { "angmsdag",                        "&#x029AE;"          },
-    { "angmsdah",                        "&#x029AF;"          },
-    { "angrtvb",                         "&#x022BE;"          },
-    { "angrtvbd",                        "&#x0299D;"          },
-    { "bbrk",                            "&#x023B5;"          },
-    { "bemptyv",                         "&#x029B0;"          },
-    { "beth",                            "&#x02136;"          },
-    { "boxbox",                          "&#x029C9;"          },
-    { "bprime",                          "&#x02035;"          },
-    { "bsemi",                           "&#x0204F;"          },
-    { "cemptyv",                         "&#x029B2;"          },
-    { "cirE",                            "&#x029C3;"          },
-    { "cirscir",                         "&#x029C2;"          },
-    { "comp",                            "&#x02201;"          },
-    { "daleth",                          "&#x02138;"          },
-    { "demptyv",                         "&#x029B1;"          },
-    { "ell",                             "&#x02113;"          },
-    { "empty",                           "&#x02205;"          },
-    { "emptyv",                          "&#x02205;"          },
-    { "gimel",                           "&#x02137;"          },
-    { "iiota",                           "&#x02129;"          },
-    { "image",                           "&#x02111;"          },
-    { "imath",                           "&#x00131;"          },
-    { "jmath",                           "&#x0006A;"          },
-    { "laemptyv",                        "&#x029B4;"          },
-    { "lltri",                           "&#x025FA;"          },
-    { "lrtri",                           "&#x022BF;"          },
-    { "mho",                             "&#x02127;"          },
-    { "nang",                            "&#x02220;&#x020D2;" },
-    { "nexist",                          "&#x02204;"          },
-    { "oS",                              "&#x024C8;"          },
-    { "planck",                          "&#x0210F;"          },
-    { "plankv",                          "&#x0210F;"          },
-    { "raemptyv",                        "&#x029B3;"          },
-    { "range",                           "&#x029A5;"          },
-    { "real",                            "&#x0211C;"          },
-    { "tbrk",                            "&#x023B4;"          },
-    { "ultri",                           "&#x025F8;"          },
-    { "urtri",                           "&#x025F9;"          },
-    { "vzigzag",                         "&#x0299A;"          },
-    { "weierp",                          "&#x02118;"          },
-    { "apE",                             "&#x02A70;"          },
-    { "ape",                             "&#x0224A;"          },
-    { "apid",                            "&#x0224B;"          },
-    { "asymp",                           "&#x02248;"          },
-    { "Barv",                            "&#x02AE7;"          },
-    { "bcong",                           "&#x0224C;"          },
-    { "bepsi",                           "&#x003F6;"          },
-    { "bowtie",                          "&#x022C8;"          },
-    { "bsim",                            "&#x0223D;"          },
-    { "bsime",                           "&#x022CD;"          },
-    { "bsolhsub",                        "&#x0005C;&#x02282;" },
-    { "bump",                            "&#x0224E;"          },
-    { "bumpE",                           "&#x02AAE;"          },
-    { "bumpe",                           "&#x0224F;"          },
-    { "cire",                            "&#x02257;"          },
-    { "Colon",                           "&#x02237;"          },
-    { "Colone",                          "&#x02A74;"          },
-    { "colone",                          "&#x02254;"          },
-    { "congdot",                         "&#x02A6D;"          },
-    { "csub",                            "&#x02ACF;"          },
-    { "csube",                           "&#x02AD1;"          },
-    { "csup",                            "&#x02AD0;"          },
-    { "csupe",                           "&#x02AD2;"          },
-    { "cuepr",                           "&#x022DE;"          },
-    { "cuesc",                           "&#x022DF;"          },
-    { "Dashv",                           "&#x02AE4;"          },
-    { "dashv",                           "&#x022A3;"          },
-    { "easter",                          "&#x02A6E;"          },
-    { "ecir",                            "&#x02256;"          },
-    { "ecolon",                          "&#x02255;"          },
-    { "eDDot",                           "&#x02A77;"          },
-    { "eDot",                            "&#x02251;"          },
-    { "efDot",                           "&#x02252;"          },
-    { "eg",                              "&#x02A9A;"          },
-    { "egs",                             "&#x02A96;"          },
-    { "egsdot",                          "&#x02A98;"          },
-    { "el",                              "&#x02A99;"          },
-    { "els",                             "&#x02A95;"          },
-    { "elsdot",                          "&#x02A97;"          },
-    { "equest",                          "&#x0225F;"          },
-    { "equivDD",                         "&#x02A78;"          },
-    { "erDot",                           "&#x02253;"          },
-    { "esdot",                           "&#x02250;"          },
-    { "Esim",                            "&#x02A73;"          },
-    { "esim",                            "&#x02242;"          },
-    { "fork",                            "&#x022D4;"          },
-    { "forkv",                           "&#x02AD9;"          },
-    { "frown",                           "&#x02322;"          },
-    { "gap",                             "&#x02A86;"          },
-    { "gE",                              "&#x02267;"          },
-    { "gEl",                             "&#x02A8C;"          },
-    { "gel",                             "&#x022DB;"          },
-    { "ges",                             "&#x02A7E;"          },
-    { "gescc",                           "&#x02AA9;"          },
-    { "gesdot",                          "&#x02A80;"          },
-    { "gesdoto",                         "&#x02A82;"          },
-    { "gesdotol",                        "&#x02A84;"          },
-    { "gesl",                            "&#x022DB;&#x0FE00;" },
-    { "gesles",                          "&#x02A94;"          },
-    { "Gg",                              "&#x022D9;"          },
-    { "gl",                              "&#x02277;"          },
-    { "gla",                             "&#x02AA5;"          },
-    { "glE",                             "&#x02A92;"          },
-    { "glj",                             "&#x02AA4;"          },
-    { "gsim",                            "&#x02273;"          },
-    { "gsime",                           "&#x02A8E;"          },
-    { "gsiml",                           "&#x02A90;"          },
-    { "Gt",                              "&#x0226B;"          },
-    { "gtcc",                            "&#x02AA7;"          },
-    { "gtcir",                           "&#x02A7A;"          },
-    { "gtdot",                           "&#x022D7;"          },
-    { "gtquest",                         "&#x02A7C;"          },
-    { "gtrarr",                          "&#x02978;"          },
-    { "homtht",                          "&#x0223B;"          },
-    { "lap",                             "&#x02A85;"          },
-    { "lat",                             "&#x02AAB;"          },
-    { "late",                            "&#x02AAD;"          },
-    { "lates",                           "&#x02AAD;&#x0FE00;" },
-    { "lE",                              "&#x02266;"          },
-    { "lEg",                             "&#x02A8B;"          },
-    { "leg",                             "&#x022DA;"          },
-    { "les",                             "&#x02A7D;"          },
-    { "lescc",                           "&#x02AA8;"          },
-    { "lesdot",                          "&#x02A7F;"          },
-    { "lesdoto",                         "&#x02A81;"          },
-    { "lesdotor",                        "&#x02A83;"          },
-    { "lesg",                            "&#x022DA;&#x0FE00;" },
-    { "lesges",                          "&#x02A93;"          },
-    { "lg",                              "&#x02276;"          },
-    { "lgE",                             "&#x02A91;"          },
-    { "Ll",                              "&#x022D8;"          },
-    { "lsim",                            "&#x02272;"          },
-    { "lsime",                           "&#x02A8D;"          },
-    { "lsimg",                           "&#x02A8F;"          },
-    { "Lt",                              "&#x0226A;"          },
-    { "ltcc",                            "&#x02AA6;"          },
-    { "ltcir",                           "&#x02A79;"          },
-    { "ltdot",                           "&#x022D6;"          },
-    { "ltlarr",                          "&#x02976;"          },
-    { "ltquest",                         "&#x02A7B;"          },
-    { "ltrie",                           "&#x022B4;"          },
-    { "mcomma",                          "&#x02A29;"          },
-    { "mDDot",                           "&#x0223A;"          },
-    { "mid",                             "&#x02223;"          },
-    { "mlcp",                            "&#x02ADB;"          },
-    { "models",                          "&#x022A7;"          },
-    { "mstpos",                          "&#x0223E;"          },
-    { "Pr",                              "&#x02ABB;"          },
-    { "pr",                              "&#x0227A;"          },
-    { "prap",                            "&#x02AB7;"          },
-    { "prcue",                           "&#x0227C;"          },
-    { "prE",                             "&#x02AB3;"          },
-    { "pre",                             "&#x02AAF;"          },
-    { "prsim",                           "&#x0227E;"          },
-    { "prurel",                          "&#x022B0;"          },
-    { "ratio",                           "&#x02236;"          },
-    { "rtrie",                           "&#x022B5;"          },
-    { "rtriltri",                        "&#x029CE;"          },
-    { "Sc",                              "&#x02ABC;"          },
-    { "sc",                              "&#x0227B;"          },
-    { "scap",                            "&#x02AB8;"          },
-    { "sccue",                           "&#x0227D;"          },
-    { "scE",                             "&#x02AB4;"          },
-    { "sce",                             "&#x02AB0;"          },
-    { "scsim",                           "&#x0227F;"          },
-    { "sdote",                           "&#x02A66;"          },
-    { "simg",                            "&#x02A9E;"          },
-    { "simgE",                           "&#x02AA0;"          },
-    { "siml",                            "&#x02A9D;"          },
-    { "simlE",                           "&#x02A9F;"          },
-    { "smid",                            "&#x02223;"          },
-    { "smile",                           "&#x02323;"          },
-    { "smt",                             "&#x02AAA;"          },
-    { "smte",                            "&#x02AAC;"          },
-    { "smtes",                           "&#x02AAC;&#x0FE00;" },
-    { "spar",                            "&#x02225;"          },
-    { "sqsub",                           "&#x0228F;"          },
-    { "sqsube",                          "&#x02291;"          },
-    { "sqsup",                           "&#x02290;"          },
-    { "sqsupe",                          "&#x02292;"          },
-    { "Sub",                             "&#x022D0;"          },
-    { "subE",                            "&#x02AC5;"          },
-    { "subedot",                         "&#x02AC3;"          },
-    { "submult",                         "&#x02AC1;"          },
-    { "subplus",                         "&#x02ABF;"          },
-    { "subrarr",                         "&#x02979;"          },
-    { "subsim",                          "&#x02AC7;"          },
-    { "subsub",                          "&#x02AD5;"          },
-    { "subsup",                          "&#x02AD3;"          },
-    { "Sup",                             "&#x022D1;"          },
-    { "supdsub",                         "&#x02AD8;"          },
-    { "supE",                            "&#x02AC6;"          },
-    { "supedot",                         "&#x02AC4;"          },
-    { "suphsol",                         "&#x02283;&#x00338;" },
-    { "suphsub",                         "&#x02AD7;"          },
-    { "suplarr",                         "&#x0297B;"          },
-    { "supmult",                         "&#x02AC2;"          },
-    { "supplus",                         "&#x02AC0;"          },
-    { "supsim",                          "&#x02AC8;"          },
-    { "supsub",                          "&#x02AD4;"          },
-    { "supsup",                          "&#x02AD6;"          },
-    { "thkap",                           "&#x02248;"          },
-    { "topfork",                         "&#x02ADA;"          },
-    { "trie",                            "&#x0225C;"          },
-    { "twixt",                           "&#x0226C;"          },
-    { "Vbar",                            "&#x02AEB;"          },
-    { "vBar",                            "&#x02AE8;"          },
-    { "vBarv",                           "&#x02AE9;"          },
-    { "VDash",                           "&#x022AB;"          },
-    { "Vdash",                           "&#x022A9;"          },
-    { "vDash",                           "&#x022A8;"          },
-    { "vdash",                           "&#x022A2;"          },
-    { "Vdashl",                          "&#x02AE6;"          },
-    { "vltri",                           "&#x022B2;"          },
-    { "vprop",                           "&#x0221D;"          },
-    { "vrtri",                           "&#x022B3;"          },
-    { "Vvdash",                          "&#x022AA;"          },
-    { "alpha",                           "&#x003B1;"          },
-    { "beta",                            "&#x003B2;"          },
-    { "chi",                             "&#x003C7;"          },
-    { "Delta",                           "&#x00394;"          },
-    { "delta",                           "&#x003B4;"          },
-    { "epsi",                            "&#x003B5;"          },
-    { "epsiv",                           "&#x0025B;"          },
-    { "eta",                             "&#x003B7;"          },
-    { "Gamma",                           "&#x00393;"          },
-    { "gamma",                           "&#x003B3;"          },
-    { "Gammad",                          "&#x003DC;"          },
-    { "gammad",                          "&#x003DD;"          },
-    { "iota",                            "&#x003B9;"          },
-    { "kappa",                           "&#x003BA;"          },
-    { "kappav",                          "&#x003F0;"          },
-    { "Lambda",                          "&#x0039B;"          },
-    { "lambda",                          "&#x003BB;"          },
-    { "mu",                              "&#x003BC;"          },
-    { "nu",                              "&#x003BD;"          },
-    { "Omega",                           "&#x003A9;"          },
-    { "omega",                           "&#x003C9;"          },
-    { "Phi",                             "&#x003A6;"          },
-    { "phi",                             "&#x003D5;"          },
-    { "phiv",                            "&#x003C6;"          },
-    { "Pi",                              "&#x003A0;"          },
-    { "pi",                              "&#x003C0;"          },
-    { "piv",                             "&#x003D6;"          },
-    { "Psi",                             "&#x003A8;"          },
-    { "psi",                             "&#x003C8;"          },
-    { "rho",                             "&#x003C1;"          },
-    { "rhov",                            "&#x003F1;"          },
-    { "Sigma",                           "&#x003A3;"          },
-    { "sigma",                           "&#x003C3;"          },
-    { "sigmav",                          "&#x003C2;"          },
-    { "tau",                             "&#x003C4;"          },
-    { "Theta",                           "&#x00398;"          },
-    { "theta",                           "&#x003B8;"          },
-    { "thetav",                          "&#x003D1;"          },
-    { "Upsi",                            "&#x003D2;"          },
-    { "upsi",                            "&#x003C5;"          },
-    { "Xi",                              "&#x0039E;"          },
-    { "xi",                              "&#x003BE;"          },
-    { "zeta",                            "&#x003B6;"          },
-    { "Cfr",                             "&#x0212D;"          },
-    { "Hfr",                             "&#x0210C;"          },
-    { "Ifr",                             "&#x02111;"          },
-    { "Rfr",                             "&#x0211C;"          },
-    { "Zfr",                             "&#x02128;"          },
-    { "Copf",                            "&#x02102;"          },
-    { "Hopf",                            "&#x0210D;"          },
-    { "Nopf",                            "&#x02115;"          },
-    { "Popf",                            "&#x02119;"          },
-    { "Qopf",                            "&#x0211A;"          },
-    { "Ropf",                            "&#x0211D;"          },
-    { "Zopf",                            "&#x02124;"          },
-    { "Bscr",                            "&#x0212C;"          },
-    { "Escr",                            "&#x02130;"          },
-    { "escr",                            "&#x0212F;"          },
-    { "Fscr",                            "&#x02131;"          },
-    { "gscr",                            "&#x0210A;"          },
-    { "Hscr",                            "&#x0210B;"          },
-    { "Iscr",                            "&#x02110;"          },
-    { "Lscr",                            "&#x02112;"          },
-    { "Mscr",                            "&#x02133;"          },
-    { "oscr",                            "&#x02134;"          },
-    { "pscr",                            "&#x1D4C5;"          },
-    { "Rscr",                            "&#x0211B;"          },
-    { "acd",                             "&#x0223F;"          },
-    { "aleph",                           "&#x02135;"          },
-    { "And",                             "&#x02A53;"          },
-    { "and",                             "&#x02227;"          },
-    { "andand",                          "&#x02A55;"          },
-    { "andd",                            "&#x02A5C;"          },
-    { "andslope",                        "&#x02A58;"          },
-    { "andv",                            "&#x02A5A;"          },
-    { "angrt",                           "&#x0221F;"          },
-    { "angsph",                          "&#x02222;"          },
-    { "angst",                           "&#x0212B;"          },
-    { "ap",                              "&#x02248;"          },
-    { "apacir",                          "&#x02A6F;"          },
-    { "awconint",                        "&#x02233;"          },
-    { "awint",                           "&#x02A11;"          },
-    { "becaus",                          "&#x02235;"          },
-    { "bernou",                          "&#x0212C;"          },
-    { "bne",                             "&#x0003D;&#x020E5;" },
-    { "bnequiv",                         "&#x02261;&#x020E5;" },
-    { "bNot",                            "&#x02AED;"          },
-    { "bnot",                            "&#x02310;"          },
-    { "bottom",                          "&#x022A5;"          },
-    { "cap",                             "&#x02229;"          },
-    { "Cconint",                         "&#x02230;"          },
-    { "cirfnint",                        "&#x02A10;"          },
-    { "compfn",                          "&#x02218;"          },
-    { "cong",                            "&#x02245;"          },
-    { "Conint",                          "&#x0222F;"          },
-    { "conint",                          "&#x0222E;"          },
-    { "ctdot",                           "&#x022EF;"          },
-    { "cup",                             "&#x0222A;"          },
-    { "cwconint",                        "&#x02232;"          },
-    { "cwint",                           "&#x02231;"          },
-    { "cylcty",                          "&#x0232D;"          },
-    { "disin",                           "&#x022F2;"          },
-    { "Dot",                             "&#x000A8;"          },
-    { "DotDot",                          "&#x020DC;"          },
-    { "dsol",                            "&#x029F6;"          },
-    { "dtdot",                           "&#x022F1;"          },
-    { "dwangle",                         "&#x029A6;"          },
-    { "epar",                            "&#x022D5;"          },
-    { "eparsl",                          "&#x029E3;"          },
-    { "equiv",                           "&#x02261;"          },
-    { "eqvparsl",                        "&#x029E5;"          },
-    { "exist",                           "&#x02203;"          },
-    { "fnof",                            "&#x00192;"          },
-    { "forall",                          "&#x02200;"          },
-    { "fpartint",                        "&#x02A0D;"          },
-    { "ge",                              "&#x02265;"          },
-    { "hamilt",                          "&#x0210B;"          },
-    { "iff",                             "&#x021D4;"          },
-    { "iinfin",                          "&#x029DC;"          },
-    { "infin",                           "&#x0221E;"          },
-    { "Int",                             "&#x0222C;"          },
-    { "int",                             "&#x0222B;"          },
-    { "intlarhk",                        "&#x02A17;"          },
-    { "isin",                            "&#x02208;"          },
-    { "isindot",                         "&#x022F5;"          },
-    { "isinE",                           "&#x022F9;"          },
-    { "isins",                           "&#x022F4;"          },
-    { "isinsv",                          "&#x022F3;"          },
-    { "isinv",                           "&#x02208;"          },
-    { "lagran",                          "&#x02112;"          },
-    { "Lang",                            "&#x0300A;"          },
-    { "lang",                            "&#x02329;"          },
-    { "lArr",                            "&#x021D0;"          },
-    { "lbbrk",                           "&#x03014;"          },
-    { "le",                              "&#x02264;"          },
-    { "loang",                           "&#x03018;"          },
-    { "lobrk",                           "&#x0301A;"          },
-    { "lopar",                           "&#x02985;"          },
-    { "lowast",                          "&#x02217;"          },
-    { "minus",                           "&#x02212;"          },
-    { "mnplus",                          "&#x02213;"          },
-    { "nabla",                           "&#x02207;"          },
-    { "ne",                              "&#x02260;"          },
-    { "nedot",                           "&#x02250;&#x00338;" },
-    { "nhpar",                           "&#x02AF2;"          },
-    { "ni",                              "&#x0220B;"          },
-    { "nis",                             "&#x022FC;"          },
-    { "nisd",                            "&#x022FA;"          },
-    { "niv",                             "&#x0220B;"          },
-    { "Not",                             "&#x02AEC;"          },
-    { "notin",                           "&#x02209;"          },
-    { "notindot",                        "&#x022F5;&#x00338;" },
-    { "notinva",                         "&#x02209;"          },
-    { "notinvb",                         "&#x022F7;"          },
-    { "notinvc",                         "&#x022F6;"          },
-    { "notni",                           "&#x0220C;"          },
-    { "notniva",                         "&#x0220C;"          },
-    { "notnivb",                         "&#x022FE;"          },
-    { "notnivc",                         "&#x022FD;"          },
-    { "nparsl",                          "&#x02AFD;&#x020E5;" },
-    { "npart",                           "&#x02202;&#x00338;" },
-    { "npolint",                         "&#x02A14;"          },
-    { "nvinfin",                         "&#x029DE;"          },
-    { "olcross",                         "&#x029BB;"          },
-    { "Or",                              "&#x02A54;"          },
-    { "or",                              "&#x02228;"          },
-    { "ord",                             "&#x02A5D;"          },
-    { "order",                           "&#x02134;"          },
-    { "oror",                            "&#x02A56;"          },
-    { "orslope",                         "&#x02A57;"          },
-    { "orv",                             "&#x02A5B;"          },
-    { "par",                             "&#x02225;"          },
-    { "parsl",                           "&#x02AFD;"          },
-    { "part",                            "&#x02202;"          },
-    { "permil",                          "&#x02030;"          },
-    { "perp",                            "&#x022A5;"          },
-    { "pertenk",                         "&#x02031;"          },
-    { "phmmat",                          "&#x02133;"          },
-    { "pointint",                        "&#x02A15;"          },
-    { "Prime",                           "&#x02033;"          },
-    { "prime",                           "&#x02032;"          },
-    { "profalar",                        "&#x0232E;"          },
-    { "profline",                        "&#x02312;"          },
-    { "profsurf",                        "&#x02313;"          },
-    { "prop",                            "&#x0221D;"          },
-    { "qint",                            "&#x02A0C;"          },
-    { "qprime",                          "&#x02057;"          },
-    { "quatint",                         "&#x02A16;"          },
-    { "radic",                           "&#x0221A;"          },
-    { "Rang",                            "&#x0300B;"          },
-    { "rang",                            "&#x0232A;"          },
-    { "rArr",                            "&#x021D2;"          },
-    { "rbbrk",                           "&#x03015;"          },
-    { "roang",                           "&#x03019;"          },
-    { "robrk",                           "&#x0301B;"          },
-    { "ropar",                           "&#x02986;"          },
-    { "rppolint",                        "&#x02A12;"          },
-    { "scpolint",                        "&#x02A13;"          },
-    { "sim",                             "&#x0223C;"          },
-    { "simdot",                          "&#x02A6A;"          },
-    { "sime",                            "&#x02243;"          },
-    { "smeparsl",                        "&#x029E4;"          },
-    { "square",                          "&#x025A1;"          },
-    { "squarf",                          "&#x025AA;"          },
-    { "sub",                             "&#x02282;"          },
-    { "sube",                            "&#x02286;"          },
-    { "sup",                             "&#x02283;"          },
-    { "supe",                            "&#x02287;"          },
-    { "tdot",                            "&#x020DB;"          },
-    { "there4",                          "&#x02234;"          },
-    { "tint",                            "&#x0222D;"          },
-    { "top",                             "&#x022A4;"          },
-    { "topbot",                          "&#x02336;"          },
-    { "topcir",                          "&#x02AF1;"          },
-    { "tprime",                          "&#x02034;"          },
-    { "utdot",                           "&#x022F0;"          },
-    { "uwangle",                         "&#x029A7;"          },
-    { "vangrt",                          "&#x0299C;"          },
-    { "veeeq",                           "&#x0225A;"          },
-    { "Verbar",                          "&#x02016;"          },
-    { "wedgeq",                          "&#x02259;"          },
-    { "xnis",                            "&#x022FB;"          },
-    { "boxDL",                           "&#x02557;"          },
-    { "boxDl",                           "&#x02556;"          },
-    { "boxdL",                           "&#x02555;"          },
-    { "boxdl",                           "&#x02510;"          },
-    { "boxDR",                           "&#x02554;"          },
-    { "boxDr",                           "&#x02553;"          },
-    { "boxdR",                           "&#x02552;"          },
-    { "boxdr",                           "&#x0250C;"          },
-    { "boxH",                            "&#x02550;"          },
-    { "boxh",                            "&#x02500;"          },
-    { "boxHD",                           "&#x02566;"          },
-    { "boxHd",                           "&#x02564;"          },
-    { "boxhD",                           "&#x02565;"          },
-    { "boxhd",                           "&#x0252C;"          },
-    { "boxHU",                           "&#x02569;"          },
-    { "boxHu",                           "&#x02567;"          },
-    { "boxhU",                           "&#x02568;"          },
-    { "boxhu",                           "&#x02534;"          },
-    { "boxUL",                           "&#x0255D;"          },
-    { "boxUl",                           "&#x0255C;"          },
-    { "boxuL",                           "&#x0255B;"          },
-    { "boxul",                           "&#x02518;"          },
-    { "boxUR",                           "&#x0255A;"          },
-    { "boxUr",                           "&#x02559;"          },
-    { "boxuR",                           "&#x02558;"          },
-    { "boxur",                           "&#x02514;"          },
-    { "boxV",                            "&#x02551;"          },
-    { "boxv",                            "&#x02502;"          },
-    { "boxVH",                           "&#x0256C;"          },
-    { "boxVh",                           "&#x0256B;"          },
-    { "boxvH",                           "&#x0256A;"          },
-    { "boxvh",                           "&#x0253C;"          },
-    { "boxVL",                           "&#x02563;"          },
-    { "boxVl",                           "&#x02562;"          },
-    { "boxvL",                           "&#x02561;"          },
-    { "boxvl",                           "&#x02524;"          },
-    { "boxVR",                           "&#x02560;"          },
-    { "boxVr",                           "&#x0255F;"          },
-    { "boxvR",                           "&#x0255E;"          },
-    { "boxvr",                           "&#x0251C;"          },
-    { "Acy",                             "&#x00410;"          },
-    { "acy",                             "&#x00430;"          },
-    { "Bcy",                             "&#x00411;"          },
-    { "bcy",                             "&#x00431;"          },
-    { "CHcy",                            "&#x00427;"          },
-    { "chcy",                            "&#x00447;"          },
-    { "Dcy",                             "&#x00414;"          },
-    { "dcy",                             "&#x00434;"          },
-    { "Ecy",                             "&#x0042D;"          },
-    { "ecy",                             "&#x0044D;"          },
-    { "Fcy",                             "&#x00424;"          },
-    { "fcy",                             "&#x00444;"          },
-    { "Gcy",                             "&#x00413;"          },
-    { "gcy",                             "&#x00433;"          },
-    { "HARDcy",                          "&#x0042A;"          },
-    { "hardcy",                          "&#x0044A;"          },
-    { "Icy",                             "&#x00418;"          },
-    { "icy",                             "&#x00438;"          },
-    { "IEcy",                            "&#x00415;"          },
-    { "iecy",                            "&#x00435;"          },
-    { "IOcy",                            "&#x00401;"          },
-    { "iocy",                            "&#x00451;"          },
-    { "Jcy",                             "&#x00419;"          },
-    { "jcy",                             "&#x00439;"          },
-    { "Kcy",                             "&#x0041A;"          },
-    { "kcy",                             "&#x0043A;"          },
-    { "KHcy",                            "&#x00425;"          },
-    { "khcy",                            "&#x00445;"          },
-    { "Lcy",                             "&#x0041B;"          },
-    { "lcy",                             "&#x0043B;"          },
-    { "Mcy",                             "&#x0041C;"          },
-    { "mcy",                             "&#x0043C;"          },
-    { "Ncy",                             "&#x0041D;"          },
-    { "ncy",                             "&#x0043D;"          },
-    { "numero",                          "&#x02116;"          },
-    { "Ocy",                             "&#x0041E;"          },
-    { "ocy",                             "&#x0043E;"          },
-    { "Pcy",                             "&#x0041F;"          },
-    { "pcy",                             "&#x0043F;"          },
-    { "Rcy",                             "&#x00420;"          },
-    { "rcy",                             "&#x00440;"          },
-    { "Scy",                             "&#x00421;"          },
-    { "scy",                             "&#x00441;"          },
-    { "SHCHcy",                          "&#x00429;"          },
-    { "shchcy",                          "&#x00449;"          },
-    { "SHcy",                            "&#x00428;"          },
-    { "shcy",                            "&#x00448;"          },
-    { "SOFTcy",                          "&#x0042C;"          },
-    { "softcy",                          "&#x0044C;"          },
-    { "Tcy",                             "&#x00422;"          },
-    { "tcy",                             "&#x00442;"          },
-    { "TScy",                            "&#x00426;"          },
-    { "tscy",                            "&#x00446;"          },
-    { "Ucy",                             "&#x00423;"          },
-    { "ucy",                             "&#x00443;"          },
-    { "Vcy",                             "&#x00412;"          },
-    { "vcy",                             "&#x00432;"          },
-    { "YAcy",                            "&#x0042F;"          },
-    { "yacy",                            "&#x0044F;"          },
-    { "Ycy",                             "&#x0042B;"          },
-    { "ycy",                             "&#x0044B;"          },
-    { "YUcy",                            "&#x0042E;"          },
-    { "yucy",                            "&#x0044E;"          },
-    { "Zcy",                             "&#x00417;"          },
-    { "zcy",                             "&#x00437;"          },
-    { "ZHcy",                            "&#x00416;"          },
-    { "zhcy",                            "&#x00436;"          },
-    { "DJcy",                            "&#x00402;"          },
-    { "djcy",                            "&#x00452;"          },
-    { "DScy",                            "&#x00405;"          },
-    { "dscy",                            "&#x00455;"          },
-    { "DZcy",                            "&#x0040F;"          },
-    { "dzcy",                            "&#x0045F;"          },
-    { "GJcy",                            "&#x00403;"          },
-    { "gjcy",                            "&#x00453;"          },
-    { "Iukcy",                           "&#x00406;"          },
-    { "iukcy",                           "&#x00456;"          },
-    { "Jsercy",                          "&#x00408;"          },
-    { "jsercy",                          "&#x00458;"          },
-    { "Jukcy",                           "&#x00404;"          },
-    { "jukcy",                           "&#x00454;"          },
-    { "KJcy",                            "&#x0040C;"          },
-    { "kjcy",                            "&#x0045C;"          },
-    { "LJcy",                            "&#x00409;"          },
-    { "ljcy",                            "&#x00459;"          },
-    { "NJcy",                            "&#x0040A;"          },
-    { "njcy",                            "&#x0045A;"          },
-    { "TSHcy",                           "&#x0040B;"          },
-    { "tshcy",                           "&#x0045B;"          },
-    { "Ubrcy",                           "&#x0040E;"          },
-    { "ubrcy",                           "&#x0045E;"          },
-    { "YIcy",                            "&#x00407;"          },
-    { "yicy",                            "&#x00457;"          },
-    { "acute",                           "&#x000B4;"          },
-    { "breve",                           "&#x002D8;"          },
-    { "caron",                           "&#x002C7;"          },
-    { "cedil",                           "&#x000B8;"          },
-    { "circ",                            "&#x002C6;"          },
-    { "dblac",                           "&#x002DD;"          },
-    { "die",                             "&#x000A8;"          },
-    { "dot",                             "&#x002D9;"          },
-    { "grave",                           "&#x00060;"          },
-    { "macr",                            "&#x000AF;"          },
-    { "ogon",                            "&#x002DB;"          },
-    { "ring",                            "&#x002DA;"          },
-    { "tilde",                           "&#x002DC;"          },
-    { "uml",                             "&#x000A8;"          },
-    { "Aacute",                          "&#x000C1;"          },
-    { "aacute",                          "&#x000E1;"          },
-    { "Acirc",                           "&#x000C2;"          },
-    { "acirc",                           "&#x000E2;"          },
-    { "AElig",                           "&#x000C6;"          },
-    { "aelig",                           "&#x000E6;"          },
-    { "Agrave",                          "&#x000C0;"          },
-    { "agrave",                          "&#x000E0;"          },
-    { "Aring",                           "&#x000C5;"          },
-    { "aring",                           "&#x000E5;"          },
-    { "Atilde",                          "&#x000C3;"          },
-    { "atilde",                          "&#x000E3;"          },
-    { "Auml",                            "&#x000C4;"          },
-    { "auml",                            "&#x000E4;"          },
-    { "Ccedil",                          "&#x000C7;"          },
-    { "ccedil",                          "&#x000E7;"          },
-    { "Eacute",                          "&#x000C9;"          },
-    { "eacute",                          "&#x000E9;"          },
-    { "Ecirc",                           "&#x000CA;"          },
-    { "ecirc",                           "&#x000EA;"          },
-    { "Egrave",                          "&#x000C8;"          },
-    { "egrave",                          "&#x000E8;"          },
-    { "ETH",                             "&#x000D0;"          },
-    { "eth",                             "&#x000F0;"          },
-    { "Euml",                            "&#x000CB;"          },
-    { "euml",                            "&#x000EB;"          },
-    { "Iacute",                          "&#x000CD;"          },
-    { "iacute",                          "&#x000ED;"          },
-    { "Icirc",                           "&#x000CE;"          },
-    { "icirc",                           "&#x000EE;"          },
-    { "Igrave",                          "&#x000CC;"          },
-    { "igrave",                          "&#x000EC;"          },
-    { "Iuml",                            "&#x000CF;"          },
-    { "iuml",                            "&#x000EF;"          },
-    { "Ntilde",                          "&#x000D1;"          },
-    { "ntilde",                          "&#x000F1;"          },
-    { "Oacute",                          "&#x000D3;"          },
-    { "oacute",                          "&#x000F3;"          },
-    { "Ocirc",                           "&#x000D4;"          },
-    { "ocirc",                           "&#x000F4;"          },
-    { "Ograve",                          "&#x000D2;"          },
-    { "ograve",                          "&#x000F2;"          },
-    { "Oslash",                          "&#x000D8;"          },
-    { "oslash",                          "&#x000F8;"          },
-    { "Otilde",                          "&#x000D5;"          },
-    { "otilde",                          "&#x000F5;"          },
-    { "Ouml",                            "&#x000D6;"          },
-    { "ouml",                            "&#x000F6;"          },
-    { "szlig",                           "&#x000DF;"          },
-    { "THORN",                           "&#x000DE;"          },
-    { "thorn",                           "&#x000FE;"          },
-    { "Uacute",                          "&#x000DA;"          },
-    { "uacute",                          "&#x000FA;"          },
-    { "Ucirc",                           "&#x000DB;"          },
-    { "ucirc",                           "&#x000FB;"          },
-    { "Ugrave",                          "&#x000D9;"          },
-    { "ugrave",                          "&#x000F9;"          },
-    { "Uuml",                            "&#x000DC;"          },
-    { "uuml",                            "&#x000FC;"          },
-    { "Yacute",                          "&#x000DD;"          },
-    { "yacute",                          "&#x000FD;"          },
-    { "yuml",                            "&#x000FF;"          },
-    { "Abreve",                          "&#x00102;"          },
-    { "abreve",                          "&#x00103;"          },
-    { "Amacr",                           "&#x00100;"          },
-    { "amacr",                           "&#x00101;"          },
-    { "Aogon",                           "&#x00104;"          },
-    { "aogon",                           "&#x00105;"          },
-    { "Cacute",                          "&#x00106;"          },
-    { "cacute",                          "&#x00107;"          },
-    { "Ccaron",                          "&#x0010C;"          },
-    { "ccaron",                          "&#x0010D;"          },
-    { "Ccirc",                           "&#x00108;"          },
-    { "ccirc",                           "&#x00109;"          },
-    { "Cdot",                            "&#x0010A;"          },
-    { "cdot",                            "&#x0010B;"          },
-    { "Dcaron",                          "&#x0010E;"          },
-    { "dcaron",                          "&#x0010F;"          },
-    { "Dstrok",                          "&#x00110;"          },
-    { "dstrok",                          "&#x00111;"          },
-    { "Ecaron",                          "&#x0011A;"          },
-    { "ecaron",                          "&#x0011B;"          },
-    { "Edot",                            "&#x00116;"          },
-    { "edot",                            "&#x00117;"          },
-    { "Emacr",                           "&#x00112;"          },
-    { "emacr",                           "&#x00113;"          },
-    { "ENG",                             "&#x0014A;"          },
-    { "eng",                             "&#x0014B;"          },
-    { "Eogon",                           "&#x00118;"          },
-    { "eogon",                           "&#x00119;"          },
-    { "gacute",                          "&#x001F5;"          },
-    { "Gbreve",                          "&#x0011E;"          },
-    { "gbreve",                          "&#x0011F;"          },
-    { "Gcedil",                          "&#x00122;"          },
-    { "Gcirc",                           "&#x0011C;"          },
-    { "gcirc",                           "&#x0011D;"          },
-    { "Gdot",                            "&#x00120;"          },
-    { "gdot",                            "&#x00121;"          },
-    { "Hcirc",                           "&#x00124;"          },
-    { "hcirc",                           "&#x00125;"          },
-    { "Hstrok",                          "&#x00126;"          },
-    { "hstrok",                          "&#x00127;"          },
-    { "Idot",                            "&#x00130;"          },
-    { "IJlig",                           "&#x00132;"          },
-    { "ijlig",                           "&#x00133;"          },
-    { "Imacr",                           "&#x0012A;"          },
-    { "imacr",                           "&#x0012B;"          },
-    { "inodot",                          "&#x00131;"          },
-    { "Iogon",                           "&#x0012E;"          },
-    { "iogon",                           "&#x0012F;"          },
-    { "Itilde",                          "&#x00128;"          },
-    { "itilde",                          "&#x00129;"          },
-    { "Jcirc",                           "&#x00134;"          },
-    { "jcirc",                           "&#x00135;"          },
-    { "Kcedil",                          "&#x00136;"          },
-    { "kcedil",                          "&#x00137;"          },
-    { "kgreen",                          "&#x00138;"          },
-    { "Lacute",                          "&#x00139;"          },
-    { "lacute",                          "&#x0013A;"          },
-    { "Lcaron",                          "&#x0013D;"          },
-    { "lcaron",                          "&#x0013E;"          },
-    { "Lcedil",                          "&#x0013B;"          },
-    { "lcedil",                          "&#x0013C;"          },
-    { "Lmidot",                          "&#x0013F;"          },
-    { "lmidot",                          "&#x00140;"          },
-    { "Lstrok",                          "&#x00141;"          },
-    { "lstrok",                          "&#x00142;"          },
-    { "Nacute",                          "&#x00143;"          },
-    { "nacute",                          "&#x00144;"          },
-    { "napos",                           "&#x00149;"          },
-    { "Ncaron",                          "&#x00147;"          },
-    { "ncaron",                          "&#x00148;"          },
-    { "Ncedil",                          "&#x00145;"          },
-    { "ncedil",                          "&#x00146;"          },
-    { "Odblac",                          "&#x00150;"          },
-    { "odblac",                          "&#x00151;"          },
-    { "OElig",                           "&#x00152;"          },
-    { "oelig",                           "&#x00153;"          },
-    { "Omacr",                           "&#x0014C;"          },
-    { "omacr",                           "&#x0014D;"          },
-    { "Racute",                          "&#x00154;"          },
-    { "racute",                          "&#x00155;"          },
-    { "Rcaron",                          "&#x00158;"          },
-    { "rcaron",                          "&#x00159;"          },
-    { "Rcedil",                          "&#x00156;"          },
-    { "rcedil",                          "&#x00157;"          },
-    { "Sacute",                          "&#x0015A;"          },
-    { "sacute",                          "&#x0015B;"          },
-    { "Scaron",                          "&#x00160;"          },
-    { "scaron",                          "&#x00161;"          },
-    { "Scedil",                          "&#x0015E;"          },
-    { "scedil",                          "&#x0015F;"          },
-    { "Scirc",                           "&#x0015C;"          },
-    { "scirc",                           "&#x0015D;"          },
-    { "Tcaron",                          "&#x00164;"          },
-    { "tcaron",                          "&#x00165;"          },
-    { "Tcedil",                          "&#x00162;"          },
-    { "tcedil",                          "&#x00163;"          },
-    { "Tstrok",                          "&#x00166;"          },
-    { "tstrok",                          "&#x00167;"          },
-    { "Ubreve",                          "&#x0016C;"          },
-    { "ubreve",                          "&#x0016D;"          },
-    { "Udblac",                          "&#x00170;"          },
-    { "udblac",                          "&#x00171;"          },
-    { "Umacr",                           "&#x0016A;"          },
-    { "umacr",                           "&#x0016B;"          },
-    { "Uogon",                           "&#x00172;"          },
-    { "uogon",                           "&#x00173;"          },
-    { "Uring",                           "&#x0016E;"          },
-    { "uring",                           "&#x0016F;"          },
-    { "Utilde",                          "&#x00168;"          },
-    { "utilde",                          "&#x00169;"          },
-    { "Wcirc",                           "&#x00174;"          },
-    { "wcirc",                           "&#x00175;"          },
-    { "Ycirc",                           "&#x00176;"          },
-    { "ycirc",                           "&#x00177;"          },
-    { "Yuml",                            "&#x00178;"          },
-    { "Zacute",                          "&#x00179;"          },
-    { "zacute",                          "&#x0017A;"          },
-    { "Zcaron",                          "&#x0017D;"          },
-    { "zcaron",                          "&#x0017E;"          },
-    { "Zdot",                            "&#x0017B;"          },
-    { "zdot",                            "&#x0017C;"          },
-    { "apos",                            "&#x00027;"          },
-    { "ast",                             "&#x0002A;"          },
-    { "brvbar",                          "&#x000A6;"          },
-    { "bsol",                            "&#x0005C;"          },
-    { "cent",                            "&#x000A2;"          },
-    { "colon",                           "&#x0003A;"          },
-    { "comma",                           "&#x0002C;"          },
-    { "commat",                          "&#x00040;"          },
-    { "copy",                            "&#x000A9;"          },
-    { "curren",                          "&#x000A4;"          },
-    { "darr",                            "&#x02193;"          },
-    { "deg",                             "&#x000B0;"          },
-    { "divide",                          "&#x000F7;"          },
-    { "dollar",                          "&#x00024;"          },
-    { "equals",                          "&#x0003D;"          },
-    { "excl",                            "&#x00021;"          },
-    { "frac12",                          "&#x000BD;"          },
-    { "frac14",                          "&#x000BC;"          },
-    { "frac18",                          "&#x0215B;"          },
-    { "frac34",                          "&#x000BE;"          },
-    { "frac38",                          "&#x0215C;"          },
-    { "frac58",                          "&#x0215D;"          },
-    { "frac78",                          "&#x0215E;"          },
-    { "gt",                              "&#x0003E;"          },
-    { "half",                            "&#x000BD;"          },
-    { "horbar",                          "&#x02015;"          },
-    { "hyphen",                          "&#x02010;"          },
-    { "iexcl",                           "&#x000A1;"          },
-    { "iquest",                          "&#x000BF;"          },
-    { "laquo",                           "&#x000AB;"          },
-    { "larr",                            "&#x02190;"          },
-    { "lcub",                            "&#x0007B;"          },
-    { "ldquo",                           "&#x0201C;"          },
-    { "lowbar",                          "&#x0005F;"          },
-    { "lpar",                            "&#x00028;"          },
-    { "lsqb",                            "&#x0005B;"          },
-    { "lsquo",                           "&#x02018;"          },
-    { "lt",                              "&#x0003C;"          },
-    { "micro",                           "&#x000B5;"          },
-    { "middot",                          "&#x000B7;"          },
-    { "nbsp",                            "&#x000A0;"          },
-    { "not",                             "&#x000AC;"          },
-    { "num",                             "&#x00023;"          },
-    { "ohm",                             "&#x02126;"          },
-    { "ordf",                            "&#x000AA;"          },
-    { "ordm",                            "&#x000BA;"          },
-    { "para",                            "&#x000B6;"          },
-    { "percnt",                          "&#x00025;"          },
-    { "period",                          "&#x0002E;"          },
-    { "plus",                            "&#x0002B;"          },
-    { "plusmn",                          "&#x000B1;"          },
-    { "pound",                           "&#x000A3;"          },
-    { "quest",                           "&#x0003F;"          },
-    { "quot",                            "&#x00022;"          },
-    { "raquo",                           "&#x000BB;"          },
-    { "rarr",                            "&#x02192;"          },
-    { "rcub",                            "&#x0007D;"          },
-    { "rdquo",                           "&#x0201D;"          },
-    { "reg",                             "&#x000AE;"          },
-    { "rpar",                            "&#x00029;"          },
-    { "rsqb",                            "&#x0005D;"          },
-    { "rsquo",                           "&#x02019;"          },
-    { "sect",                            "&#x000A7;"          },
-    { "semi",                            "&#x0003B;"          },
-    { "shy",                             "&#x000AD;"          },
-    { "sol",                             "&#x0002F;"          },
-    { "sung",                            "&#x0266A;"          },
-    { "sup1",                            "&#x000B9;"          },
-    { "sup2",                            "&#x000B2;"          },
-    { "sup3",                            "&#x000B3;"          },
-    { "times",                           "&#x000D7;"          },
-    { "trade",                           "&#x02122;"          },
-    { "uarr",                            "&#x02191;"          },
-    { "verbar",                          "&#x0007C;"          },
-    { "yen",                             "&#x000A5;"          },
-    { "blank",                           "&#x02423;"          },
-    { "blk12",                           "&#x02592;"          },
-    { "blk14",                           "&#x02591;"          },
-    { "blk34",                           "&#x02593;"          },
-    { "block",                           "&#x02588;"          },
-    { "bull",                            "&#x02022;"          },
-    { "caret",                           "&#x02041;"          },
-    { "check",                           "&#x02713;"          },
-    { "cir",                             "&#x025CB;"          },
-    { "clubs",                           "&#x02663;"          },
-    { "copysr",                          "&#x02117;"          },
-    { "cross",                           "&#x02717;"          },
-    { "Dagger",                          "&#x02021;"          },
-    { "dagger",                          "&#x02020;"          },
-    { "dash",                            "&#x02010;"          },
-    { "diams",                           "&#x02666;"          },
-    { "dlcrop",                          "&#x0230D;"          },
-    { "drcrop",                          "&#x0230C;"          },
-    { "dtri",                            "&#x025BF;"          },
-    { "dtrif",                           "&#x025BE;"          },
-    { "emsp",                            "&#x02003;"          },
-    { "emsp13",                          "&#x02004;"          },
-    { "emsp14",                          "&#x02005;"          },
-    { "ensp",                            "&#x02002;"          },
-    { "female",                          "&#x02640;"          },
-    { "ffilig",                          "&#x0FB03;"          },
-    { "fflig",                           "&#x0FB00;"          },
-    { "ffllig",                          "&#x0FB04;"          },
-    { "filig",                           "&#x0FB01;"          },
-    { "flat",                            "&#x0266D;"          },
-    { "fllig",                           "&#x0FB02;"          },
-    { "frac13",                          "&#x02153;"          },
-    { "frac15",                          "&#x02155;"          },
-    { "frac16",                          "&#x02159;"          },
-    { "frac23",                          "&#x02154;"          },
-    { "frac25",                          "&#x02156;"          },
-    { "frac35",                          "&#x02157;"          },
-    { "frac45",                          "&#x02158;"          },
-    { "frac56",                          "&#x0215A;"          },
-    { "hairsp",                          "&#x0200A;"          },
-    { "hearts",                          "&#x02665;"          },
-    { "hellip",                          "&#x02026;"          },
-    { "hybull",                          "&#x02043;"          },
-    { "incare",                          "&#x02105;"          },
-    { "ldquor",                          "&#x0201E;"          },
-    { "lhblk",                           "&#x02584;"          },
-    { "loz",                             "&#x025CA;"          },
-    { "lozf",                            "&#x029EB;"          },
-    { "lsquor",                          "&#x0201A;"          },
-    { "ltri",                            "&#x025C3;"          },
-    { "ltrif",                           "&#x025C2;"          },
-    { "male",                            "&#x02642;"          },
-    { "malt",                            "&#x02720;"          },
-    { "marker",                          "&#x025AE;"          },
-    { "mdash",                           "&#x02014;"          },
-    { "mldr",                            "&#x02026;"          },
-    { "natur",                           "&#x0266E;"          },
-    { "ndash",                           "&#x02013;"          },
-    { "nldr",                            "&#x02025;"          },
-    { "numsp",                           "&#x02007;"          },
-    { "phone",                           "&#x0260E;"          },
-    { "puncsp",                          "&#x02008;"          },
-    { "rdquor",                          "&#x0201D;"          },
-    { "rect",                            "&#x025AD;"          },
-    { "rsquor",                          "&#x02019;"          },
-    { "rtri",                            "&#x025B9;"          },
-    { "rtrif",                           "&#x025B8;"          },
-    { "rx",                              "&#x0211E;"          },
-    { "sext",                            "&#x02736;"          },
-    { "sharp",                           "&#x0266F;"          },
-    { "spades",                          "&#x02660;"          },
-    { "squ",                             "&#x025A1;"          },
-    { "squf",                            "&#x025AA;"          },
-    { "star",                            "&#x02606;"          },
-    { "starf",                           "&#x02605;"          },
-    { "target",                          "&#x02316;"          },
-    { "telrec",                          "&#x02315;"          },
-    { "thinsp",                          "&#x02009;"          },
-    { "uhblk",                           "&#x02580;"          },
-    { "ulcrop",                          "&#x0230F;"          },
-    { "urcrop",                          "&#x0230E;"          },
-    { "utri",                            "&#x025B5;"          },
-    { "utrif",                           "&#x025B4;"          },
-    { "vellip",                          "&#x022EE;"          },
-    { "af",                              "&#x02061;"          },
-    { "asympeq",                         "&#x0224D;"          },
-    { "Cross",                           "&#x02A2F;"          },
-    { "DD",                              "&#x02145;"          },
-    { "dd",                              "&#x02146;"          },
-    { "DownArrowBar",                    "&#x02913;"          },
-    { "DownBreve",                       "&#x00311;"          },
-    { "DownLeftRightVector",             "&#x02950;"          },
-    { "DownLeftTeeVector",               "&#x0295E;"          },
-    { "DownLeftVectorBar",               "&#x02956;"          },
-    { "DownRightTeeVector",              "&#x0295F;"          },
-    { "DownRightVectorBar",              "&#x02957;"          },
-    { "ee",                              "&#x02147;"          },
-    { "EmptySmallSquare",                "&#x025FB;"          },
-    { "EmptyVerySmallSquare",            "&#x025AB;"          },
-    { "Equal",                           "&#x02A75;"          },
-    { "FilledSmallSquare",               "&#x025FC;"          },
-    { "FilledVerySmallSquare",           "&#x025AA;"          },
-    { "GreaterGreater",                  "&#x02AA2;"          },
-    { "Hat",                             "&#x0005E;"          },
-    { "HorizontalLine",                  "&#x02500;"          },
-    { "ic",                              "&#x02063;"          },
-    { "ii",                              "&#x02148;"          },
-    { "it",                              "&#x02062;"          },
-    { "larrb",                           "&#x021E4;"          },
-    { "LeftDownTeeVector",               "&#x02961;"          },
-    { "LeftDownVectorBar",               "&#x02959;"          },
-    { "LeftRightVector",                 "&#x0294E;"          },
-    { "LeftTeeVector",                   "&#x0295A;"          },
-    { "LeftTriangleBar",                 "&#x029CF;"          },
-    { "LeftUpDownVector",                "&#x02951;"          },
-    { "LeftUpTeeVector",                 "&#x02960;"          },
-    { "LeftUpVectorBar",                 "&#x02958;"          },
-    { "LeftVectorBar",                   "&#x02952;"          },
-    { "LessLess",                        "&#x02AA1;"          },
-    { "mapstodown",                      "&#x021A7;"          },
-    { "mapstoleft",                      "&#x021A4;"          },
-    { "mapstoup",                        "&#x021A5;"          },
-    { "MediumSpace",                     "&#x0205F;"          },
-    { "nbump",                           "&#x0224E;&#x00338;" },
-    { "nbumpe",                          "&#x0224F;&#x00338;" },
-    { "nesim",                           "&#x02242;&#x00338;" },
-    { "NewLine",                         "&#x0000A;"          },
-    { "NoBreak",                         "&#x02060;"          },
-    { "NotCupCap",                       "&#x0226D;"          },
-    { "NotHumpEqual",                    "&#x0224F;&#x00338;" },
-    { "NotLeftTriangleBar",              "&#x029CF;&#x00338;" },
-    { "NotNestedGreaterGreater",         "&#x02AA2;&#x00338;" },
-    { "NotNestedLessLess",               "&#x02AA1;&#x00338;" },
-    { "NotRightTriangleBar",             "&#x029D0;&#x00338;" },
-    { "NotSquareSubset",                 "&#x0228F;&#x00338;" },
-    { "NotSquareSuperset",               "&#x02290;&#x00338;" },
-    { "NotSucceedsTilde",                "&#x0227F;&#x00338;" },
-    { "OverBar",                         "&#x000AF;"          },
-    { "OverBrace",                       "&#x0FE37;"          },
-    { "OverBracket",                     "&#x023B4;"          },
-    { "OverParenthesis",                 "&#x0FE35;"          },
-    { "planckh",                         "&#x0210E;"          },
-    { "Product",                         "&#x0220F;"          },
-    { "rarrb",                           "&#x021E5;"          },
-    { "RightDownTeeVector",              "&#x0295D;"          },
-    { "RightDownVectorBar",              "&#x02955;"          },
-    { "RightTeeVector",                  "&#x0295B;"          },
-    { "RightTriangleBar",                "&#x029D0;"          },
-    { "RightUpDownVector",               "&#x0294F;"          },
-    { "RightUpTeeVector",                "&#x0295C;"          },
-    { "RightUpVectorBar",                "&#x02954;"          },
-    { "RightVectorBar",                  "&#x02953;"          },
-    { "RoundImplies",                    "&#x02970;"          },
-    { "RuleDelayed",                     "&#x029F4;"          },
-    { "Tab",                             "&#x00009;"          },
-    { "ThickSpace",                      "&#x02009;&#x0200A;&#x0200A;" },
-    { "UnderBar",                        "&#x00332;"          },
-    { "UnderBrace",                      "&#x0FE38;"          },
-    { "UnderBracket",                    "&#x023B5;"          },
-    { "UnderParenthesis",                "&#x0FE36;"          },
-    { "UpArrowBar",                      "&#x02912;"          },
-    { "Upsilon",                         "&#x003A5;"          },
-    { "VerticalLine",                    "&#x0007C;"          },
-    { "VerticalSeparator",               "&#x02758;"          },
-    { "ZeroWidthSpace",                  "&#x0200B;"          },
-    { "angle",                           "&#x02220;"          },
-    { "ApplyFunction",                   "&#x02061;"          },
-    { "approx",                          "&#x02248;"          },
-    { "approxeq",                        "&#x0224A;"          },
-    { "Assign",                          "&#x02254;"          },
-    { "backcong",                        "&#x0224C;"          },
-    { "backepsilon",                     "&#x003F6;"          },
-    { "backprime",                       "&#x02035;"          },
-    { "backsim",                         "&#x0223D;"          },
-    { "backsimeq",                       "&#x022CD;"          },
-    { "Backslash",                       "&#x02216;"          },
-    { "barwedge",                        "&#x02305;"          },
-    { "Because",                         "&#x02235;"          },
-    { "because",                         "&#x02235;"          },
-    { "Bernoullis",                      "&#x0212C;"          },
-    { "between",                         "&#x0226C;"          },
-    { "bigcap",                          "&#x022C2;"          },
-    { "bigcirc",                         "&#x025EF;"          },
-    { "bigcup",                          "&#x022C3;"          },
-    { "bigodot",                         "&#x02A00;"          },
-    { "bigoplus",                        "&#x02A01;"          },
-    { "bigotimes",                       "&#x02A02;"          },
-    { "bigsqcup",                        "&#x02A06;"          },
-    { "bigstar",                         "&#x02605;"          },
-    { "bigtriangledown",                 "&#x025BD;"          },
-    { "bigtriangleup",                   "&#x025B3;"          },
-    { "biguplus",                        "&#x02A04;"          },
-    { "bigvee",                          "&#x022C1;"          },
-    { "bigwedge",                        "&#x022C0;"          },
-    { "bkarow",                          "&#x0290D;"          },
-    { "blacklozenge",                    "&#x029EB;"          },
-    { "blacksquare",                     "&#x025AA;"          },
-    { "blacktriangle",                   "&#x025B4;"          },
-    { "blacktriangledown",               "&#x025BE;"          },
-    { "blacktriangleleft",               "&#x025C2;"          },
-    { "blacktriangleright",              "&#x025B8;"          },
-    { "bot",                             "&#x022A5;"          },
-    { "boxminus",                        "&#x0229F;"          },
-    { "boxplus",                         "&#x0229E;"          },
-    { "boxtimes",                        "&#x022A0;"          },
-    { "Breve",                           "&#x002D8;"          },
-    { "bullet",                          "&#x02022;"          },
-    { "Bumpeq",                          "&#x0224E;"          },
-    { "bumpeq",                          "&#x0224F;"          },
-    { "CapitalDifferentialD",            "&#x02145;"          },
-    { "Cayleys",                         "&#x0212D;"          },
-    { "Cedilla",                         "&#x000B8;"          },
-    { "CenterDot",                       "&#x000B7;"          },
-    { "centerdot",                       "&#x000B7;"          },
-    { "checkmark",                       "&#x02713;"          },
-    { "circeq",                          "&#x02257;"          },
-    { "circlearrowleft",                 "&#x021BA;"          },
-    { "circlearrowright",                "&#x021BB;"          },
-    { "circledast",                      "&#x0229B;"          },
-    { "circledcirc",                     "&#x0229A;"          },
-    { "circleddash",                     "&#x0229D;"          },
-    { "CircleDot",                       "&#x02299;"          },
-    { "circledR",                        "&#x000AE;"          },
-    { "circledS",                        "&#x024C8;"          },
-    { "CircleMinus",                     "&#x02296;"          },
-    { "CirclePlus",                      "&#x02295;"          },
-    { "CircleTimes",                     "&#x02297;"          },
-    { "ClockwiseContourIntegral",        "&#x02232;"          },
-    { "CloseCurlyDoubleQuote",           "&#x0201D;"          },
-    { "CloseCurlyQuote",                 "&#x02019;"          },
-    { "clubsuit",                        "&#x02663;"          },
-    { "coloneq",                         "&#x02254;"          },
-    { "complement",                      "&#x02201;"          },
-    { "complexes",                       "&#x02102;"          },
-    { "Congruent",                       "&#x02261;"          },
-    { "ContourIntegral",                 "&#x0222E;"          },
-    { "Coproduct",                       "&#x02210;"          },
-    { "CounterClockwiseContourIntegral", "&#x02233;"          },
-    { "CupCap",                          "&#x0224D;"          },
-    { "curlyeqprec",                     "&#x022DE;"          },
-    { "curlyeqsucc",                     "&#x022DF;"          },
-    { "curlyvee",                        "&#x022CE;"          },
-    { "curlywedge",                      "&#x022CF;"          },
-    { "curvearrowleft",                  "&#x021B6;"          },
-    { "curvearrowright",                 "&#x021B7;"          },
-    { "dbkarow",                         "&#x0290F;"          },
-    { "ddagger",                         "&#x02021;"          },
-    { "ddotseq",                         "&#x02A77;"          },
-    { "Del",                             "&#x02207;"          },
-    { "DiacriticalAcute",                "&#x000B4;"          },
-    { "DiacriticalDot",                  "&#x002D9;"          },
-    { "DiacriticalDoubleAcute",          "&#x002DD;"          },
-    { "DiacriticalGrave",                "&#x00060;"          },
-    { "DiacriticalTilde",                "&#x002DC;"          },
-    { "Diamond",                         "&#x022C4;"          },
-    { "diamond",                         "&#x022C4;"          },
-    { "diamondsuit",                     "&#x02666;"          },
-    { "DifferentialD",                   "&#x02146;"          },
-    { "digamma",                         "&#x003DD;"          },
-    { "div",                             "&#x000F7;"          },
-    { "divideontimes",                   "&#x022C7;"          },
-    { "doteq",                           "&#x02250;"          },
-    { "doteqdot",                        "&#x02251;"          },
-    { "DotEqual",                        "&#x02250;"          },
-    { "dotminus",                        "&#x02238;"          },
-    { "dotplus",                         "&#x02214;"          },
-    { "dotsquare",                       "&#x022A1;"          },
-    { "doublebarwedge",                  "&#x02306;"          },
-    { "DoubleContourIntegral",           "&#x0222F;"          },
-    { "DoubleDot",                       "&#x000A8;"          },
-    { "DoubleDownArrow",                 "&#x021D3;"          },
-    { "DoubleLeftArrow",                 "&#x021D0;"          },
-    { "DoubleLeftRightArrow",            "&#x021D4;"          },
-    { "DoubleLeftTee",                   "&#x02AE4;"          },
-    { "DoubleLongLeftArrow",             "&#x027F8;"          },
-    { "DoubleLongLeftRightArrow",        "&#x027FA;"          },
-    { "DoubleLongRightArrow",            "&#x027F9;"          },
-    { "DoubleRightArrow",                "&#x021D2;"          },
-    { "DoubleRightTee",                  "&#x022A8;"          },
-    { "DoubleUpArrow",                   "&#x021D1;"          },
-    { "DoubleUpDownArrow",               "&#x021D5;"          },
-    { "DoubleVerticalBar",               "&#x02225;"          },
-    { "DownArrow",                       "&#x02193;"          },
-    { "Downarrow",                       "&#x021D3;"          },
-    { "downarrow",                       "&#x02193;"          },
-    { "DownArrowUpArrow",                "&#x021F5;"          },
-    { "downdownarrows",                  "&#x021CA;"          },
-    { "downharpoonleft",                 "&#x021C3;"          },
-    { "downharpoonright",                "&#x021C2;"          },
-    { "DownLeftVector",                  "&#x021BD;"          },
-    { "DownRightVector",                 "&#x021C1;"          },
-    { "DownTee",                         "&#x022A4;"          },
-    { "DownTeeArrow",                    "&#x021A7;"          },
-    { "drbkarow",                        "&#x02910;"          },
-    { "Element",                         "&#x02208;"          },
-    { "emptyset",                        "&#x02205;"          },
-    { "eqcirc",                          "&#x02256;"          },
-    { "eqcolon",                         "&#x02255;"          },
-    { "eqsim",                           "&#x02242;"          },
-    { "eqslantgtr",                      "&#x02A96;"          },
-    { "eqslantless",                     "&#x02A95;"          },
-    { "EqualTilde",                      "&#x02242;"          },
-    { "Equilibrium",                     "&#x021CC;"          },
-    { "Exists",                          "&#x02203;"          },
-    { "expectation",                     "&#x02130;"          },
-    { "ExponentialE",                    "&#x02147;"          },
-    { "exponentiale",                    "&#x02147;"          },
-    { "fallingdotseq",                   "&#x02252;"          },
-    { "ForAll",                          "&#x02200;"          },
-    { "Fouriertrf",                      "&#x02131;"          },
-    { "geq",                             "&#x02265;"          },
-    { "geqq",                            "&#x02267;"          },
-    { "geqslant",                        "&#x02A7E;"          },
-    { "gg",                              "&#x0226B;"          },
-    { "ggg",                             "&#x022D9;"          },
-    { "gnapprox",                        "&#x02A8A;"          },
-    { "gneq",                            "&#x02A88;"          },
-    { "gneqq",                           "&#x02269;"          },
-    { "GreaterEqual",                    "&#x02265;"          },
-    { "GreaterEqualLess",                "&#x022DB;"          },
-    { "GreaterFullEqual",                "&#x02267;"          },
-    { "GreaterLess",                     "&#x02277;"          },
-    { "GreaterSlantEqual",               "&#x02A7E;"          },
-    { "GreaterTilde",                    "&#x02273;"          },
-    { "gtrapprox",                       "&#x02A86;"          },
-    { "gtrdot",                          "&#x022D7;"          },
-    { "gtreqless",                       "&#x022DB;"          },
-    { "gtreqqless",                      "&#x02A8C;"          },
-    { "gtrless",                         "&#x02277;"          },
-    { "gtrsim",                          "&#x02273;"          },
-    { "gvertneqq",                       "&#x02269;&#x0FE00;" },
-    { "Hacek",                           "&#x002C7;"          },
-    { "hbar",                            "&#x0210F;"          },
-    { "heartsuit",                       "&#x02665;"          },
-    { "HilbertSpace",                    "&#x0210B;"          },
-    { "hksearow",                        "&#x02925;"          },
-    { "hkswarow",                        "&#x02926;"          },
-    { "hookleftarrow",                   "&#x021A9;"          },
-    { "hookrightarrow",                  "&#x021AA;"          },
-    { "hslash",                          "&#x0210F;"          },
-    { "HumpDownHump",                    "&#x0224E;"          },
-    { "HumpEqual",                       "&#x0224F;"          },
-    { "iiiint",                          "&#x02A0C;"          },
-    { "iiint",                           "&#x0222D;"          },
-    { "Im",                              "&#x02111;"          },
-    { "ImaginaryI",                      "&#x02148;"          },
-    { "imagline",                        "&#x02110;"          },
-    { "imagpart",                        "&#x02111;"          },
-    { "Implies",                         "&#x021D2;"          },
-    { "in",                              "&#x02208;"          },
-    { "integers",                        "&#x02124;"          },
-    { "Integral",                        "&#x0222B;"          },
-    { "intercal",                        "&#x022BA;"          },
-    { "Intersection",                    "&#x022C2;"          },
-    { "intprod",                         "&#x02A3C;"          },
-    { "InvisibleComma",                  "&#x02063;"          },
-    { "InvisibleTimes",                  "&#x02062;"          },
-    { "langle",                          "&#x02329;"          },
-    { "Laplacetrf",                      "&#x02112;"          },
-    { "lbrace",                          "&#x0007B;"          },
-    { "lbrack",                          "&#x0005B;"          },
-    { "LeftAngleBracket",                "&#x02329;"          },
-    { "LeftArrow",                       "&#x02190;"          },
-    { "Leftarrow",                       "&#x021D0;"          },
-    { "leftarrow",                       "&#x02190;"          },
-    { "LeftArrowBar",                    "&#x021E4;"          },
-    { "LeftArrowRightArrow",             "&#x021C6;"          },
-    { "leftarrowtail",                   "&#x021A2;"          },
-    { "LeftCeiling",                     "&#x02308;"          },
-    { "LeftDoubleBracket",               "&#x0301A;"          },
-    { "LeftDownVector",                  "&#x021C3;"          },
-    { "LeftFloor",                       "&#x0230A;"          },
-    { "leftharpoondown",                 "&#x021BD;"          },
-    { "leftharpoonup",                   "&#x021BC;"          },
-    { "leftleftarrows",                  "&#x021C7;"          },
-    { "LeftRightArrow",                  "&#x02194;"          },
-    { "Leftrightarrow",                  "&#x021D4;"          },
-    { "leftrightarrow",                  "&#x02194;"          },
-    { "leftrightarrows",                 "&#x021C6;"          },
-    { "leftrightharpoons",               "&#x021CB;"          },
-    { "leftrightsquigarrow",             "&#x021AD;"          },
-    { "LeftTee",                         "&#x022A3;"          },
-    { "LeftTeeArrow",                    "&#x021A4;"          },
-    { "leftthreetimes",                  "&#x022CB;"          },
-    { "LeftTriangle",                    "&#x022B2;"          },
-    { "LeftTriangleEqual",               "&#x022B4;"          },
-    { "LeftUpVector",                    "&#x021BF;"          },
-    { "LeftVector",                      "&#x021BC;"          },
-    { "leq",                             "&#x02264;"          },
-    { "leqq",                            "&#x02266;"          },
-    { "leqslant",                        "&#x02A7D;"          },
-    { "lessapprox",                      "&#x02A85;"          },
-    { "lessdot",                         "&#x022D6;"          },
-    { "lesseqgtr",                       "&#x022DA;"          },
-    { "lesseqqgtr",                      "&#x02A8B;"          },
-    { "LessEqualGreater",                "&#x022DA;"          },
-    { "LessFullEqual",                   "&#x02266;"          },
-    { "LessGreater",                     "&#x02276;"          },
-    { "lessgtr",                         "&#x02276;"          },
-    { "lesssim",                         "&#x02272;"          },
-    { "LessSlantEqual",                  "&#x02A7D;"          },
-    { "LessTilde",                       "&#x02272;"          },
-    { "ll",                              "&#x0226A;"          },
-    { "llcorner",                        "&#x0231E;"          },
-    { "Lleftarrow",                      "&#x021DA;"          },
-    { "lmoustache",                      "&#x023B0;"          },
-    { "lnapprox",                        "&#x02A89;"          },
-    { "lneq",                            "&#x02A87;"          },
-    { "lneqq",                           "&#x02268;"          },
-    { "LongLeftArrow",                   "&#x027F5;"          },
-    { "Longleftarrow",                   "&#x027F8;"          },
-    { "longleftarrow",                   "&#x027F5;"          },
-    { "LongLeftRightArrow",              "&#x027F7;"          },
-    { "Longleftrightarrow",              "&#x027FA;"          },
-    { "longleftrightarrow",              "&#x027F7;"          },
-    { "longmapsto",                      "&#x027FC;"          },
-    { "LongRightArrow",                  "&#x027F6;"          },
-    { "Longrightarrow",                  "&#x027F9;"          },
-    { "longrightarrow",                  "&#x027F6;"          },
-    { "looparrowleft",                   "&#x021AB;"          },
-    { "looparrowright",                  "&#x021AC;"          },
-    { "LowerLeftArrow",                  "&#x02199;"          },
-    { "LowerRightArrow",                 "&#x02198;"          },
-    { "lozenge",                         "&#x025CA;"          },
-    { "lrcorner",                        "&#x0231F;"          },
-    { "Lsh",                             "&#x021B0;"          },
-    { "lvertneqq",                       "&#x02268;&#x0FE00;" },
-    { "maltese",                         "&#x02720;"          },
-    { "mapsto",                          "&#x021A6;"          },
-    { "measuredangle",                   "&#x02221;"          },
-    { "Mellintrf",                       "&#x02133;"          },
-    { "MinusPlus",                       "&#x02213;"          },
-    { "mp",                              "&#x02213;"          },
-    { "multimap",                        "&#x022B8;"          },
-    { "napprox",                         "&#x02249;"          },
-    { "natural",                         "&#x0266E;"          },
-    { "naturals",                        "&#x02115;"          },
-    { "nearrow",                         "&#x02197;"          },
-    { "NegativeMediumSpace",             "&#x0200B;"          },
-    { "NegativeThickSpace",              "&#x0200B;"          },
-    { "NegativeThinSpace",               "&#x0200B;"          },
-    { "NegativeVeryThinSpace",           "&#x0200B;"          },
-    { "NestedGreaterGreater",            "&#x0226B;"          },
-    { "NestedLessLess",                  "&#x0226A;"          },
-    { "nexists",                         "&#x02204;"          },
-    { "ngeq",                            "&#x02271;"          },
-    { "ngeqq",                           "&#x02267;&#x00338;" },
-    { "ngeqslant",                       "&#x02A7E;&#x00338;" },
-    { "ngtr",                            "&#x0226F;"          },
-    { "nLeftarrow",                      "&#x021CD;"          },
-    { "nleftarrow",                      "&#x0219A;"          },
-    { "nLeftrightarrow",                 "&#x021CE;"          },
-    { "nleftrightarrow",                 "&#x021AE;"          },
-    { "nleq",                            "&#x02270;"          },
-    { "nleqq",                           "&#x02266;&#x00338;" },
-    { "nleqslant",                       "&#x02A7D;&#x00338;" },
-    { "nless",                           "&#x0226E;"          },
-    { "NonBreakingSpace",                "&#x000A0;"          },
-    { "NotCongruent",                    "&#x02262;"          },
-    { "NotDoubleVerticalBar",            "&#x02226;"          },
-    { "NotElement",                      "&#x02209;"          },
-    { "NotEqual",                        "&#x02260;"          },
-    { "NotEqualTilde",                   "&#x02242;&#x00338;" },
-    { "NotExists",                       "&#x02204;"          },
-    { "NotGreater",                      "&#x0226F;"          },
-    { "NotGreaterEqual",                 "&#x02271;"          },
-    { "NotGreaterFullEqual",             "&#x02266;&#x00338;" },
-    { "NotGreaterGreater",               "&#x0226B;&#x00338;" },
-    { "NotGreaterLess",                  "&#x02279;"          },
-    { "NotGreaterSlantEqual",            "&#x02A7E;&#x00338;" },
-    { "NotGreaterTilde",                 "&#x02275;"          },
-    { "NotHumpDownHump",                 "&#x0224E;&#x00338;" },
-    { "NotLeftTriangle",                 "&#x022EA;"          },
-    { "NotLeftTriangleEqual",            "&#x022EC;"          },
-    { "NotLess",                         "&#x0226E;"          },
-    { "NotLessEqual",                    "&#x02270;"          },
-    { "NotLessGreater",                  "&#x02278;"          },
-    { "NotLessLess",                     "&#x0226A;&#x00338;" },
-    { "NotLessSlantEqual",               "&#x02A7D;&#x00338;" },
-    { "NotLessTilde",                    "&#x02274;"          },
-    { "NotPrecedes",                     "&#x02280;"          },
-    { "NotPrecedesEqual",                "&#x02AAF;&#x00338;" },
-    { "NotPrecedesSlantEqual",           "&#x022E0;"          },
-    { "NotReverseElement",               "&#x0220C;"          },
-    { "NotRightTriangle",                "&#x022EB;"          },
-    { "NotRightTriangleEqual",           "&#x022ED;"          },
-    { "NotSquareSubsetEqual",            "&#x022E2;"          },
-    { "NotSquareSupersetEqual",          "&#x022E3;"          },
-    { "NotSubset",                       "&#x02282;&#x020D2;" },
-    { "NotSubsetEqual",                  "&#x02288;"          },
-    { "NotSucceeds",                     "&#x02281;"          },
-    { "NotSucceedsEqual",                "&#x02AB0;&#x00338;" },
-    { "NotSucceedsSlantEqual",           "&#x022E1;"          },
-    { "NotSuperset",                     "&#x02283;&#x020D2;" },
-    { "NotSupersetEqual",                "&#x02289;"          },
-    { "NotTilde",                        "&#x02241;"          },
-    { "NotTildeEqual",                   "&#x02244;"          },
-    { "NotTildeFullEqual",               "&#x02247;"          },
-    { "NotTildeTilde",                   "&#x02249;"          },
-    { "NotVerticalBar",                  "&#x02224;"          },
-    { "nparallel",                       "&#x02226;"          },
-    { "nprec",                           "&#x02280;"          },
-    { "npreceq",                         "&#x02AAF;&#x00338;" },
-    { "nRightarrow",                     "&#x021CF;"          },
-    { "nrightarrow",                     "&#x0219B;"          },
-    { "nshortmid",                       "&#x02224;"          },
-    { "nshortparallel",                  "&#x02226;"          },
-    { "nsimeq",                          "&#x02244;"          },
-    { "nsubset",                         "&#x02282;&#x020D2;" },
-    { "nsubseteq",                       "&#x02288;"          },
-    { "nsubseteqq",                      "&#x02AC5;&#x0338;"  },
-    { "nsucc",                           "&#x02281;"          },
-    { "nsucceq",                         "&#x02AB0;&#x00338;" },
-    { "nsupset",                         "&#x02283;&#x020D2;" },
-    { "nsupseteq",                       "&#x02289;"          },
-    { "nsupseteqq",                      "&#x02AC6;&#x0338;"  },
-    { "ntriangleleft",                   "&#x022EA;"          },
-    { "ntrianglelefteq",                 "&#x022EC;"          },
-    { "ntriangleright",                  "&#x022EB;"          },
-    { "ntrianglerighteq",                "&#x022ED;"          },
-    { "nwarrow",                         "&#x02196;"          },
-    { "oint",                            "&#x0222E;"          },
-    { "OpenCurlyDoubleQuote",            "&#x0201C;"          },
-    { "OpenCurlyQuote",                  "&#x02018;"          },
-    { "orderof",                         "&#x02134;"          },
-    { "parallel",                        "&#x02225;"          },
-    { "PartialD",                        "&#x02202;"          },
-    { "pitchfork",                       "&#x022D4;"          },
-    { "PlusMinus",                       "&#x000B1;"          },
-    { "pm",                              "&#x000B1;"          },
-    { "Poincareplane",                   "&#x0210C;"          },
-    { "prec",                            "&#x0227A;"          },
-    { "precapprox",                      "&#x02AB7;"          },
-    { "preccurlyeq",                     "&#x0227C;"          },
-    { "Precedes",                        "&#x0227A;"          },
-    { "PrecedesEqual",                   "&#x02AAF;"          },
-    { "PrecedesSlantEqual",              "&#x0227C;"          },
-    { "PrecedesTilde",                   "&#x0227E;"          },
-    { "preceq",                          "&#x02AAF;"          },
-    { "precnapprox",                     "&#x02AB9;"          },
-    { "precneqq",                        "&#x02AB5;"          },
-    { "precnsim",                        "&#x022E8;"          },
-    { "precsim",                         "&#x0227E;"          },
-    { "primes",                          "&#x02119;"          },
-    { "Proportion",                      "&#x02237;"          },
-    { "Proportional",                    "&#x0221D;"          },
-    { "propto",                          "&#x0221D;"          },
-    { "quaternions",                     "&#x0210D;"          },
-    { "questeq",                         "&#x0225F;"          },
-    { "rangle",                          "&#x0232A;"          },
-    { "rationals",                       "&#x0211A;"          },
-    { "rbrace",                          "&#x0007D;"          },
-    { "rbrack",                          "&#x0005D;"          },
-    { "Re",                              "&#x0211C;"          },
-    { "realine",                         "&#x0211B;"          },
-    { "realpart",                        "&#x0211C;"          },
-    { "reals",                           "&#x0211D;"          },
-    { "ReverseElement",                  "&#x0220B;"          },
-    { "ReverseEquilibrium",              "&#x021CB;"          },
-    { "ReverseUpEquilibrium",            "&#x0296F;"          },
-    { "RightAngleBracket",               "&#x0232A;"          },
-    { "RightArrow",                      "&#x02192;"          },
-    { "Rightarrow",                      "&#x021D2;"          },
-    { "rightarrow",                      "&#x02192;"          },
-    { "RightArrowBar",                   "&#x021E5;"          },
-    { "RightArrowLeftArrow",             "&#x021C4;"          },
-    { "rightarrowtail",                  "&#x021A3;"          },
-    { "RightCeiling",                    "&#x02309;"          },
-    { "RightDoubleBracket",              "&#x0301B;"          },
-    { "RightDownVector",                 "&#x021C2;"          },
-    { "RightFloor",                      "&#x0230B;"          },
-    { "rightharpoondown",                "&#x021C1;"          },
-    { "rightharpoonup",                  "&#x021C0;"          },
-    { "rightleftarrows",                 "&#x021C4;"          },
-    { "rightleftharpoons",               "&#x021CC;"          },
-    { "rightrightarrows",                "&#x021C9;"          },
-    { "rightsquigarrow",                 "&#x0219D;"          },
-    { "RightTee",                        "&#x022A2;"          },
-    { "RightTeeArrow",                   "&#x021A6;"          },
-    { "rightthreetimes",                 "&#x022CC;"          },
-    { "RightTriangle",                   "&#x022B3;"          },
-    { "RightTriangleEqual",              "&#x022B5;"          },
-    { "RightUpVector",                   "&#x021BE;"          },
-    { "RightVector",                     "&#x021C0;"          },
-    { "risingdotseq",                    "&#x02253;"          },
-    { "rmoustache",                      "&#x023B1;"          },
-    { "Rrightarrow",                     "&#x021DB;"          },
-    { "Rsh",                             "&#x021B1;"          },
-    { "searrow",                         "&#x02198;"          },
-    { "setminus",                        "&#x02216;"          },
-    { "ShortDownArrow",                  "&#x02193;"          },
-    { "ShortLeftArrow",                  "&#x02190;"          },
-    { "shortmid",                        "&#x02223;"          },
-    { "shortparallel",                   "&#x02225;"          },
-    { "ShortRightArrow",                 "&#x02192;"          },
-    { "ShortUpArrow",                    "&#x02191;"          },
-    { "simeq",                           "&#x02243;"          },
-    { "SmallCircle",                     "&#x02218;"          },
-    { "smallsetminus",                   "&#x02216;"          },
-    { "spadesuit",                       "&#x02660;"          },
-    { "Sqrt",                            "&#x0221A;"          },
-    { "sqsubset",                        "&#x0228F;"          },
-    { "sqsubseteq",                      "&#x02291;"          },
-    { "sqsupset",                        "&#x02290;"          },
-    { "sqsupseteq",                      "&#x02292;"          },
-    { "Square",                          "&#x025A1;"          },
-    { "SquareIntersection",              "&#x02293;"          },
-    { "SquareSubset",                    "&#x0228F;"          },
-    { "SquareSubsetEqual",               "&#x02291;"          },
-    { "SquareSuperset",                  "&#x02290;"          },
-    { "SquareSupersetEqual",             "&#x02292;"          },
-    { "SquareUnion",                     "&#x02294;"          },
-    { "Star",                            "&#x022C6;"          },
-    { "straightepsilon",                 "&#x003B5;"          },
-    { "straightphi",                     "&#x003D5;"          },
-    { "Subset",                          "&#x022D0;"          },
-    { "subset",                          "&#x02282;"          },
-    { "subseteq",                        "&#x02286;"          },
-    { "subseteqq",                       "&#x02AC5;"          },
-    { "SubsetEqual",                     "&#x02286;"          },
-    { "subsetneq",                       "&#x0228A;"          },
-    { "subsetneqq",                      "&#x02ACB;"          },
-    { "succ",                            "&#x0227B;"          },
-    { "succapprox",                      "&#x02AB8;"          },
-    { "succcurlyeq",                     "&#x0227D;"          },
-    { "Succeeds",                        "&#x0227B;"          },
-    { "SucceedsEqual",                   "&#x02AB0;"          },
-    { "SucceedsSlantEqual",              "&#x0227D;"          },
-    { "SucceedsTilde",                   "&#x0227F;"          },
-    { "succeq",                          "&#x02AB0;"          },
-    { "succnapprox",                     "&#x02ABA;"          },
-    { "succneqq",                        "&#x02AB6;"          },
-    { "succnsim",                        "&#x022E9;"          },
-    { "succsim",                         "&#x0227F;"          },
-    { "SuchThat",                        "&#x0220B;"          },
-    { "Sum",                             "&#x02211;"          },
-    { "Superset",                        "&#x02283;"          },
-    { "SupersetEqual",                   "&#x02287;"          },
-    { "Supset",                          "&#x022D1;"          },
-    { "supset",                          "&#x02283;"          },
-    { "supseteq",                        "&#x02287;"          },
-    { "supseteqq",                       "&#x02AC6;"          },
-    { "supsetneq",                       "&#x0228B;"          },
-    { "supsetneqq",                      "&#x02ACC;"          },
-    { "swarrow",                         "&#x02199;"          },
-    { "Therefore",                       "&#x02234;"          },
-    { "therefore",                       "&#x02234;"          },
-    { "thickapprox",                     "&#x02248;"          },
-    { "thicksim",                        "&#x0223C;"          },
-    { "ThinSpace",                       "&#x02009;"          },
-    { "Tilde",                           "&#x0223C;"          },
-    { "TildeEqual",                      "&#x02243;"          },
-    { "TildeFullEqual",                  "&#x02245;"          },
-    { "TildeTilde",                      "&#x02248;"          },
-    { "toea",                            "&#x02928;"          },
-    { "tosa",                            "&#x02929;"          },
-    { "triangle",                        "&#x025B5;"          },
-    { "triangledown",                    "&#x025BF;"          },
-    { "triangleleft",                    "&#x025C3;"          },
-    { "trianglelefteq",                  "&#x022B4;"          },
-    { "triangleq",                       "&#x0225C;"          },
-    { "triangleright",                   "&#x025B9;"          },
-    { "trianglerighteq",                 "&#x022B5;"          },
-    { "TripleDot",                       "&#x020DB;"          },
-    { "twoheadleftarrow",                "&#x0219E;"          },
-    { "twoheadrightarrow",               "&#x021A0;"          },
-    { "ulcorner",                        "&#x0231C;"          },
-    { "Union",                           "&#x022C3;"          },
-    { "UnionPlus",                       "&#x0228E;"          },
-    { "UpArrow",                         "&#x02191;"          },
-    { "Uparrow",                         "&#x021D1;"          },
-    { "uparrow",                         "&#x02191;"          },
-    { "UpArrowDownArrow",                "&#x021C5;"          },
-    { "UpDownArrow",                     "&#x02195;"          },
-    { "Updownarrow",                     "&#x021D5;"          },
-    { "updownarrow",                     "&#x02195;"          },
-    { "UpEquilibrium",                   "&#x0296E;"          },
-    { "upharpoonleft",                   "&#x021BF;"          },
-    { "upharpoonright",                  "&#x021BE;"          },
-    { "UpperLeftArrow",                  "&#x02196;"          },
-    { "UpperRightArrow",                 "&#x02197;"          },
-    { "upsilon",                         "&#x003C5;"          },
-    { "UpTee",                           "&#x022A5;"          },
-    { "UpTeeArrow",                      "&#x021A5;"          },
-    { "upuparrows",                      "&#x021C8;"          },
-    { "urcorner",                        "&#x0231D;"          },
-    { "varepsilon",                      "&#x0025B;"          },
-    { "varkappa",                        "&#x003F0;"          },
-    { "varnothing",                      "&#x02205;"          },
-    { "varphi",                          "&#x003C6;"          },
-    { "varpi",                           "&#x003D6;"          },
-    { "varpropto",                       "&#x0221D;"          },
-    { "varrho",                          "&#x003F1;"          },
-    { "varsigma",                        "&#x003C2;"          },
-    { "varsubsetneq",                    "&#x0228A;&#x0FE00;" },
-    { "varsubsetneqq",                   "&#x02ACB;&#x0FE00;" },
-    { "varsupsetneq",                    "&#x0228B;&#x0FE00;" },
-    { "varsupsetneqq",                   "&#x02ACC;&#x0FE00;" },
-    { "vartheta",                        "&#x003D1;"          },
-    { "vartriangleleft",                 "&#x022B2;"          },
-    { "vartriangleright",                "&#x022B3;"          },
-    { "Vee",                             "&#x022C1;"          },
-    { "vee",                             "&#x02228;"          },
-    { "Vert",                            "&#x02016;"          },
-    { "vert",                            "&#x0007C;"          },
-    { "VerticalBar",                     "&#x02223;"          },
-    { "VerticalTilde",                   "&#x02240;"          },
-    { "VeryThinSpace",                   "&#x0200A;"          },
-    { "Wedge",                           "&#x022C0;"          },
-    { "wedge",                           "&#x02227;"          },
-    { "wp",                              "&#x02118;"          },
-    { "wr",                              "&#x02240;"          },
-    { "zeetrf",                          "&#x02128;"          },
-    { 0,                                 0                    }
-};
+    init();
+}
+
+void QwtMMLEntityTable::init(void)
+{
+    if (!alreadyInitialized) {
+        alreadyInitialized = true;
+
+        initValueLookup();
+    }
+}
+
+void QwtMMLEntityTable::initValueLookup(void)
+{
+    valueLookup.insert("angzarr",                         "&#x0237C;"          );
+    valueLookup.insert("cirmid",                          "&#x02AEF;"          );
+    valueLookup.insert("cudarrl",                         "&#x02938;"          );
+    valueLookup.insert("cudarrr",                         "&#x02935;"          );
+    valueLookup.insert("cularr",                          "&#x021B6;"          );
+    valueLookup.insert("cularrp",                         "&#x0293D;"          );
+    valueLookup.insert("curarr",                          "&#x021B7;"          );
+    valueLookup.insert("curarrm",                         "&#x0293C;"          );
+    valueLookup.insert("Darr",                            "&#x021A1;"          );
+    valueLookup.insert("dArr",                            "&#x021D3;"          );
+    valueLookup.insert("ddarr",                           "&#x021CA;"          );
+    valueLookup.insert("DDotrahd",                        "&#x02911;"          );
+    valueLookup.insert("dfisht",                          "&#x0297F;"          );
+    valueLookup.insert("dHar",                            "&#x02965;"          );
+    valueLookup.insert("dharl",                           "&#x021C3;"          );
+    valueLookup.insert("dharr",                           "&#x021C2;"          );
+    valueLookup.insert("duarr",                           "&#x021F5;"          );
+    valueLookup.insert("duhar",                           "&#x0296F;"          );
+    valueLookup.insert("dzigrarr",                        "&#x027FF;"          );
+    valueLookup.insert("erarr",                           "&#x02971;"          );
+    valueLookup.insert("hArr",                            "&#x021D4;"          );
+    valueLookup.insert("harr",                            "&#x02194;"          );
+    valueLookup.insert("harrcir",                         "&#x02948;"          );
+    valueLookup.insert("harrw",                           "&#x021AD;"          );
+    valueLookup.insert("hoarr",                           "&#x021FF;"          );
+    valueLookup.insert("imof",                            "&#x022B7;"          );
+    valueLookup.insert("lAarr",                           "&#x021DA;"          );
+    valueLookup.insert("Larr",                            "&#x0219E;"          );
+    valueLookup.insert("larrbfs",                         "&#x0291F;"          );
+    valueLookup.insert("larrfs",                          "&#x0291D;"          );
+    valueLookup.insert("larrhk",                          "&#x021A9;"          );
+    valueLookup.insert("larrlp",                          "&#x021AB;"          );
+    valueLookup.insert("larrpl",                          "&#x02939;"          );
+    valueLookup.insert("larrsim",                         "&#x02973;"          );
+    valueLookup.insert("larrtl",                          "&#x021A2;"          );
+    valueLookup.insert("lAtail",                          "&#x0291B;"          );
+    valueLookup.insert("latail",                          "&#x02919;"          );
+    valueLookup.insert("lBarr",                           "&#x0290E;"          );
+    valueLookup.insert("lbarr",                           "&#x0290C;"          );
+    valueLookup.insert("ldca",                            "&#x02936;"          );
+    valueLookup.insert("ldrdhar",                         "&#x02967;"          );
+    valueLookup.insert("ldrushar",                        "&#x0294B;"          );
+    valueLookup.insert("ldsh",                            "&#x021B2;"          );
+    valueLookup.insert("lfisht",                          "&#x0297C;"          );
+    valueLookup.insert("lHar",                            "&#x02962;"          );
+    valueLookup.insert("lhard",                           "&#x021BD;"          );
+    valueLookup.insert("lharu",                           "&#x021BC;"          );
+    valueLookup.insert("lharul",                          "&#x0296A;"          );
+    valueLookup.insert("llarr",                           "&#x021C7;"          );
+    valueLookup.insert("llhard",                          "&#x0296B;"          );
+    valueLookup.insert("loarr",                           "&#x021FD;"          );
+    valueLookup.insert("lrarr",                           "&#x021C6;"          );
+    valueLookup.insert("lrhar",                           "&#x021CB;"          );
+    valueLookup.insert("lrhard",                          "&#x0296D;"          );
+    valueLookup.insert("lsh",                             "&#x021B0;"          );
+    valueLookup.insert("lurdshar",                        "&#x0294A;"          );
+    valueLookup.insert("luruhar",                         "&#x02966;"          );
+    valueLookup.insert("Map",                             "&#x02905;"          );
+    valueLookup.insert("map",                             "&#x021A6;"          );
+    valueLookup.insert("midcir",                          "&#x02AF0;"          );
+    valueLookup.insert("mumap",                           "&#x022B8;"          );
+    valueLookup.insert("nearhk",                          "&#x02924;"          );
+    valueLookup.insert("neArr",                           "&#x021D7;"          );
+    valueLookup.insert("nearr",                           "&#x02197;"          );
+    valueLookup.insert("nesear",                          "&#x02928;"          );
+    valueLookup.insert("nhArr",                           "&#x021CE;"          );
+    valueLookup.insert("nharr",                           "&#x021AE;"          );
+    valueLookup.insert("nlArr",                           "&#x021CD;"          );
+    valueLookup.insert("nlarr",                           "&#x0219A;"          );
+    valueLookup.insert("nrArr",                           "&#x021CF;"          );
+    valueLookup.insert("nrarr",                           "&#x0219B;"          );
+    valueLookup.insert("nrarrc",                          "&#x02933;&#x00338;" );
+    valueLookup.insert("nrarrw",                          "&#x0219D;&#x00338;" );
+    valueLookup.insert("nvHarr",                          "&#x02904;"          );
+    valueLookup.insert("nvlArr",                          "&#x02902;"          );
+    valueLookup.insert("nvrArr",                          "&#x02903;"          );
+    valueLookup.insert("nwarhk",                          "&#x02923;"          );
+    valueLookup.insert("nwArr",                           "&#x021D6;"          );
+    valueLookup.insert("nwarr",                           "&#x02196;"          );
+    valueLookup.insert("nwnear",                          "&#x02927;"          );
+    valueLookup.insert("olarr",                           "&#x021BA;"          );
+    valueLookup.insert("orarr",                           "&#x021BB;"          );
+    valueLookup.insert("origof",                          "&#x022B6;"          );
+    valueLookup.insert("rAarr",                           "&#x021DB;"          );
+    valueLookup.insert("Rarr",                            "&#x021A0;"          );
+    valueLookup.insert("rarrap",                          "&#x02975;"          );
+    valueLookup.insert("rarrbfs",                         "&#x02920;"          );
+    valueLookup.insert("rarrc",                           "&#x02933;"          );
+    valueLookup.insert("rarrfs",                          "&#x0291E;"          );
+    valueLookup.insert("rarrhk",                          "&#x021AA;"          );
+    valueLookup.insert("rarrlp",                          "&#x021AC;"          );
+    valueLookup.insert("rarrpl",                          "&#x02945;"          );
+    valueLookup.insert("rarrsim",                         "&#x02974;"          );
+    valueLookup.insert("Rarrtl",                          "&#x02916;"          );
+    valueLookup.insert("rarrtl",                          "&#x021A3;"          );
+    valueLookup.insert("rarrw",                           "&#x0219D;"          );
+    valueLookup.insert("rAtail",                          "&#x0291C;"          );
+    valueLookup.insert("ratail",                          "&#x0291A;"          );
+    valueLookup.insert("RBarr",                           "&#x02910;"          );
+    valueLookup.insert("rBarr",                           "&#x0290F;"          );
+    valueLookup.insert("rbarr",                           "&#x0290D;"          );
+    valueLookup.insert("rdca",                            "&#x02937;"          );
+    valueLookup.insert("rdldhar",                         "&#x02969;"          );
+    valueLookup.insert("rdsh",                            "&#x021B3;"          );
+    valueLookup.insert("rfisht",                          "&#x0297D;"          );
+    valueLookup.insert("rHar",                            "&#x02964;"          );
+    valueLookup.insert("rhard",                           "&#x021C1;"          );
+    valueLookup.insert("rharu",                           "&#x021C0;"          );
+    valueLookup.insert("rharul",                          "&#x0296C;"          );
+    valueLookup.insert("rlarr",                           "&#x021C4;"          );
+    valueLookup.insert("rlhar",                           "&#x021CC;"          );
+    valueLookup.insert("roarr",                           "&#x021FE;"          );
+    valueLookup.insert("rrarr",                           "&#x021C9;"          );
+    valueLookup.insert("rsh",                             "&#x021B1;"          );
+    valueLookup.insert("ruluhar",                         "&#x02968;"          );
+    valueLookup.insert("searhk",                          "&#x02925;"          );
+    valueLookup.insert("seArr",                           "&#x021D8;"          );
+    valueLookup.insert("searr",                           "&#x02198;"          );
+    valueLookup.insert("seswar",                          "&#x02929;"          );
+    valueLookup.insert("simrarr",                         "&#x02972;"          );
+    valueLookup.insert("slarr",                           "&#x02190;"          );
+    valueLookup.insert("srarr",                           "&#x02192;"          );
+    valueLookup.insert("swarhk",                          "&#x02926;"          );
+    valueLookup.insert("swArr",                           "&#x021D9;"          );
+    valueLookup.insert("swarr",                           "&#x02199;"          );
+    valueLookup.insert("swnwar",                          "&#x0292A;"          );
+    valueLookup.insert("Uarr",                            "&#x0219F;"          );
+    valueLookup.insert("uArr",                            "&#x021D1;"          );
+    valueLookup.insert("Uarrocir",                        "&#x02949;"          );
+    valueLookup.insert("udarr",                           "&#x021C5;"          );
+    valueLookup.insert("udhar",                           "&#x0296E;"          );
+    valueLookup.insert("ufisht",                          "&#x0297E;"          );
+    valueLookup.insert("uHar",                            "&#x02963;"          );
+    valueLookup.insert("uharl",                           "&#x021BF;"          );
+    valueLookup.insert("uharr",                           "&#x021BE;"          );
+    valueLookup.insert("uuarr",                           "&#x021C8;"          );
+    valueLookup.insert("vArr",                            "&#x021D5;"          );
+    valueLookup.insert("varr",                            "&#x02195;"          );
+    valueLookup.insert("xhArr",                           "&#x027FA;"          );
+    valueLookup.insert("xharr",                           "&#x027F7;"          );
+    valueLookup.insert("xlArr",                           "&#x027F8;"          );
+    valueLookup.insert("xlarr",                           "&#x027F5;"          );
+    valueLookup.insert("xmap",                            "&#x027FC;"          );
+    valueLookup.insert("xrArr",                           "&#x027F9;"          );
+    valueLookup.insert("xrarr",                           "&#x027F6;"          );
+    valueLookup.insert("zigrarr",                         "&#x021DD;"          );
+    valueLookup.insert("ac",                              "&#x0223E;"          );
+    valueLookup.insert("acE",                             "&#x0223E;&#x00333;" );
+    valueLookup.insert("amalg",                           "&#x02A3F;"          );
+    valueLookup.insert("barvee",                          "&#x022BD;"          );
+    valueLookup.insert("Barwed",                          "&#x02306;"          );
+    valueLookup.insert("barwed",                          "&#x02305;"          );
+    valueLookup.insert("bsolb",                           "&#x029C5;"          );
+    valueLookup.insert("Cap",                             "&#x022D2;"          );
+    valueLookup.insert("capand",                          "&#x02A44;"          );
+    valueLookup.insert("capbrcup",                        "&#x02A49;"          );
+    valueLookup.insert("capcap",                          "&#x02A4B;"          );
+    valueLookup.insert("capcup",                          "&#x02A47;"          );
+    valueLookup.insert("capdot",                          "&#x02A40;"          );
+    valueLookup.insert("caps",                            "&#x02229;&#x0FE00;" );
+    valueLookup.insert("ccaps",                           "&#x02A4D;"          );
+    valueLookup.insert("ccups",                           "&#x02A4C;"          );
+    valueLookup.insert("ccupssm",                         "&#x02A50;"          );
+    valueLookup.insert("coprod",                          "&#x02210;"          );
+    valueLookup.insert("Cup",                             "&#x022D3;"          );
+    valueLookup.insert("cupbrcap",                        "&#x02A48;"          );
+    valueLookup.insert("cupcap",                          "&#x02A46;"          );
+    valueLookup.insert("cupcup",                          "&#x02A4A;"          );
+    valueLookup.insert("cupdot",                          "&#x0228D;"          );
+    valueLookup.insert("cupor",                           "&#x02A45;"          );
+    valueLookup.insert("cups",                            "&#x0222A;&#x0FE00;" );
+    valueLookup.insert("cuvee",                           "&#x022CE;"          );
+    valueLookup.insert("cuwed",                           "&#x022CF;"          );
+    valueLookup.insert("Dagger",                          "&#x02021;"          );
+    valueLookup.insert("dagger",                          "&#x02020;"          );
+    valueLookup.insert("diam",                            "&#x022C4;"          );
+    valueLookup.insert("divonx",                          "&#x022C7;"          );
+    valueLookup.insert("eplus",                           "&#x02A71;"          );
+    valueLookup.insert("hercon",                          "&#x022B9;"          );
+    valueLookup.insert("intcal",                          "&#x022BA;"          );
+    valueLookup.insert("iprod",                           "&#x02A3C;"          );
+    valueLookup.insert("loplus",                          "&#x02A2D;"          );
+    valueLookup.insert("lotimes",                         "&#x02A34;"          );
+    valueLookup.insert("lthree",                          "&#x022CB;"          );
+    valueLookup.insert("ltimes",                          "&#x022C9;"          );
+    valueLookup.insert("midast",                          "&#x0002A;"          );
+    valueLookup.insert("minusb",                          "&#x0229F;"          );
+    valueLookup.insert("minusd",                          "&#x02238;"          );
+    valueLookup.insert("minusdu",                         "&#x02A2A;"          );
+    valueLookup.insert("ncap",                            "&#x02A43;"          );
+    valueLookup.insert("ncup",                            "&#x02A42;"          );
+    valueLookup.insert("oast",                            "&#x0229B;"          );
+    valueLookup.insert("ocir",                            "&#x0229A;"          );
+    valueLookup.insert("odash",                           "&#x0229D;"          );
+    valueLookup.insert("odiv",                            "&#x02A38;"          );
+    valueLookup.insert("odot",                            "&#x02299;"          );
+    valueLookup.insert("odsold",                          "&#x029BC;"          );
+    valueLookup.insert("ofcir",                           "&#x029BF;"          );
+    valueLookup.insert("ogt",                             "&#x029C1;"          );
+    valueLookup.insert("ohbar",                           "&#x029B5;"          );
+    valueLookup.insert("olcir",                           "&#x029BE;"          );
+    valueLookup.insert("olt",                             "&#x029C0;"          );
+    valueLookup.insert("omid",                            "&#x029B6;"          );
+    valueLookup.insert("ominus",                          "&#x02296;"          );
+    valueLookup.insert("opar",                            "&#x029B7;"          );
+    valueLookup.insert("operp",                           "&#x029B9;"          );
+    valueLookup.insert("oplus",                           "&#x02295;"          );
+    valueLookup.insert("osol",                            "&#x02298;"          );
+    valueLookup.insert("Otimes",                          "&#x02A37;"          );
+    valueLookup.insert("otimes",                          "&#x02297;"          );
+    valueLookup.insert("otimesas",                        "&#x02A36;"          );
+    valueLookup.insert("ovbar",                           "&#x0233D;"          );
+    valueLookup.insert("plusacir",                        "&#x02A23;"          );
+    valueLookup.insert("plusb",                           "&#x0229E;"          );
+    valueLookup.insert("pluscir",                         "&#x02A22;"          );
+    valueLookup.insert("plusdo",                          "&#x02214;"          );
+    valueLookup.insert("plusdu",                          "&#x02A25;"          );
+    valueLookup.insert("pluse",                           "&#x02A72;"          );
+    valueLookup.insert("plussim",                         "&#x02A26;"          );
+    valueLookup.insert("plustwo",                         "&#x02A27;"          );
+    valueLookup.insert("prod",                            "&#x0220F;"          );
+    valueLookup.insert("race",                            "&#x029DA;"          );
+    valueLookup.insert("roplus",                          "&#x02A2E;"          );
+    valueLookup.insert("rotimes",                         "&#x02A35;"          );
+    valueLookup.insert("rthree",                          "&#x022CC;"          );
+    valueLookup.insert("rtimes",                          "&#x022CA;"          );
+    valueLookup.insert("sdot",                            "&#x022C5;"          );
+    valueLookup.insert("sdotb",                           "&#x022A1;"          );
+    valueLookup.insert("setmn",                           "&#x02216;"          );
+    valueLookup.insert("simplus",                         "&#x02A24;"          );
+    valueLookup.insert("smashp",                          "&#x02A33;"          );
+    valueLookup.insert("solb",                            "&#x029C4;"          );
+    valueLookup.insert("sqcap",                           "&#x02293;"          );
+    valueLookup.insert("sqcaps",                          "&#x02293;&#x0FE00;" );
+    valueLookup.insert("sqcup",                           "&#x02294;"          );
+    valueLookup.insert("sqcups",                          "&#x02294;&#x0FE00;" );
+    valueLookup.insert("ssetmn",                          "&#x02216;"          );
+    valueLookup.insert("sstarf",                          "&#x022C6;"          );
+    valueLookup.insert("subdot",                          "&#x02ABD;"          );
+    valueLookup.insert("sum",                             "&#x02211;"          );
+    valueLookup.insert("supdot",                          "&#x02ABE;"          );
+    valueLookup.insert("timesb",                          "&#x022A0;"          );
+    valueLookup.insert("timesbar",                        "&#x02A31;"          );
+    valueLookup.insert("timesd",                          "&#x02A30;"          );
+    valueLookup.insert("tridot",                          "&#x025EC;"          );
+    valueLookup.insert("triminus",                        "&#x02A3A;"          );
+    valueLookup.insert("triplus",                         "&#x02A39;"          );
+    valueLookup.insert("trisb",                           "&#x029CD;"          );
+    valueLookup.insert("tritime",                         "&#x02A3B;"          );
+    valueLookup.insert("uplus",                           "&#x0228E;"          );
+    valueLookup.insert("veebar",                          "&#x022BB;"          );
+    valueLookup.insert("wedbar",                          "&#x02A5F;"          );
+    valueLookup.insert("wreath",                          "&#x02240;"          );
+    valueLookup.insert("xcap",                            "&#x022C2;"          );
+    valueLookup.insert("xcirc",                           "&#x025EF;"          );
+    valueLookup.insert("xcup",                            "&#x022C3;"          );
+    valueLookup.insert("xdtri",                           "&#x025BD;"          );
+    valueLookup.insert("xodot",                           "&#x02A00;"          );
+    valueLookup.insert("xoplus",                          "&#x02A01;"          );
+    valueLookup.insert("xotime",                          "&#x02A02;"          );
+    valueLookup.insert("xsqcup",                          "&#x02A06;"          );
+    valueLookup.insert("xuplus",                          "&#x02A04;"          );
+    valueLookup.insert("xutri",                           "&#x025B3;"          );
+    valueLookup.insert("xvee",                            "&#x022C1;"          );
+    valueLookup.insert("xwedge",                          "&#x022C0;"          );
+    valueLookup.insert("dlcorn",                          "&#x0231E;"          );
+    valueLookup.insert("drcorn",                          "&#x0231F;"          );
+    valueLookup.insert("gtlPar",                          "&#x02995;"          );
+    valueLookup.insert("langd",                           "&#x02991;"          );
+    valueLookup.insert("lbrke",                           "&#x0298B;"          );
+    valueLookup.insert("lbrksld",                         "&#x0298F;"          );
+    valueLookup.insert("lbrkslu",                         "&#x0298D;"          );
+    valueLookup.insert("lceil",                           "&#x02308;"          );
+    valueLookup.insert("lfloor",                          "&#x0230A;"          );
+    valueLookup.insert("lmoust",                          "&#x023B0;"          );
+    valueLookup.insert("lparlt",                          "&#x02993;"          );
+    valueLookup.insert("ltrPar",                          "&#x02996;"          );
+    valueLookup.insert("rangd",                           "&#x02992;"          );
+    valueLookup.insert("rbrke",                           "&#x0298C;"          );
+    valueLookup.insert("rbrksld",                         "&#x0298E;"          );
+    valueLookup.insert("rbrkslu",                         "&#x02990;"          );
+    valueLookup.insert("rceil",                           "&#x02309;"          );
+    valueLookup.insert("rfloor",                          "&#x0230B;"          );
+    valueLookup.insert("rmoust",                          "&#x023B1;"          );
+    valueLookup.insert("rpargt",                          "&#x02994;"          );
+    valueLookup.insert("ulcorn",                          "&#x0231C;"          );
+    valueLookup.insert("urcorn",                          "&#x0231D;"          );
+    valueLookup.insert("gnap",                            "&#x02A8A;"          );
+    valueLookup.insert("gnE",                             "&#x02269;"          );
+    valueLookup.insert("gne",                             "&#x02A88;"          );
+    valueLookup.insert("gnsim",                           "&#x022E7;"          );
+    valueLookup.insert("gvnE",                            "&#x02269;&#x0FE00;" );
+    valueLookup.insert("lnap",                            "&#x02A89;"          );
+    valueLookup.insert("lnE",                             "&#x02268;"          );
+    valueLookup.insert("lne",                             "&#x02A87;"          );
+    valueLookup.insert("lnsim",                           "&#x022E6;"          );
+    valueLookup.insert("lvnE",                            "&#x02268;&#x0FE00;" );
+    valueLookup.insert("nap",                             "&#x02249;"          );
+    valueLookup.insert("napE",                            "&#x02A70;&#x00338;" );
+    valueLookup.insert("napid",                           "&#x0224B;&#x00338;" );
+    valueLookup.insert("ncong",                           "&#x02247;"          );
+    valueLookup.insert("ncongdot",                        "&#x02A6D;&#x00338;" );
+    valueLookup.insert("nequiv",                          "&#x02262;"          );
+    valueLookup.insert("ngE",                             "&#x02267;&#x00338;" );
+    valueLookup.insert("nge",                             "&#x02271;"          );
+    valueLookup.insert("nges",                            "&#x02A7E;&#x00338;" );
+    valueLookup.insert("nGg",                             "&#x022D9;&#x00338;" );
+    valueLookup.insert("ngsim",                           "&#x02275;"          );
+    valueLookup.insert("nGt",                             "&#x0226B;&#x020D2;" );
+    valueLookup.insert("ngt",                             "&#x0226F;"          );
+    valueLookup.insert("nGtv",                            "&#x0226B;&#x00338;" );
+    valueLookup.insert("nlE",                             "&#x02266;&#x00338;" );
+    valueLookup.insert("nle",                             "&#x02270;"          );
+    valueLookup.insert("nles",                            "&#x02A7D;&#x00338;" );
+    valueLookup.insert("nLl",                             "&#x022D8;&#x00338;" );
+    valueLookup.insert("nlsim",                           "&#x02274;"          );
+    valueLookup.insert("nLt",                             "&#x0226A;&#x020D2;" );
+    valueLookup.insert("nlt",                             "&#x0226E;"          );
+    valueLookup.insert("nltri",                           "&#x022EA;"          );
+    valueLookup.insert("nltrie",                          "&#x022EC;"          );
+    valueLookup.insert("nLtv",                            "&#x0226A;&#x00338;" );
+    valueLookup.insert("nmid",                            "&#x02224;"          );
+    valueLookup.insert("npar",                            "&#x02226;"          );
+    valueLookup.insert("npr",                             "&#x02280;"          );
+    valueLookup.insert("nprcue",                          "&#x022E0;"          );
+    valueLookup.insert("npre",                            "&#x02AAF;&#x00338;" );
+    valueLookup.insert("nrtri",                           "&#x022EB;"          );
+    valueLookup.insert("nrtrie",                          "&#x022ED;"          );
+    valueLookup.insert("nsc",                             "&#x02281;"          );
+    valueLookup.insert("nsccue",                          "&#x022E1;"          );
+    valueLookup.insert("nsce",                            "&#x02AB0;&#x00338;" );
+    valueLookup.insert("nsim",                            "&#x02241;"          );
+    valueLookup.insert("nsime",                           "&#x02244;"          );
+    valueLookup.insert("nsmid",                           "&#x02224;"          );
+    valueLookup.insert("nspar",                           "&#x02226;"          );
+    valueLookup.insert("nsqsube",                         "&#x022E2;"          );
+    valueLookup.insert("nsqsupe",                         "&#x022E3;"          );
+    valueLookup.insert("nsub",                            "&#x02284;"          );
+    valueLookup.insert("nsubE",                           "&#x02AC5;&#x0338;"  );
+    valueLookup.insert("nsube",                           "&#x02288;"          );
+    valueLookup.insert("nsup",                            "&#x02285;"          );
+    valueLookup.insert("nsupE",                           "&#x02AC6;&#x0338;"  );
+    valueLookup.insert("nsupe",                           "&#x02289;"          );
+    valueLookup.insert("ntgl",                            "&#x02279;"          );
+    valueLookup.insert("ntlg",                            "&#x02278;"          );
+    valueLookup.insert("nvap",                            "&#x0224D;&#x020D2;" );
+    valueLookup.insert("nVDash",                          "&#x022AF;"          );
+    valueLookup.insert("nVdash",                          "&#x022AE;"          );
+    valueLookup.insert("nvDash",                          "&#x022AD;"          );
+    valueLookup.insert("nvdash",                          "&#x022AC;"          );
+    valueLookup.insert("nvge",                            "&#x02265;&#x020D2;" );
+    valueLookup.insert("nvgt",                            "&#x0003E;&#x020D2;" );
+    valueLookup.insert("nvle",                            "&#x02264;&#x020D2;" );
+    valueLookup.insert("nvlt",                            "&#x0003C;&#x020D2;" );
+    valueLookup.insert("nvltrie",                         "&#x022B4;&#x020D2;" );
+    valueLookup.insert("nvrtrie",                         "&#x022B5;&#x020D2;" );
+    valueLookup.insert("nvsim",                           "&#x0223C;&#x020D2;" );
+    valueLookup.insert("parsim",                          "&#x02AF3;"          );
+    valueLookup.insert("prnap",                           "&#x02AB9;"          );
+    valueLookup.insert("prnE",                            "&#x02AB5;"          );
+    valueLookup.insert("prnsim",                          "&#x022E8;"          );
+    valueLookup.insert("rnmid",                           "&#x02AEE;"          );
+    valueLookup.insert("scnap",                           "&#x02ABA;"          );
+    valueLookup.insert("scnE",                            "&#x02AB6;"          );
+    valueLookup.insert("scnsim",                          "&#x022E9;"          );
+    valueLookup.insert("simne",                           "&#x02246;"          );
+    valueLookup.insert("solbar",                          "&#x0233F;"          );
+    valueLookup.insert("subnE",                           "&#x02ACB;"          );
+    valueLookup.insert("subne",                           "&#x0228A;"          );
+    valueLookup.insert("supnE",                           "&#x02ACC;"          );
+    valueLookup.insert("supne",                           "&#x0228B;"          );
+    valueLookup.insert("vnsub",                           "&#x02282;&#x020D2;" );
+    valueLookup.insert("vnsup",                           "&#x02283;&#x020D2;" );
+    valueLookup.insert("vsubnE",                          "&#x02ACB;&#x0FE00;" );
+    valueLookup.insert("vsubne",                          "&#x0228A;&#x0FE00;" );
+    valueLookup.insert("vsupnE",                          "&#x02ACC;&#x0FE00;" );
+    valueLookup.insert("vsupne",                          "&#x0228B;&#x0FE00;" );
+    valueLookup.insert("ang",                             "&#x02220;"          );
+    valueLookup.insert("ange",                            "&#x029A4;"          );
+    valueLookup.insert("angmsd",                          "&#x02221;"          );
+    valueLookup.insert("angmsdaa",                        "&#x029A8;"          );
+    valueLookup.insert("angmsdab",                        "&#x029A9;"          );
+    valueLookup.insert("angmsdac",                        "&#x029AA;"          );
+    valueLookup.insert("angmsdad",                        "&#x029AB;"          );
+    valueLookup.insert("angmsdae",                        "&#x029AC;"          );
+    valueLookup.insert("angmsdaf",                        "&#x029AD;"          );
+    valueLookup.insert("angmsdag",                        "&#x029AE;"          );
+    valueLookup.insert("angmsdah",                        "&#x029AF;"          );
+    valueLookup.insert("angrtvb",                         "&#x022BE;"          );
+    valueLookup.insert("angrtvbd",                        "&#x0299D;"          );
+    valueLookup.insert("bbrk",                            "&#x023B5;"          );
+    valueLookup.insert("bemptyv",                         "&#x029B0;"          );
+    valueLookup.insert("beth",                            "&#x02136;"          );
+    valueLookup.insert("boxbox",                          "&#x029C9;"          );
+    valueLookup.insert("bprime",                          "&#x02035;"          );
+    valueLookup.insert("bsemi",                           "&#x0204F;"          );
+    valueLookup.insert("cemptyv",                         "&#x029B2;"          );
+    valueLookup.insert("cirE",                            "&#x029C3;"          );
+    valueLookup.insert("cirscir",                         "&#x029C2;"          );
+    valueLookup.insert("comp",                            "&#x02201;"          );
+    valueLookup.insert("daleth",                          "&#x02138;"          );
+    valueLookup.insert("demptyv",                         "&#x029B1;"          );
+    valueLookup.insert("ell",                             "&#x02113;"          );
+    valueLookup.insert("empty",                           "&#x02205;"          );
+    valueLookup.insert("emptyv",                          "&#x02205;"          );
+    valueLookup.insert("gimel",                           "&#x02137;"          );
+    valueLookup.insert("iiota",                           "&#x02129;"          );
+    valueLookup.insert("image",                           "&#x02111;"          );
+    valueLookup.insert("imath",                           "&#x00131;"          );
+    valueLookup.insert("jmath",                           "&#x0006A;"          );
+    valueLookup.insert("laemptyv",                        "&#x029B4;"          );
+    valueLookup.insert("lltri",                           "&#x025FA;"          );
+    valueLookup.insert("lrtri",                           "&#x022BF;"          );
+    valueLookup.insert("mho",                             "&#x02127;"          );
+    valueLookup.insert("nang",                            "&#x02220;&#x020D2;" );
+    valueLookup.insert("nexist",                          "&#x02204;"          );
+    valueLookup.insert("oS",                              "&#x024C8;"          );
+    valueLookup.insert("planck",                          "&#x0210F;"          );
+    valueLookup.insert("plankv",                          "&#x0210F;"          );
+    valueLookup.insert("raemptyv",                        "&#x029B3;"          );
+    valueLookup.insert("range",                           "&#x029A5;"          );
+    valueLookup.insert("real",                            "&#x0211C;"          );
+    valueLookup.insert("tbrk",                            "&#x023B4;"          );
+    valueLookup.insert("ultri",                           "&#x025F8;"          );
+    valueLookup.insert("urtri",                           "&#x025F9;"          );
+    valueLookup.insert("vzigzag",                         "&#x0299A;"          );
+    valueLookup.insert("weierp",                          "&#x02118;"          );
+    valueLookup.insert("apE",                             "&#x02A70;"          );
+    valueLookup.insert("ape",                             "&#x0224A;"          );
+    valueLookup.insert("apid",                            "&#x0224B;"          );
+    valueLookup.insert("asymp",                           "&#x02248;"          );
+    valueLookup.insert("Barv",                            "&#x02AE7;"          );
+    valueLookup.insert("bcong",                           "&#x0224C;"          );
+    valueLookup.insert("bepsi",                           "&#x003F6;"          );
+    valueLookup.insert("bowtie",                          "&#x022C8;"          );
+    valueLookup.insert("bsim",                            "&#x0223D;"          );
+    valueLookup.insert("bsime",                           "&#x022CD;"          );
+    valueLookup.insert("bsolhsub",                        "&#x0005C;&#x02282;" );
+    valueLookup.insert("bump",                            "&#x0224E;"          );
+    valueLookup.insert("bumpE",                           "&#x02AAE;"          );
+    valueLookup.insert("bumpe",                           "&#x0224F;"          );
+    valueLookup.insert("cire",                            "&#x02257;"          );
+    valueLookup.insert("Colon",                           "&#x02237;"          );
+    valueLookup.insert("Colone",                          "&#x02A74;"          );
+    valueLookup.insert("colone",                          "&#x02254;"          );
+    valueLookup.insert("congdot",                         "&#x02A6D;"          );
+    valueLookup.insert("csub",                            "&#x02ACF;"          );
+    valueLookup.insert("csube",                           "&#x02AD1;"          );
+    valueLookup.insert("csup",                            "&#x02AD0;"          );
+    valueLookup.insert("csupe",                           "&#x02AD2;"          );
+    valueLookup.insert("cuepr",                           "&#x022DE;"          );
+    valueLookup.insert("cuesc",                           "&#x022DF;"          );
+    valueLookup.insert("Dashv",                           "&#x02AE4;"          );
+    valueLookup.insert("dashv",                           "&#x022A3;"          );
+    valueLookup.insert("easter",                          "&#x02A6E;"          );
+    valueLookup.insert("ecir",                            "&#x02256;"          );
+    valueLookup.insert("ecolon",                          "&#x02255;"          );
+    valueLookup.insert("eDDot",                           "&#x02A77;"          );
+    valueLookup.insert("eDot",                            "&#x02251;"          );
+    valueLookup.insert("efDot",                           "&#x02252;"          );
+    valueLookup.insert("eg",                              "&#x02A9A;"          );
+    valueLookup.insert("egs",                             "&#x02A96;"          );
+    valueLookup.insert("egsdot",                          "&#x02A98;"          );
+    valueLookup.insert("el",                              "&#x02A99;"          );
+    valueLookup.insert("els",                             "&#x02A95;"          );
+    valueLookup.insert("elsdot",                          "&#x02A97;"          );
+    valueLookup.insert("equest",                          "&#x0225F;"          );
+    valueLookup.insert("equivDD",                         "&#x02A78;"          );
+    valueLookup.insert("erDot",                           "&#x02253;"          );
+    valueLookup.insert("esdot",                           "&#x02250;"          );
+    valueLookup.insert("Esim",                            "&#x02A73;"          );
+    valueLookup.insert("esim",                            "&#x02242;"          );
+    valueLookup.insert("fork",                            "&#x022D4;"          );
+    valueLookup.insert("forkv",                           "&#x02AD9;"          );
+    valueLookup.insert("frown",                           "&#x02322;"          );
+    valueLookup.insert("gap",                             "&#x02A86;"          );
+    valueLookup.insert("gE",                              "&#x02267;"          );
+    valueLookup.insert("gEl",                             "&#x02A8C;"          );
+    valueLookup.insert("gel",                             "&#x022DB;"          );
+    valueLookup.insert("ges",                             "&#x02A7E;"          );
+    valueLookup.insert("gescc",                           "&#x02AA9;"          );
+    valueLookup.insert("gesdot",                          "&#x02A80;"          );
+    valueLookup.insert("gesdoto",                         "&#x02A82;"          );
+    valueLookup.insert("gesdotol",                        "&#x02A84;"          );
+    valueLookup.insert("gesl",                            "&#x022DB;&#x0FE00;" );
+    valueLookup.insert("gesles",                          "&#x02A94;"          );
+    valueLookup.insert("Gg",                              "&#x022D9;"          );
+    valueLookup.insert("gl",                              "&#x02277;"          );
+    valueLookup.insert("gla",                             "&#x02AA5;"          );
+    valueLookup.insert("glE",                             "&#x02A92;"          );
+    valueLookup.insert("glj",                             "&#x02AA4;"          );
+    valueLookup.insert("gsim",                            "&#x02273;"          );
+    valueLookup.insert("gsime",                           "&#x02A8E;"          );
+    valueLookup.insert("gsiml",                           "&#x02A90;"          );
+    valueLookup.insert("Gt",                              "&#x0226B;"          );
+    valueLookup.insert("gtcc",                            "&#x02AA7;"          );
+    valueLookup.insert("gtcir",                           "&#x02A7A;"          );
+    valueLookup.insert("gtdot",                           "&#x022D7;"          );
+    valueLookup.insert("gtquest",                         "&#x02A7C;"          );
+    valueLookup.insert("gtrarr",                          "&#x02978;"          );
+    valueLookup.insert("homtht",                          "&#x0223B;"          );
+    valueLookup.insert("lap",                             "&#x02A85;"          );
+    valueLookup.insert("lat",                             "&#x02AAB;"          );
+    valueLookup.insert("late",                            "&#x02AAD;"          );
+    valueLookup.insert("lates",                           "&#x02AAD;&#x0FE00;" );
+    valueLookup.insert("lE",                              "&#x02266;"          );
+    valueLookup.insert("lEg",                             "&#x02A8B;"          );
+    valueLookup.insert("leg",                             "&#x022DA;"          );
+    valueLookup.insert("les",                             "&#x02A7D;"          );
+    valueLookup.insert("lescc",                           "&#x02AA8;"          );
+    valueLookup.insert("lesdot",                          "&#x02A7F;"          );
+    valueLookup.insert("lesdoto",                         "&#x02A81;"          );
+    valueLookup.insert("lesdotor",                        "&#x02A83;"          );
+    valueLookup.insert("lesg",                            "&#x022DA;&#x0FE00;" );
+    valueLookup.insert("lesges",                          "&#x02A93;"          );
+    valueLookup.insert("lg",                              "&#x02276;"          );
+    valueLookup.insert("lgE",                             "&#x02A91;"          );
+    valueLookup.insert("Ll",                              "&#x022D8;"          );
+    valueLookup.insert("lsim",                            "&#x02272;"          );
+    valueLookup.insert("lsime",                           "&#x02A8D;"          );
+    valueLookup.insert("lsimg",                           "&#x02A8F;"          );
+    valueLookup.insert("Lt",                              "&#x0226A;"          );
+    valueLookup.insert("ltcc",                            "&#x02AA6;"          );
+    valueLookup.insert("ltcir",                           "&#x02A79;"          );
+    valueLookup.insert("ltdot",                           "&#x022D6;"          );
+    valueLookup.insert("ltlarr",                          "&#x02976;"          );
+    valueLookup.insert("ltquest",                         "&#x02A7B;"          );
+    valueLookup.insert("ltrie",                           "&#x022B4;"          );
+    valueLookup.insert("mcomma",                          "&#x02A29;"          );
+    valueLookup.insert("mDDot",                           "&#x0223A;"          );
+    valueLookup.insert("mid",                             "&#x02223;"          );
+    valueLookup.insert("mlcp",                            "&#x02ADB;"          );
+    valueLookup.insert("models",                          "&#x022A7;"          );
+    valueLookup.insert("mstpos",                          "&#x0223E;"          );
+    valueLookup.insert("Pr",                              "&#x02ABB;"          );
+    valueLookup.insert("pr",                              "&#x0227A;"          );
+    valueLookup.insert("prap",                            "&#x02AB7;"          );
+    valueLookup.insert("prcue",                           "&#x0227C;"          );
+    valueLookup.insert("prE",                             "&#x02AB3;"          );
+    valueLookup.insert("pre",                             "&#x02AAF;"          );
+    valueLookup.insert("prsim",                           "&#x0227E;"          );
+    valueLookup.insert("prurel",                          "&#x022B0;"          );
+    valueLookup.insert("ratio",                           "&#x02236;"          );
+    valueLookup.insert("rtrie",                           "&#x022B5;"          );
+    valueLookup.insert("rtriltri",                        "&#x029CE;"          );
+    valueLookup.insert("Sc",                              "&#x02ABC;"          );
+    valueLookup.insert("sc",                              "&#x0227B;"          );
+    valueLookup.insert("scap",                            "&#x02AB8;"          );
+    valueLookup.insert("sccue",                           "&#x0227D;"          );
+    valueLookup.insert("scE",                             "&#x02AB4;"          );
+    valueLookup.insert("sce",                             "&#x02AB0;"          );
+    valueLookup.insert("scsim",                           "&#x0227F;"          );
+    valueLookup.insert("sdote",                           "&#x02A66;"          );
+    valueLookup.insert("simg",                            "&#x02A9E;"          );
+    valueLookup.insert("simgE",                           "&#x02AA0;"          );
+    valueLookup.insert("siml",                            "&#x02A9D;"          );
+    valueLookup.insert("simlE",                           "&#x02A9F;"          );
+    valueLookup.insert("smid",                            "&#x02223;"          );
+    valueLookup.insert("smile",                           "&#x02323;"          );
+    valueLookup.insert("smt",                             "&#x02AAA;"          );
+    valueLookup.insert("smte",                            "&#x02AAC;"          );
+    valueLookup.insert("smtes",                           "&#x02AAC;&#x0FE00;" );
+    valueLookup.insert("spar",                            "&#x02225;"          );
+    valueLookup.insert("sqsub",                           "&#x0228F;"          );
+    valueLookup.insert("sqsube",                          "&#x02291;"          );
+    valueLookup.insert("sqsup",                           "&#x02290;"          );
+    valueLookup.insert("sqsupe",                          "&#x02292;"          );
+    valueLookup.insert("Sub",                             "&#x022D0;"          );
+    valueLookup.insert("subE",                            "&#x02AC5;"          );
+    valueLookup.insert("subedot",                         "&#x02AC3;"          );
+    valueLookup.insert("submult",                         "&#x02AC1;"          );
+    valueLookup.insert("subplus",                         "&#x02ABF;"          );
+    valueLookup.insert("subrarr",                         "&#x02979;"          );
+    valueLookup.insert("subsim",                          "&#x02AC7;"          );
+    valueLookup.insert("subsub",                          "&#x02AD5;"          );
+    valueLookup.insert("subsup",                          "&#x02AD3;"          );
+    valueLookup.insert("Sup",                             "&#x022D1;"          );
+    valueLookup.insert("supdsub",                         "&#x02AD8;"          );
+    valueLookup.insert("supE",                            "&#x02AC6;"          );
+    valueLookup.insert("supedot",                         "&#x02AC4;"          );
+    valueLookup.insert("suphsol",                         "&#x02283;&#x00338;" );
+    valueLookup.insert("suphsub",                         "&#x02AD7;"          );
+    valueLookup.insert("suplarr",                         "&#x0297B;"          );
+    valueLookup.insert("supmult",                         "&#x02AC2;"          );
+    valueLookup.insert("supplus",                         "&#x02AC0;"          );
+    valueLookup.insert("supsim",                          "&#x02AC8;"          );
+    valueLookup.insert("supsub",                          "&#x02AD4;"          );
+    valueLookup.insert("supsup",                          "&#x02AD6;"          );
+    valueLookup.insert("thkap",                           "&#x02248;"          );
+    valueLookup.insert("topfork",                         "&#x02ADA;"          );
+    valueLookup.insert("trie",                            "&#x0225C;"          );
+    valueLookup.insert("twixt",                           "&#x0226C;"          );
+    valueLookup.insert("Vbar",                            "&#x02AEB;"          );
+    valueLookup.insert("vBar",                            "&#x02AE8;"          );
+    valueLookup.insert("vBarv",                           "&#x02AE9;"          );
+    valueLookup.insert("VDash",                           "&#x022AB;"          );
+    valueLookup.insert("Vdash",                           "&#x022A9;"          );
+    valueLookup.insert("vDash",                           "&#x022A8;"          );
+    valueLookup.insert("vdash",                           "&#x022A2;"          );
+    valueLookup.insert("Vdashl",                          "&#x02AE6;"          );
+    valueLookup.insert("vltri",                           "&#x022B2;"          );
+    valueLookup.insert("vprop",                           "&#x0221D;"          );
+    valueLookup.insert("vrtri",                           "&#x022B3;"          );
+    valueLookup.insert("Vvdash",                          "&#x022AA;"          );
+    valueLookup.insert("alpha",                           "&#x003B1;"          );
+    valueLookup.insert("beta",                            "&#x003B2;"          );
+    valueLookup.insert("chi",                             "&#x003C7;"          );
+    valueLookup.insert("Delta",                           "&#x00394;"          );
+    valueLookup.insert("delta",                           "&#x003B4;"          );
+    valueLookup.insert("epsi",                            "&#x003B5;"          );
+    valueLookup.insert("epsiv",                           "&#x0025B;"          );
+    valueLookup.insert("eta",                             "&#x003B7;"          );
+    valueLookup.insert("Gamma",                           "&#x00393;"          );
+    valueLookup.insert("gamma",                           "&#x003B3;"          );
+    valueLookup.insert("Gammad",                          "&#x003DC;"          );
+    valueLookup.insert("gammad",                          "&#x003DD;"          );
+    valueLookup.insert("iota",                            "&#x003B9;"          );
+    valueLookup.insert("kappa",                           "&#x003BA;"          );
+    valueLookup.insert("kappav",                          "&#x003F0;"          );
+    valueLookup.insert("Lambda",                          "&#x0039B;"          );
+    valueLookup.insert("lambda",                          "&#x003BB;"          );
+    valueLookup.insert("mu",                              "&#x003BC;"          );
+    valueLookup.insert("nu",                              "&#x003BD;"          );
+    valueLookup.insert("Omega",                           "&#x003A9;"          );
+    valueLookup.insert("omega",                           "&#x003C9;"          );
+    valueLookup.insert("Phi",                             "&#x003A6;"          );
+    valueLookup.insert("phi",                             "&#x003D5;"          );
+    valueLookup.insert("phiv",                            "&#x003C6;"          );
+    valueLookup.insert("Pi",                              "&#x003A0;"          );
+    valueLookup.insert("pi",                              "&#x003C0;"          );
+    valueLookup.insert("piv",                             "&#x003D6;"          );
+    valueLookup.insert("Psi",                             "&#x003A8;"          );
+    valueLookup.insert("psi",                             "&#x003C8;"          );
+    valueLookup.insert("rho",                             "&#x003C1;"          );
+    valueLookup.insert("rhov",                            "&#x003F1;"          );
+    valueLookup.insert("Sigma",                           "&#x003A3;"          );
+    valueLookup.insert("sigma",                           "&#x003C3;"          );
+    valueLookup.insert("sigmav",                          "&#x003C2;"          );
+    valueLookup.insert("tau",                             "&#x003C4;"          );
+    valueLookup.insert("Theta",                           "&#x00398;"          );
+    valueLookup.insert("theta",                           "&#x003B8;"          );
+    valueLookup.insert("thetav",                          "&#x003D1;"          );
+    valueLookup.insert("Upsi",                            "&#x003D2;"          );
+    valueLookup.insert("upsi",                            "&#x003C5;"          );
+    valueLookup.insert("Xi",                              "&#x0039E;"          );
+    valueLookup.insert("xi",                              "&#x003BE;"          );
+    valueLookup.insert("zeta",                            "&#x003B6;"          );
+    valueLookup.insert("Cfr",                             "&#x0212D;"          );
+    valueLookup.insert("Hfr",                             "&#x0210C;"          );
+    valueLookup.insert("Ifr",                             "&#x02111;"          );
+    valueLookup.insert("Rfr",                             "&#x0211C;"          );
+    valueLookup.insert("Zfr",                             "&#x02128;"          );
+    valueLookup.insert("Copf",                            "&#x02102;"          );
+    valueLookup.insert("Hopf",                            "&#x0210D;"          );
+    valueLookup.insert("Nopf",                            "&#x02115;"          );
+    valueLookup.insert("Popf",                            "&#x02119;"          );
+    valueLookup.insert("Qopf",                            "&#x0211A;"          );
+    valueLookup.insert("Ropf",                            "&#x0211D;"          );
+    valueLookup.insert("Zopf",                            "&#x02124;"          );
+    valueLookup.insert("Bscr",                            "&#x0212C;"          );
+    valueLookup.insert("Escr",                            "&#x02130;"          );
+    valueLookup.insert("escr",                            "&#x0212F;"          );
+    valueLookup.insert("Fscr",                            "&#x02131;"          );
+    valueLookup.insert("gscr",                            "&#x0210A;"          );
+    valueLookup.insert("Hscr",                            "&#x0210B;"          );
+    valueLookup.insert("Iscr",                            "&#x02110;"          );
+    valueLookup.insert("Lscr",                            "&#x02112;"          );
+    valueLookup.insert("Mscr",                            "&#x02133;"          );
+    valueLookup.insert("oscr",                            "&#x02134;"          );
+    valueLookup.insert("pscr",                            "&#x1D4C5;"          );
+    valueLookup.insert("Rscr",                            "&#x0211B;"          );
+    valueLookup.insert("acd",                             "&#x0223F;"          );
+    valueLookup.insert("aleph",                           "&#x02135;"          );
+    valueLookup.insert("And",                             "&#x02A53;"          );
+    valueLookup.insert("and",                             "&#x02227;"          );
+    valueLookup.insert("andand",                          "&#x02A55;"          );
+    valueLookup.insert("andd",                            "&#x02A5C;"          );
+    valueLookup.insert("andslope",                        "&#x02A58;"          );
+    valueLookup.insert("andv",                            "&#x02A5A;"          );
+    valueLookup.insert("angrt",                           "&#x0221F;"          );
+    valueLookup.insert("angsph",                          "&#x02222;"          );
+    valueLookup.insert("angst",                           "&#x0212B;"          );
+    valueLookup.insert("ap",                              "&#x02248;"          );
+    valueLookup.insert("apacir",                          "&#x02A6F;"          );
+    valueLookup.insert("awconint",                        "&#x02233;"          );
+    valueLookup.insert("awint",                           "&#x02A11;"          );
+    valueLookup.insert("becaus",                          "&#x02235;"          );
+    valueLookup.insert("bernou",                          "&#x0212C;"          );
+    valueLookup.insert("bne",                             "&#x0003D;&#x020E5;" );
+    valueLookup.insert("bnequiv",                         "&#x02261;&#x020E5;" );
+    valueLookup.insert("bNot",                            "&#x02AED;"          );
+    valueLookup.insert("bnot",                            "&#x02310;"          );
+    valueLookup.insert("bottom",                          "&#x022A5;"          );
+    valueLookup.insert("cap",                             "&#x02229;"          );
+    valueLookup.insert("Cconint",                         "&#x02230;"          );
+    valueLookup.insert("cirfnint",                        "&#x02A10;"          );
+    valueLookup.insert("compfn",                          "&#x02218;"          );
+    valueLookup.insert("cong",                            "&#x02245;"          );
+    valueLookup.insert("Conint",                          "&#x0222F;"          );
+    valueLookup.insert("conint",                          "&#x0222E;"          );
+    valueLookup.insert("ctdot",                           "&#x022EF;"          );
+    valueLookup.insert("cup",                             "&#x0222A;"          );
+    valueLookup.insert("cwconint",                        "&#x02232;"          );
+    valueLookup.insert("cwint",                           "&#x02231;"          );
+    valueLookup.insert("cylcty",                          "&#x0232D;"          );
+    valueLookup.insert("disin",                           "&#x022F2;"          );
+    valueLookup.insert("Dot",                             "&#x000A8;"          );
+    valueLookup.insert("DotDot",                          "&#x020DC;"          );
+    valueLookup.insert("dsol",                            "&#x029F6;"          );
+    valueLookup.insert("dtdot",                           "&#x022F1;"          );
+    valueLookup.insert("dwangle",                         "&#x029A6;"          );
+    valueLookup.insert("epar",                            "&#x022D5;"          );
+    valueLookup.insert("eparsl",                          "&#x029E3;"          );
+    valueLookup.insert("equiv",                           "&#x02261;"          );
+    valueLookup.insert("eqvparsl",                        "&#x029E5;"          );
+    valueLookup.insert("exist",                           "&#x02203;"          );
+    valueLookup.insert("fnof",                            "&#x00192;"          );
+    valueLookup.insert("forall",                          "&#x02200;"          );
+    valueLookup.insert("fpartint",                        "&#x02A0D;"          );
+    valueLookup.insert("ge",                              "&#x02265;"          );
+    valueLookup.insert("hamilt",                          "&#x0210B;"          );
+    valueLookup.insert("iff",                             "&#x021D4;"          );
+    valueLookup.insert("iinfin",                          "&#x029DC;"          );
+    valueLookup.insert("infin",                           "&#x0221E;"          );
+    valueLookup.insert("Int",                             "&#x0222C;"          );
+    valueLookup.insert("int",                             "&#x0222B;"          );
+    valueLookup.insert("intlarhk",                        "&#x02A17;"          );
+    valueLookup.insert("isin",                            "&#x02208;"          );
+    valueLookup.insert("isindot",                         "&#x022F5;"          );
+    valueLookup.insert("isinE",                           "&#x022F9;"          );
+    valueLookup.insert("isins",                           "&#x022F4;"          );
+    valueLookup.insert("isinsv",                          "&#x022F3;"          );
+    valueLookup.insert("isinv",                           "&#x02208;"          );
+    valueLookup.insert("lagran",                          "&#x02112;"          );
+    valueLookup.insert("Lang",                            "&#x0300A;"          );
+    valueLookup.insert("lang",                            "&#x02329;"          );
+    valueLookup.insert("lArr",                            "&#x021D0;"          );
+    valueLookup.insert("lbbrk",                           "&#x03014;"          );
+    valueLookup.insert("le",                              "&#x02264;"          );
+    valueLookup.insert("loang",                           "&#x03018;"          );
+    valueLookup.insert("lobrk",                           "&#x0301A;"          );
+    valueLookup.insert("lopar",                           "&#x02985;"          );
+    valueLookup.insert("lowast",                          "&#x02217;"          );
+    valueLookup.insert("minus",                           "&#x02212;"          );
+    valueLookup.insert("mnplus",                          "&#x02213;"          );
+    valueLookup.insert("nabla",                           "&#x02207;"          );
+    valueLookup.insert("ne",                              "&#x02260;"          );
+    valueLookup.insert("nedot",                           "&#x02250;&#x00338;" );
+    valueLookup.insert("nhpar",                           "&#x02AF2;"          );
+    valueLookup.insert("ni",                              "&#x0220B;"          );
+    valueLookup.insert("nis",                             "&#x022FC;"          );
+    valueLookup.insert("nisd",                            "&#x022FA;"          );
+    valueLookup.insert("niv",                             "&#x0220B;"          );
+    valueLookup.insert("Not",                             "&#x02AEC;"          );
+    valueLookup.insert("notin",                           "&#x02209;"          );
+    valueLookup.insert("notindot",                        "&#x022F5;&#x00338;" );
+    valueLookup.insert("notinva",                         "&#x02209;"          );
+    valueLookup.insert("notinvb",                         "&#x022F7;"          );
+    valueLookup.insert("notinvc",                         "&#x022F6;"          );
+    valueLookup.insert("notni",                           "&#x0220C;"          );
+    valueLookup.insert("notniva",                         "&#x0220C;"          );
+    valueLookup.insert("notnivb",                         "&#x022FE;"          );
+    valueLookup.insert("notnivc",                         "&#x022FD;"          );
+    valueLookup.insert("nparsl",                          "&#x02AFD;&#x020E5;" );
+    valueLookup.insert("npart",                           "&#x02202;&#x00338;" );
+    valueLookup.insert("npolint",                         "&#x02A14;"          );
+    valueLookup.insert("nvinfin",                         "&#x029DE;"          );
+    valueLookup.insert("olcross",                         "&#x029BB;"          );
+    valueLookup.insert("Or",                              "&#x02A54;"          );
+    valueLookup.insert("or",                              "&#x02228;"          );
+    valueLookup.insert("ord",                             "&#x02A5D;"          );
+    valueLookup.insert("order",                           "&#x02134;"          );
+    valueLookup.insert("oror",                            "&#x02A56;"          );
+    valueLookup.insert("orslope",                         "&#x02A57;"          );
+    valueLookup.insert("orv",                             "&#x02A5B;"          );
+    valueLookup.insert("par",                             "&#x02225;"          );
+    valueLookup.insert("parsl",                           "&#x02AFD;"          );
+    valueLookup.insert("part",                            "&#x02202;"          );
+    valueLookup.insert("permil",                          "&#x02030;"          );
+    valueLookup.insert("perp",                            "&#x022A5;"          );
+    valueLookup.insert("pertenk",                         "&#x02031;"          );
+    valueLookup.insert("phmmat",                          "&#x02133;"          );
+    valueLookup.insert("pointint",                        "&#x02A15;"          );
+    valueLookup.insert("Prime",                           "&#x02033;"          );
+    valueLookup.insert("prime",                           "&#x02032;"          );
+    valueLookup.insert("profalar",                        "&#x0232E;"          );
+    valueLookup.insert("profline",                        "&#x02312;"          );
+    valueLookup.insert("profsurf",                        "&#x02313;"          );
+    valueLookup.insert("prop",                            "&#x0221D;"          );
+    valueLookup.insert("qint",                            "&#x02A0C;"          );
+    valueLookup.insert("qprime",                          "&#x02057;"          );
+    valueLookup.insert("quatint",                         "&#x02A16;"          );
+    valueLookup.insert("radic",                           "&#x0221A;"          );
+    valueLookup.insert("Rang",                            "&#x0300B;"          );
+    valueLookup.insert("rang",                            "&#x0232A;"          );
+    valueLookup.insert("rArr",                            "&#x021D2;"          );
+    valueLookup.insert("rbbrk",                           "&#x03015;"          );
+    valueLookup.insert("roang",                           "&#x03019;"          );
+    valueLookup.insert("robrk",                           "&#x0301B;"          );
+    valueLookup.insert("ropar",                           "&#x02986;"          );
+    valueLookup.insert("rppolint",                        "&#x02A12;"          );
+    valueLookup.insert("scpolint",                        "&#x02A13;"          );
+    valueLookup.insert("sim",                             "&#x0223C;"          );
+    valueLookup.insert("simdot",                          "&#x02A6A;"          );
+    valueLookup.insert("sime",                            "&#x02243;"          );
+    valueLookup.insert("smeparsl",                        "&#x029E4;"          );
+    valueLookup.insert("square",                          "&#x025A1;"          );
+    valueLookup.insert("squarf",                          "&#x025AA;"          );
+    valueLookup.insert("sub",                             "&#x02282;"          );
+    valueLookup.insert("sube",                            "&#x02286;"          );
+    valueLookup.insert("sup",                             "&#x02283;"          );
+    valueLookup.insert("supe",                            "&#x02287;"          );
+    valueLookup.insert("tdot",                            "&#x020DB;"          );
+    valueLookup.insert("there4",                          "&#x02234;"          );
+    valueLookup.insert("tint",                            "&#x0222D;"          );
+    valueLookup.insert("top",                             "&#x022A4;"          );
+    valueLookup.insert("topbot",                          "&#x02336;"          );
+    valueLookup.insert("topcir",                          "&#x02AF1;"          );
+    valueLookup.insert("tprime",                          "&#x02034;"          );
+    valueLookup.insert("utdot",                           "&#x022F0;"          );
+    valueLookup.insert("uwangle",                         "&#x029A7;"          );
+    valueLookup.insert("vangrt",                          "&#x0299C;"          );
+    valueLookup.insert("veeeq",                           "&#x0225A;"          );
+    valueLookup.insert("Verbar",                          "&#x02016;"          );
+    valueLookup.insert("wedgeq",                          "&#x02259;"          );
+    valueLookup.insert("xnis",                            "&#x022FB;"          );
+    valueLookup.insert("boxDL",                           "&#x02557;"          );
+    valueLookup.insert("boxDl",                           "&#x02556;"          );
+    valueLookup.insert("boxdL",                           "&#x02555;"          );
+    valueLookup.insert("boxdl",                           "&#x02510;"          );
+    valueLookup.insert("boxDR",                           "&#x02554;"          );
+    valueLookup.insert("boxDr",                           "&#x02553;"          );
+    valueLookup.insert("boxdR",                           "&#x02552;"          );
+    valueLookup.insert("boxdr",                           "&#x0250C;"          );
+    valueLookup.insert("boxH",                            "&#x02550;"          );
+    valueLookup.insert("boxh",                            "&#x02500;"          );
+    valueLookup.insert("boxHD",                           "&#x02566;"          );
+    valueLookup.insert("boxHd",                           "&#x02564;"          );
+    valueLookup.insert("boxhD",                           "&#x02565;"          );
+    valueLookup.insert("boxhd",                           "&#x0252C;"          );
+    valueLookup.insert("boxHU",                           "&#x02569;"          );
+    valueLookup.insert("boxHu",                           "&#x02567;"          );
+    valueLookup.insert("boxhU",                           "&#x02568;"          );
+    valueLookup.insert("boxhu",                           "&#x02534;"          );
+    valueLookup.insert("boxUL",                           "&#x0255D;"          );
+    valueLookup.insert("boxUl",                           "&#x0255C;"          );
+    valueLookup.insert("boxuL",                           "&#x0255B;"          );
+    valueLookup.insert("boxul",                           "&#x02518;"          );
+    valueLookup.insert("boxUR",                           "&#x0255A;"          );
+    valueLookup.insert("boxUr",                           "&#x02559;"          );
+    valueLookup.insert("boxuR",                           "&#x02558;"          );
+    valueLookup.insert("boxur",                           "&#x02514;"          );
+    valueLookup.insert("boxV",                            "&#x02551;"          );
+    valueLookup.insert("boxv",                            "&#x02502;"          );
+    valueLookup.insert("boxVH",                           "&#x0256C;"          );
+    valueLookup.insert("boxVh",                           "&#x0256B;"          );
+    valueLookup.insert("boxvH",                           "&#x0256A;"          );
+    valueLookup.insert("boxvh",                           "&#x0253C;"          );
+    valueLookup.insert("boxVL",                           "&#x02563;"          );
+    valueLookup.insert("boxVl",                           "&#x02562;"          );
+    valueLookup.insert("boxvL",                           "&#x02561;"          );
+    valueLookup.insert("boxvl",                           "&#x02524;"          );
+    valueLookup.insert("boxVR",                           "&#x02560;"          );
+    valueLookup.insert("boxVr",                           "&#x0255F;"          );
+    valueLookup.insert("boxvR",                           "&#x0255E;"          );
+    valueLookup.insert("boxvr",                           "&#x0251C;"          );
+    valueLookup.insert("Acy",                             "&#x00410;"          );
+    valueLookup.insert("acy",                             "&#x00430;"          );
+    valueLookup.insert("Bcy",                             "&#x00411;"          );
+    valueLookup.insert("bcy",                             "&#x00431;"          );
+    valueLookup.insert("CHcy",                            "&#x00427;"          );
+    valueLookup.insert("chcy",                            "&#x00447;"          );
+    valueLookup.insert("Dcy",                             "&#x00414;"          );
+    valueLookup.insert("dcy",                             "&#x00434;"          );
+    valueLookup.insert("Ecy",                             "&#x0042D;"          );
+    valueLookup.insert("ecy",                             "&#x0044D;"          );
+    valueLookup.insert("Fcy",                             "&#x00424;"          );
+    valueLookup.insert("fcy",                             "&#x00444;"          );
+    valueLookup.insert("Gcy",                             "&#x00413;"          );
+    valueLookup.insert("gcy",                             "&#x00433;"          );
+    valueLookup.insert("HARDcy",                          "&#x0042A;"          );
+    valueLookup.insert("hardcy",                          "&#x0044A;"          );
+    valueLookup.insert("Icy",                             "&#x00418;"          );
+    valueLookup.insert("icy",                             "&#x00438;"          );
+    valueLookup.insert("IEcy",                            "&#x00415;"          );
+    valueLookup.insert("iecy",                            "&#x00435;"          );
+    valueLookup.insert("IOcy",                            "&#x00401;"          );
+    valueLookup.insert("iocy",                            "&#x00451;"          );
+    valueLookup.insert("Jcy",                             "&#x00419;"          );
+    valueLookup.insert("jcy",                             "&#x00439;"          );
+    valueLookup.insert("Kcy",                             "&#x0041A;"          );
+    valueLookup.insert("kcy",                             "&#x0043A;"          );
+    valueLookup.insert("KHcy",                            "&#x00425;"          );
+    valueLookup.insert("khcy",                            "&#x00445;"          );
+    valueLookup.insert("Lcy",                             "&#x0041B;"          );
+    valueLookup.insert("lcy",                             "&#x0043B;"          );
+    valueLookup.insert("Mcy",                             "&#x0041C;"          );
+    valueLookup.insert("mcy",                             "&#x0043C;"          );
+    valueLookup.insert("Ncy",                             "&#x0041D;"          );
+    valueLookup.insert("ncy",                             "&#x0043D;"          );
+    valueLookup.insert("numero",                          "&#x02116;"          );
+    valueLookup.insert("Ocy",                             "&#x0041E;"          );
+    valueLookup.insert("ocy",                             "&#x0043E;"          );
+    valueLookup.insert("Pcy",                             "&#x0041F;"          );
+    valueLookup.insert("pcy",                             "&#x0043F;"          );
+    valueLookup.insert("Rcy",                             "&#x00420;"          );
+    valueLookup.insert("rcy",                             "&#x00440;"          );
+    valueLookup.insert("Scy",                             "&#x00421;"          );
+    valueLookup.insert("scy",                             "&#x00441;"          );
+    valueLookup.insert("SHCHcy",                          "&#x00429;"          );
+    valueLookup.insert("shchcy",                          "&#x00449;"          );
+    valueLookup.insert("SHcy",                            "&#x00428;"          );
+    valueLookup.insert("shcy",                            "&#x00448;"          );
+    valueLookup.insert("SOFTcy",                          "&#x0042C;"          );
+    valueLookup.insert("softcy",                          "&#x0044C;"          );
+    valueLookup.insert("Tcy",                             "&#x00422;"          );
+    valueLookup.insert("tcy",                             "&#x00442;"          );
+    valueLookup.insert("TScy",                            "&#x00426;"          );
+    valueLookup.insert("tscy",                            "&#x00446;"          );
+    valueLookup.insert("Ucy",                             "&#x00423;"          );
+    valueLookup.insert("ucy",                             "&#x00443;"          );
+    valueLookup.insert("Vcy",                             "&#x00412;"          );
+    valueLookup.insert("vcy",                             "&#x00432;"          );
+    valueLookup.insert("YAcy",                            "&#x0042F;"          );
+    valueLookup.insert("yacy",                            "&#x0044F;"          );
+    valueLookup.insert("Ycy",                             "&#x0042B;"          );
+    valueLookup.insert("ycy",                             "&#x0044B;"          );
+    valueLookup.insert("YUcy",                            "&#x0042E;"          );
+    valueLookup.insert("yucy",                            "&#x0044E;"          );
+    valueLookup.insert("Zcy",                             "&#x00417;"          );
+    valueLookup.insert("zcy",                             "&#x00437;"          );
+    valueLookup.insert("ZHcy",                            "&#x00416;"          );
+    valueLookup.insert("zhcy",                            "&#x00436;"          );
+    valueLookup.insert("DJcy",                            "&#x00402;"          );
+    valueLookup.insert("djcy",                            "&#x00452;"          );
+    valueLookup.insert("DScy",                            "&#x00405;"          );
+    valueLookup.insert("dscy",                            "&#x00455;"          );
+    valueLookup.insert("DZcy",                            "&#x0040F;"          );
+    valueLookup.insert("dzcy",                            "&#x0045F;"          );
+    valueLookup.insert("GJcy",                            "&#x00403;"          );
+    valueLookup.insert("gjcy",                            "&#x00453;"          );
+    valueLookup.insert("Iukcy",                           "&#x00406;"          );
+    valueLookup.insert("iukcy",                           "&#x00456;"          );
+    valueLookup.insert("Jsercy",                          "&#x00408;"          );
+    valueLookup.insert("jsercy",                          "&#x00458;"          );
+    valueLookup.insert("Jukcy",                           "&#x00404;"          );
+    valueLookup.insert("jukcy",                           "&#x00454;"          );
+    valueLookup.insert("KJcy",                            "&#x0040C;"          );
+    valueLookup.insert("kjcy",                            "&#x0045C;"          );
+    valueLookup.insert("LJcy",                            "&#x00409;"          );
+    valueLookup.insert("ljcy",                            "&#x00459;"          );
+    valueLookup.insert("NJcy",                            "&#x0040A;"          );
+    valueLookup.insert("njcy",                            "&#x0045A;"          );
+    valueLookup.insert("TSHcy",                           "&#x0040B;"          );
+    valueLookup.insert("tshcy",                           "&#x0045B;"          );
+    valueLookup.insert("Ubrcy",                           "&#x0040E;"          );
+    valueLookup.insert("ubrcy",                           "&#x0045E;"          );
+    valueLookup.insert("YIcy",                            "&#x00407;"          );
+    valueLookup.insert("yicy",                            "&#x00457;"          );
+    valueLookup.insert("acute",                           "&#x000B4;"          );
+    valueLookup.insert("breve",                           "&#x002D8;"          );
+    valueLookup.insert("caron",                           "&#x002C7;"          );
+    valueLookup.insert("cedil",                           "&#x000B8;"          );
+    valueLookup.insert("circ",                            "&#x002C6;"          );
+    valueLookup.insert("dblac",                           "&#x002DD;"          );
+    valueLookup.insert("die",                             "&#x000A8;"          );
+    valueLookup.insert("dot",                             "&#x002D9;"          );
+    valueLookup.insert("grave",                           "&#x00060;"          );
+    valueLookup.insert("macr",                            "&#x000AF;"          );
+    valueLookup.insert("ogon",                            "&#x002DB;"          );
+    valueLookup.insert("ring",                            "&#x002DA;"          );
+    valueLookup.insert("tilde",                           "&#x002DC;"          );
+    valueLookup.insert("uml",                             "&#x000A8;"          );
+    valueLookup.insert("Aacute",                          "&#x000C1;"          );
+    valueLookup.insert("aacute",                          "&#x000E1;"          );
+    valueLookup.insert("Acirc",                           "&#x000C2;"          );
+    valueLookup.insert("acirc",                           "&#x000E2;"          );
+    valueLookup.insert("AElig",                           "&#x000C6;"          );
+    valueLookup.insert("aelig",                           "&#x000E6;"          );
+    valueLookup.insert("Agrave",                          "&#x000C0;"          );
+    valueLookup.insert("agrave",                          "&#x000E0;"          );
+    valueLookup.insert("Aring",                           "&#x000C5;"          );
+    valueLookup.insert("aring",                           "&#x000E5;"          );
+    valueLookup.insert("Atilde",                          "&#x000C3;"          );
+    valueLookup.insert("atilde",                          "&#x000E3;"          );
+    valueLookup.insert("Auml",                            "&#x000C4;"          );
+    valueLookup.insert("auml",                            "&#x000E4;"          );
+    valueLookup.insert("Ccedil",                          "&#x000C7;"          );
+    valueLookup.insert("ccedil",                          "&#x000E7;"          );
+    valueLookup.insert("Eacute",                          "&#x000C9;"          );
+    valueLookup.insert("eacute",                          "&#x000E9;"          );
+    valueLookup.insert("Ecirc",                           "&#x000CA;"          );
+    valueLookup.insert("ecirc",                           "&#x000EA;"          );
+    valueLookup.insert("Egrave",                          "&#x000C8;"          );
+    valueLookup.insert("egrave",                          "&#x000E8;"          );
+    valueLookup.insert("ETH",                             "&#x000D0;"          );
+    valueLookup.insert("eth",                             "&#x000F0;"          );
+    valueLookup.insert("Euml",                            "&#x000CB;"          );
+    valueLookup.insert("euml",                            "&#x000EB;"          );
+    valueLookup.insert("Iacute",                          "&#x000CD;"          );
+    valueLookup.insert("iacute",                          "&#x000ED;"          );
+    valueLookup.insert("Icirc",                           "&#x000CE;"          );
+    valueLookup.insert("icirc",                           "&#x000EE;"          );
+    valueLookup.insert("Igrave",                          "&#x000CC;"          );
+    valueLookup.insert("igrave",                          "&#x000EC;"          );
+    valueLookup.insert("Iuml",                            "&#x000CF;"          );
+    valueLookup.insert("iuml",                            "&#x000EF;"          );
+    valueLookup.insert("Ntilde",                          "&#x000D1;"          );
+    valueLookup.insert("ntilde",                          "&#x000F1;"          );
+    valueLookup.insert("Oacute",                          "&#x000D3;"          );
+    valueLookup.insert("oacute",                          "&#x000F3;"          );
+    valueLookup.insert("Ocirc",                           "&#x000D4;"          );
+    valueLookup.insert("ocirc",                           "&#x000F4;"          );
+    valueLookup.insert("Ograve",                          "&#x000D2;"          );
+    valueLookup.insert("ograve",                          "&#x000F2;"          );
+    valueLookup.insert("Oslash",                          "&#x000D8;"          );
+    valueLookup.insert("oslash",                          "&#x000F8;"          );
+    valueLookup.insert("Otilde",                          "&#x000D5;"          );
+    valueLookup.insert("otilde",                          "&#x000F5;"          );
+    valueLookup.insert("Ouml",                            "&#x000D6;"          );
+    valueLookup.insert("ouml",                            "&#x000F6;"          );
+    valueLookup.insert("szlig",                           "&#x000DF;"          );
+    valueLookup.insert("THORN",                           "&#x000DE;"          );
+    valueLookup.insert("thorn",                           "&#x000FE;"          );
+    valueLookup.insert("Uacute",                          "&#x000DA;"          );
+    valueLookup.insert("uacute",                          "&#x000FA;"          );
+    valueLookup.insert("Ucirc",                           "&#x000DB;"          );
+    valueLookup.insert("ucirc",                           "&#x000FB;"          );
+    valueLookup.insert("Ugrave",                          "&#x000D9;"          );
+    valueLookup.insert("ugrave",                          "&#x000F9;"          );
+    valueLookup.insert("Uuml",                            "&#x000DC;"          );
+    valueLookup.insert("uuml",                            "&#x000FC;"          );
+    valueLookup.insert("Yacute",                          "&#x000DD;"          );
+    valueLookup.insert("yacute",                          "&#x000FD;"          );
+    valueLookup.insert("yuml",                            "&#x000FF;"          );
+    valueLookup.insert("Abreve",                          "&#x00102;"          );
+    valueLookup.insert("abreve",                          "&#x00103;"          );
+    valueLookup.insert("Amacr",                           "&#x00100;"          );
+    valueLookup.insert("amacr",                           "&#x00101;"          );
+    valueLookup.insert("Aogon",                           "&#x00104;"          );
+    valueLookup.insert("aogon",                           "&#x00105;"          );
+    valueLookup.insert("Cacute",                          "&#x00106;"          );
+    valueLookup.insert("cacute",                          "&#x00107;"          );
+    valueLookup.insert("Ccaron",                          "&#x0010C;"          );
+    valueLookup.insert("ccaron",                          "&#x0010D;"          );
+    valueLookup.insert("Ccirc",                           "&#x00108;"          );
+    valueLookup.insert("ccirc",                           "&#x00109;"          );
+    valueLookup.insert("Cdot",                            "&#x0010A;"          );
+    valueLookup.insert("cdot",                            "&#x0010B;"          );
+    valueLookup.insert("Dcaron",                          "&#x0010E;"          );
+    valueLookup.insert("dcaron",                          "&#x0010F;"          );
+    valueLookup.insert("Dstrok",                          "&#x00110;"          );
+    valueLookup.insert("dstrok",                          "&#x00111;"          );
+    valueLookup.insert("Ecaron",                          "&#x0011A;"          );
+    valueLookup.insert("ecaron",                          "&#x0011B;"          );
+    valueLookup.insert("Edot",                            "&#x00116;"          );
+    valueLookup.insert("edot",                            "&#x00117;"          );
+    valueLookup.insert("Emacr",                           "&#x00112;"          );
+    valueLookup.insert("emacr",                           "&#x00113;"          );
+    valueLookup.insert("ENG",                             "&#x0014A;"          );
+    valueLookup.insert("eng",                             "&#x0014B;"          );
+    valueLookup.insert("Eogon",                           "&#x00118;"          );
+    valueLookup.insert("eogon",                           "&#x00119;"          );
+    valueLookup.insert("gacute",                          "&#x001F5;"          );
+    valueLookup.insert("Gbreve",                          "&#x0011E;"          );
+    valueLookup.insert("gbreve",                          "&#x0011F;"          );
+    valueLookup.insert("Gcedil",                          "&#x00122;"          );
+    valueLookup.insert("Gcirc",                           "&#x0011C;"          );
+    valueLookup.insert("gcirc",                           "&#x0011D;"          );
+    valueLookup.insert("Gdot",                            "&#x00120;"          );
+    valueLookup.insert("gdot",                            "&#x00121;"          );
+    valueLookup.insert("Hcirc",                           "&#x00124;"          );
+    valueLookup.insert("hcirc",                           "&#x00125;"          );
+    valueLookup.insert("Hstrok",                          "&#x00126;"          );
+    valueLookup.insert("hstrok",                          "&#x00127;"          );
+    valueLookup.insert("Idot",                            "&#x00130;"          );
+    valueLookup.insert("IJlig",                           "&#x00132;"          );
+    valueLookup.insert("ijlig",                           "&#x00133;"          );
+    valueLookup.insert("Imacr",                           "&#x0012A;"          );
+    valueLookup.insert("imacr",                           "&#x0012B;"          );
+    valueLookup.insert("inodot",                          "&#x00131;"          );
+    valueLookup.insert("Iogon",                           "&#x0012E;"          );
+    valueLookup.insert("iogon",                           "&#x0012F;"          );
+    valueLookup.insert("Itilde",                          "&#x00128;"          );
+    valueLookup.insert("itilde",                          "&#x00129;"          );
+    valueLookup.insert("Jcirc",                           "&#x00134;"          );
+    valueLookup.insert("jcirc",                           "&#x00135;"          );
+    valueLookup.insert("Kcedil",                          "&#x00136;"          );
+    valueLookup.insert("kcedil",                          "&#x00137;"          );
+    valueLookup.insert("kgreen",                          "&#x00138;"          );
+    valueLookup.insert("Lacute",                          "&#x00139;"          );
+    valueLookup.insert("lacute",                          "&#x0013A;"          );
+    valueLookup.insert("Lcaron",                          "&#x0013D;"          );
+    valueLookup.insert("lcaron",                          "&#x0013E;"          );
+    valueLookup.insert("Lcedil",                          "&#x0013B;"          );
+    valueLookup.insert("lcedil",                          "&#x0013C;"          );
+    valueLookup.insert("Lmidot",                          "&#x0013F;"          );
+    valueLookup.insert("lmidot",                          "&#x00140;"          );
+    valueLookup.insert("Lstrok",                          "&#x00141;"          );
+    valueLookup.insert("lstrok",                          "&#x00142;"          );
+    valueLookup.insert("Nacute",                          "&#x00143;"          );
+    valueLookup.insert("nacute",                          "&#x00144;"          );
+    valueLookup.insert("napos",                           "&#x00149;"          );
+    valueLookup.insert("Ncaron",                          "&#x00147;"          );
+    valueLookup.insert("ncaron",                          "&#x00148;"          );
+    valueLookup.insert("Ncedil",                          "&#x00145;"          );
+    valueLookup.insert("ncedil",                          "&#x00146;"          );
+    valueLookup.insert("Odblac",                          "&#x00150;"          );
+    valueLookup.insert("odblac",                          "&#x00151;"          );
+    valueLookup.insert("OElig",                           "&#x00152;"          );
+    valueLookup.insert("oelig",                           "&#x00153;"          );
+    valueLookup.insert("Omacr",                           "&#x0014C;"          );
+    valueLookup.insert("omacr",                           "&#x0014D;"          );
+    valueLookup.insert("Racute",                          "&#x00154;"          );
+    valueLookup.insert("racute",                          "&#x00155;"          );
+    valueLookup.insert("Rcaron",                          "&#x00158;"          );
+    valueLookup.insert("rcaron",                          "&#x00159;"          );
+    valueLookup.insert("Rcedil",                          "&#x00156;"          );
+    valueLookup.insert("rcedil",                          "&#x00157;"          );
+    valueLookup.insert("Sacute",                          "&#x0015A;"          );
+    valueLookup.insert("sacute",                          "&#x0015B;"          );
+    valueLookup.insert("Scaron",                          "&#x00160;"          );
+    valueLookup.insert("scaron",                          "&#x00161;"          );
+    valueLookup.insert("Scedil",                          "&#x0015E;"          );
+    valueLookup.insert("scedil",                          "&#x0015F;"          );
+    valueLookup.insert("Scirc",                           "&#x0015C;"          );
+    valueLookup.insert("scirc",                           "&#x0015D;"          );
+    valueLookup.insert("Tcaron",                          "&#x00164;"          );
+    valueLookup.insert("tcaron",                          "&#x00165;"          );
+    valueLookup.insert("Tcedil",                          "&#x00162;"          );
+    valueLookup.insert("tcedil",                          "&#x00163;"          );
+    valueLookup.insert("Tstrok",                          "&#x00166;"          );
+    valueLookup.insert("tstrok",                          "&#x00167;"          );
+    valueLookup.insert("Ubreve",                          "&#x0016C;"          );
+    valueLookup.insert("ubreve",                          "&#x0016D;"          );
+    valueLookup.insert("Udblac",                          "&#x00170;"          );
+    valueLookup.insert("udblac",                          "&#x00171;"          );
+    valueLookup.insert("Umacr",                           "&#x0016A;"          );
+    valueLookup.insert("umacr",                           "&#x0016B;"          );
+    valueLookup.insert("Uogon",                           "&#x00172;"          );
+    valueLookup.insert("uogon",                           "&#x00173;"          );
+    valueLookup.insert("Uring",                           "&#x0016E;"          );
+    valueLookup.insert("uring",                           "&#x0016F;"          );
+    valueLookup.insert("Utilde",                          "&#x00168;"          );
+    valueLookup.insert("utilde",                          "&#x00169;"          );
+    valueLookup.insert("Wcirc",                           "&#x00174;"          );
+    valueLookup.insert("wcirc",                           "&#x00175;"          );
+    valueLookup.insert("Ycirc",                           "&#x00176;"          );
+    valueLookup.insert("ycirc",                           "&#x00177;"          );
+    valueLookup.insert("Yuml",                            "&#x00178;"          );
+    valueLookup.insert("Zacute",                          "&#x00179;"          );
+    valueLookup.insert("zacute",                          "&#x0017A;"          );
+    valueLookup.insert("Zcaron",                          "&#x0017D;"          );
+    valueLookup.insert("zcaron",                          "&#x0017E;"          );
+    valueLookup.insert("Zdot",                            "&#x0017B;"          );
+    valueLookup.insert("zdot",                            "&#x0017C;"          );
+    valueLookup.insert("apos",                            "&#x00027;"          );
+    valueLookup.insert("ast",                             "&#x0002A;"          );
+    valueLookup.insert("brvbar",                          "&#x000A6;"          );
+    valueLookup.insert("bsol",                            "&#x0005C;"          );
+    valueLookup.insert("cent",                            "&#x000A2;"          );
+    valueLookup.insert("colon",                           "&#x0003A;"          );
+    valueLookup.insert("comma",                           "&#x0002C;"          );
+    valueLookup.insert("commat",                          "&#x00040;"          );
+    valueLookup.insert("copy",                            "&#x000A9;"          );
+    valueLookup.insert("curren",                          "&#x000A4;"          );
+    valueLookup.insert("darr",                            "&#x02193;"          );
+    valueLookup.insert("deg",                             "&#x000B0;"          );
+    valueLookup.insert("divide",                          "&#x000F7;"          );
+    valueLookup.insert("dollar",                          "&#x00024;"          );
+    valueLookup.insert("equals",                          "&#x0003D;"          );
+    valueLookup.insert("excl",                            "&#x00021;"          );
+    valueLookup.insert("frac12",                          "&#x000BD;"          );
+    valueLookup.insert("frac14",                          "&#x000BC;"          );
+    valueLookup.insert("frac18",                          "&#x0215B;"          );
+    valueLookup.insert("frac34",                          "&#x000BE;"          );
+    valueLookup.insert("frac38",                          "&#x0215C;"          );
+    valueLookup.insert("frac58",                          "&#x0215D;"          );
+    valueLookup.insert("frac78",                          "&#x0215E;"          );
+    valueLookup.insert("gt",                              "&#x0003E;"          );
+    valueLookup.insert("half",                            "&#x000BD;"          );
+    valueLookup.insert("horbar",                          "&#x02015;"          );
+    valueLookup.insert("hyphen",                          "&#x02010;"          );
+    valueLookup.insert("iexcl",                           "&#x000A1;"          );
+    valueLookup.insert("iquest",                          "&#x000BF;"          );
+    valueLookup.insert("laquo",                           "&#x000AB;"          );
+    valueLookup.insert("larr",                            "&#x02190;"          );
+    valueLookup.insert("lcub",                            "&#x0007B;"          );
+    valueLookup.insert("ldquo",                           "&#x0201C;"          );
+    valueLookup.insert("lowbar",                          "&#x0005F;"          );
+    valueLookup.insert("lpar",                            "&#x00028;"          );
+    valueLookup.insert("lsqb",                            "&#x0005B;"          );
+    valueLookup.insert("lsquo",                           "&#x02018;"          );
+    valueLookup.insert("lt",                              "&#x0003C;"          );
+    valueLookup.insert("micro",                           "&#x000B5;"          );
+    valueLookup.insert("middot",                          "&#x000B7;"          );
+    valueLookup.insert("nbsp",                            "&#x000A0;"          );
+    valueLookup.insert("not",                             "&#x000AC;"          );
+    valueLookup.insert("num",                             "&#x00023;"          );
+    valueLookup.insert("ohm",                             "&#x02126;"          );
+    valueLookup.insert("ordf",                            "&#x000AA;"          );
+    valueLookup.insert("ordm",                            "&#x000BA;"          );
+    valueLookup.insert("para",                            "&#x000B6;"          );
+    valueLookup.insert("percnt",                          "&#x00025;"          );
+    valueLookup.insert("period",                          "&#x0002E;"          );
+    valueLookup.insert("plus",                            "&#x0002B;"          );
+    valueLookup.insert("plusmn",                          "&#x000B1;"          );
+    valueLookup.insert("pound",                           "&#x000A3;"          );
+    valueLookup.insert("quest",                           "&#x0003F;"          );
+    valueLookup.insert("quot",                            "&#x00022;"          );
+    valueLookup.insert("raquo",                           "&#x000BB;"          );
+    valueLookup.insert("rarr",                            "&#x02192;"          );
+    valueLookup.insert("rcub",                            "&#x0007D;"          );
+    valueLookup.insert("rdquo",                           "&#x0201D;"          );
+    valueLookup.insert("reg",                             "&#x000AE;"          );
+    valueLookup.insert("rpar",                            "&#x00029;"          );
+    valueLookup.insert("rsqb",                            "&#x0005D;"          );
+    valueLookup.insert("rsquo",                           "&#x02019;"          );
+    valueLookup.insert("sect",                            "&#x000A7;"          );
+    valueLookup.insert("semi",                            "&#x0003B;"          );
+    valueLookup.insert("shy",                             "&#x000AD;"          );
+    valueLookup.insert("sol",                             "&#x0002F;"          );
+    valueLookup.insert("sung",                            "&#x0266A;"          );
+    valueLookup.insert("sup1",                            "&#x000B9;"          );
+    valueLookup.insert("sup2",                            "&#x000B2;"          );
+    valueLookup.insert("sup3",                            "&#x000B3;"          );
+    valueLookup.insert("times",                           "&#x000D7;"          );
+    valueLookup.insert("trade",                           "&#x02122;"          );
+    valueLookup.insert("uarr",                            "&#x02191;"          );
+    valueLookup.insert("verbar",                          "&#x0007C;"          );
+    valueLookup.insert("yen",                             "&#x000A5;"          );
+    valueLookup.insert("blank",                           "&#x02423;"          );
+    valueLookup.insert("blk12",                           "&#x02592;"          );
+    valueLookup.insert("blk14",                           "&#x02591;"          );
+    valueLookup.insert("blk34",                           "&#x02593;"          );
+    valueLookup.insert("block",                           "&#x02588;"          );
+    valueLookup.insert("bull",                            "&#x02022;"          );
+    valueLookup.insert("caret",                           "&#x02041;"          );
+    valueLookup.insert("check",                           "&#x02713;"          );
+    valueLookup.insert("cir",                             "&#x025CB;"          );
+    valueLookup.insert("clubs",                           "&#x02663;"          );
+    valueLookup.insert("copysr",                          "&#x02117;"          );
+    valueLookup.insert("cross",                           "&#x02717;"          );
+    valueLookup.insert("Dagger",                          "&#x02021;"          );
+    valueLookup.insert("dagger",                          "&#x02020;"          );
+    valueLookup.insert("dash",                            "&#x02010;"          );
+    valueLookup.insert("diams",                           "&#x02666;"          );
+    valueLookup.insert("dlcrop",                          "&#x0230D;"          );
+    valueLookup.insert("drcrop",                          "&#x0230C;"          );
+    valueLookup.insert("dtri",                            "&#x025BF;"          );
+    valueLookup.insert("dtrif",                           "&#x025BE;"          );
+    valueLookup.insert("emsp",                            "&#x02003;"          );
+    valueLookup.insert("emsp13",                          "&#x02004;"          );
+    valueLookup.insert("emsp14",                          "&#x02005;"          );
+    valueLookup.insert("ensp",                            "&#x02002;"          );
+    valueLookup.insert("female",                          "&#x02640;"          );
+    valueLookup.insert("ffilig",                          "&#x0FB03;"          );
+    valueLookup.insert("fflig",                           "&#x0FB00;"          );
+    valueLookup.insert("ffllig",                          "&#x0FB04;"          );
+    valueLookup.insert("filig",                           "&#x0FB01;"          );
+    valueLookup.insert("flat",                            "&#x0266D;"          );
+    valueLookup.insert("fllig",                           "&#x0FB02;"          );
+    valueLookup.insert("frac13",                          "&#x02153;"          );
+    valueLookup.insert("frac15",                          "&#x02155;"          );
+    valueLookup.insert("frac16",                          "&#x02159;"          );
+    valueLookup.insert("frac23",                          "&#x02154;"          );
+    valueLookup.insert("frac25",                          "&#x02156;"          );
+    valueLookup.insert("frac35",                          "&#x02157;"          );
+    valueLookup.insert("frac45",                          "&#x02158;"          );
+    valueLookup.insert("frac56",                          "&#x0215A;"          );
+    valueLookup.insert("hairsp",                          "&#x0200A;"          );
+    valueLookup.insert("hearts",                          "&#x02665;"          );
+    valueLookup.insert("hellip",                          "&#x02026;"          );
+    valueLookup.insert("hybull",                          "&#x02043;"          );
+    valueLookup.insert("incare",                          "&#x02105;"          );
+    valueLookup.insert("ldquor",                          "&#x0201E;"          );
+    valueLookup.insert("lhblk",                           "&#x02584;"          );
+    valueLookup.insert("loz",                             "&#x025CA;"          );
+    valueLookup.insert("lozf",                            "&#x029EB;"          );
+    valueLookup.insert("lsquor",                          "&#x0201A;"          );
+    valueLookup.insert("ltri",                            "&#x025C3;"          );
+    valueLookup.insert("ltrif",                           "&#x025C2;"          );
+    valueLookup.insert("male",                            "&#x02642;"          );
+    valueLookup.insert("malt",                            "&#x02720;"          );
+    valueLookup.insert("marker",                          "&#x025AE;"          );
+    valueLookup.insert("mdash",                           "&#x02014;"          );
+    valueLookup.insert("mldr",                            "&#x02026;"          );
+    valueLookup.insert("natur",                           "&#x0266E;"          );
+    valueLookup.insert("ndash",                           "&#x02013;"          );
+    valueLookup.insert("nldr",                            "&#x02025;"          );
+    valueLookup.insert("numsp",                           "&#x02007;"          );
+    valueLookup.insert("phone",                           "&#x0260E;"          );
+    valueLookup.insert("puncsp",                          "&#x02008;"          );
+    valueLookup.insert("rdquor",                          "&#x0201D;"          );
+    valueLookup.insert("rect",                            "&#x025AD;"          );
+    valueLookup.insert("rsquor",                          "&#x02019;"          );
+    valueLookup.insert("rtri",                            "&#x025B9;"          );
+    valueLookup.insert("rtrif",                           "&#x025B8;"          );
+    valueLookup.insert("rx",                              "&#x0211E;"          );
+    valueLookup.insert("sext",                            "&#x02736;"          );
+    valueLookup.insert("sharp",                           "&#x0266F;"          );
+    valueLookup.insert("spades",                          "&#x02660;"          );
+    valueLookup.insert("squ",                             "&#x025A1;"          );
+    valueLookup.insert("squf",                            "&#x025AA;"          );
+    valueLookup.insert("star",                            "&#x02606;"          );
+    valueLookup.insert("starf",                           "&#x02605;"          );
+    valueLookup.insert("target",                          "&#x02316;"          );
+    valueLookup.insert("telrec",                          "&#x02315;"          );
+    valueLookup.insert("thinsp",                          "&#x02009;"          );
+    valueLookup.insert("uhblk",                           "&#x02580;"          );
+    valueLookup.insert("ulcrop",                          "&#x0230F;"          );
+    valueLookup.insert("urcrop",                          "&#x0230E;"          );
+    valueLookup.insert("utri",                            "&#x025B5;"          );
+    valueLookup.insert("utrif",                           "&#x025B4;"          );
+    valueLookup.insert("vellip",                          "&#x022EE;"          );
+    valueLookup.insert("af",                              "&#x02061;"          );
+    valueLookup.insert("asympeq",                         "&#x0224D;"          );
+    valueLookup.insert("Cross",                           "&#x02A2F;"          );
+    valueLookup.insert("DD",                              "&#x02145;"          );
+    valueLookup.insert("dd",                              "&#x02146;"          );
+    valueLookup.insert("DownArrowBar",                    "&#x02913;"          );
+    valueLookup.insert("DownBreve",                       "&#x00311;"          );
+    valueLookup.insert("DownLeftRightVector",             "&#x02950;"          );
+    valueLookup.insert("DownLeftTeeVector",               "&#x0295E;"          );
+    valueLookup.insert("DownLeftVectorBar",               "&#x02956;"          );
+    valueLookup.insert("DownRightTeeVector",              "&#x0295F;"          );
+    valueLookup.insert("DownRightVectorBar",              "&#x02957;"          );
+    valueLookup.insert("ee",                              "&#x02147;"          );
+    valueLookup.insert("EmptySmallSquare",                "&#x025FB;"          );
+    valueLookup.insert("EmptyVerySmallSquare",            "&#x025AB;"          );
+    valueLookup.insert("Equal",                           "&#x02A75;"          );
+    valueLookup.insert("FilledSmallSquare",               "&#x025FC;"          );
+    valueLookup.insert("FilledVerySmallSquare",           "&#x025AA;"          );
+    valueLookup.insert("GreaterGreater",                  "&#x02AA2;"          );
+    valueLookup.insert("Hat",                             "&#x0005E;"          );
+    valueLookup.insert("HorizontalLine",                  "&#x02500;"          );
+    valueLookup.insert("ic",                              "&#x02063;"          );
+    valueLookup.insert("ii",                              "&#x02148;"          );
+    valueLookup.insert("it",                              "&#x02062;"          );
+    valueLookup.insert("larrb",                           "&#x021E4;"          );
+    valueLookup.insert("LeftDownTeeVector",               "&#x02961;"          );
+    valueLookup.insert("LeftDownVectorBar",               "&#x02959;"          );
+    valueLookup.insert("LeftRightVector",                 "&#x0294E;"          );
+    valueLookup.insert("LeftTeeVector",                   "&#x0295A;"          );
+    valueLookup.insert("LeftTriangleBar",                 "&#x029CF;"          );
+    valueLookup.insert("LeftUpDownVector",                "&#x02951;"          );
+    valueLookup.insert("LeftUpTeeVector",                 "&#x02960;"          );
+    valueLookup.insert("LeftUpVectorBar",                 "&#x02958;"          );
+    valueLookup.insert("LeftVectorBar",                   "&#x02952;"          );
+    valueLookup.insert("LessLess",                        "&#x02AA1;"          );
+    valueLookup.insert("mapstodown",                      "&#x021A7;"          );
+    valueLookup.insert("mapstoleft",                      "&#x021A4;"          );
+    valueLookup.insert("mapstoup",                        "&#x021A5;"          );
+    valueLookup.insert("MediumSpace",                     "&#x0205F;"          );
+    valueLookup.insert("nbump",                           "&#x0224E;&#x00338;" );
+    valueLookup.insert("nbumpe",                          "&#x0224F;&#x00338;" );
+    valueLookup.insert("nesim",                           "&#x02242;&#x00338;" );
+    valueLookup.insert("NewLine",                         "&#x0000A;"          );
+    valueLookup.insert("NoBreak",                         "&#x02060;"          );
+    valueLookup.insert("NotCupCap",                       "&#x0226D;"          );
+    valueLookup.insert("NotHumpEqual",                    "&#x0224F;&#x00338;" );
+    valueLookup.insert("NotLeftTriangleBar",              "&#x029CF;&#x00338;" );
+    valueLookup.insert("NotNestedGreaterGreater",         "&#x02AA2;&#x00338;" );
+    valueLookup.insert("NotNestedLessLess",               "&#x02AA1;&#x00338;" );
+    valueLookup.insert("NotRightTriangleBar",             "&#x029D0;&#x00338;" );
+    valueLookup.insert("NotSquareSubset",                 "&#x0228F;&#x00338;" );
+    valueLookup.insert("NotSquareSuperset",               "&#x02290;&#x00338;" );
+    valueLookup.insert("NotSucceedsTilde",                "&#x0227F;&#x00338;" );
+    valueLookup.insert("OverBar",                         "&#x000AF;"          );
+    valueLookup.insert("OverBrace",                       "&#x0FE37;"          );
+    valueLookup.insert("OverBracket",                     "&#x023B4;"          );
+    valueLookup.insert("OverParenthesis",                 "&#x0FE35;"          );
+    valueLookup.insert("planckh",                         "&#x0210E;"          );
+    valueLookup.insert("Product",                         "&#x0220F;"          );
+    valueLookup.insert("rarrb",                           "&#x021E5;"          );
+    valueLookup.insert("RightDownTeeVector",              "&#x0295D;"          );
+    valueLookup.insert("RightDownVectorBar",              "&#x02955;"          );
+    valueLookup.insert("RightTeeVector",                  "&#x0295B;"          );
+    valueLookup.insert("RightTriangleBar",                "&#x029D0;"          );
+    valueLookup.insert("RightUpDownVector",               "&#x0294F;"          );
+    valueLookup.insert("RightUpTeeVector",                "&#x0295C;"          );
+    valueLookup.insert("RightUpVectorBar",                "&#x02954;"          );
+    valueLookup.insert("RightVectorBar",                  "&#x02953;"          );
+    valueLookup.insert("RoundImplies",                    "&#x02970;"          );
+    valueLookup.insert("RuleDelayed",                     "&#x029F4;"          );
+    valueLookup.insert("Tab",                             "&#x00009;"          );
+    valueLookup.insert("ThickSpace",                      "&#x02009;&#x0200A;&#x0200A;" );
+    valueLookup.insert("UnderBar",                        "&#x00332;"          );
+    valueLookup.insert("UnderBrace",                      "&#x0FE38;"          );
+    valueLookup.insert("UnderBracket",                    "&#x023B5;"          );
+    valueLookup.insert("UnderParenthesis",                "&#x0FE36;"          );
+    valueLookup.insert("UpArrowBar",                      "&#x02912;"          );
+    valueLookup.insert("Upsilon",                         "&#x003A5;"          );
+    valueLookup.insert("VerticalLine",                    "&#x0007C;"          );
+    valueLookup.insert("VerticalSeparator",               "&#x02758;"          );
+    valueLookup.insert("ZeroWidthSpace",                  "&#x0200B;"          );
+    valueLookup.insert("angle",                           "&#x02220;"          );
+    valueLookup.insert("ApplyFunction",                   "&#x02061;"          );
+    valueLookup.insert("approx",                          "&#x02248;"          );
+    valueLookup.insert("approxeq",                        "&#x0224A;"          );
+    valueLookup.insert("Assign",                          "&#x02254;"          );
+    valueLookup.insert("backcong",                        "&#x0224C;"          );
+    valueLookup.insert("backepsilon",                     "&#x003F6;"          );
+    valueLookup.insert("backprime",                       "&#x02035;"          );
+    valueLookup.insert("backsim",                         "&#x0223D;"          );
+    valueLookup.insert("backsimeq",                       "&#x022CD;"          );
+    valueLookup.insert("Backslash",                       "&#x02216;"          );
+    valueLookup.insert("barwedge",                        "&#x02305;"          );
+    valueLookup.insert("Because",                         "&#x02235;"          );
+    valueLookup.insert("because",                         "&#x02235;"          );
+    valueLookup.insert("Bernoullis",                      "&#x0212C;"          );
+    valueLookup.insert("between",                         "&#x0226C;"          );
+    valueLookup.insert("bigcap",                          "&#x022C2;"          );
+    valueLookup.insert("bigcirc",                         "&#x025EF;"          );
+    valueLookup.insert("bigcup",                          "&#x022C3;"          );
+    valueLookup.insert("bigodot",                         "&#x02A00;"          );
+    valueLookup.insert("bigoplus",                        "&#x02A01;"          );
+    valueLookup.insert("bigotimes",                       "&#x02A02;"          );
+    valueLookup.insert("bigsqcup",                        "&#x02A06;"          );
+    valueLookup.insert("bigstar",                         "&#x02605;"          );
+    valueLookup.insert("bigtriangledown",                 "&#x025BD;"          );
+    valueLookup.insert("bigtriangleup",                   "&#x025B3;"          );
+    valueLookup.insert("biguplus",                        "&#x02A04;"          );
+    valueLookup.insert("bigvee",                          "&#x022C1;"          );
+    valueLookup.insert("bigwedge",                        "&#x022C0;"          );
+    valueLookup.insert("bkarow",                          "&#x0290D;"          );
+    valueLookup.insert("blacklozenge",                    "&#x029EB;"          );
+    valueLookup.insert("blacksquare",                     "&#x025AA;"          );
+    valueLookup.insert("blacktriangle",                   "&#x025B4;"          );
+    valueLookup.insert("blacktriangledown",               "&#x025BE;"          );
+    valueLookup.insert("blacktriangleleft",               "&#x025C2;"          );
+    valueLookup.insert("blacktriangleright",              "&#x025B8;"          );
+    valueLookup.insert("bot",                             "&#x022A5;"          );
+    valueLookup.insert("boxminus",                        "&#x0229F;"          );
+    valueLookup.insert("boxplus",                         "&#x0229E;"          );
+    valueLookup.insert("boxtimes",                        "&#x022A0;"          );
+    valueLookup.insert("Breve",                           "&#x002D8;"          );
+    valueLookup.insert("bullet",                          "&#x02022;"          );
+    valueLookup.insert("Bumpeq",                          "&#x0224E;"          );
+    valueLookup.insert("bumpeq",                          "&#x0224F;"          );
+    valueLookup.insert("CapitalDifferentialD",            "&#x02145;"          );
+    valueLookup.insert("Cayleys",                         "&#x0212D;"          );
+    valueLookup.insert("Cedilla",                         "&#x000B8;"          );
+    valueLookup.insert("CenterDot",                       "&#x000B7;"          );
+    valueLookup.insert("centerdot",                       "&#x000B7;"          );
+    valueLookup.insert("checkmark",                       "&#x02713;"          );
+    valueLookup.insert("circeq",                          "&#x02257;"          );
+    valueLookup.insert("circlearrowleft",                 "&#x021BA;"          );
+    valueLookup.insert("circlearrowright",                "&#x021BB;"          );
+    valueLookup.insert("circledast",                      "&#x0229B;"          );
+    valueLookup.insert("circledcirc",                     "&#x0229A;"          );
+    valueLookup.insert("circleddash",                     "&#x0229D;"          );
+    valueLookup.insert("CircleDot",                       "&#x02299;"          );
+    valueLookup.insert("circledR",                        "&#x000AE;"          );
+    valueLookup.insert("circledS",                        "&#x024C8;"          );
+    valueLookup.insert("CircleMinus",                     "&#x02296;"          );
+    valueLookup.insert("CirclePlus",                      "&#x02295;"          );
+    valueLookup.insert("CircleTimes",                     "&#x02297;"          );
+    valueLookup.insert("ClockwiseContourIntegral",        "&#x02232;"          );
+    valueLookup.insert("CloseCurlyDoubleQuote",           "&#x0201D;"          );
+    valueLookup.insert("CloseCurlyQuote",                 "&#x02019;"          );
+    valueLookup.insert("clubsuit",                        "&#x02663;"          );
+    valueLookup.insert("coloneq",                         "&#x02254;"          );
+    valueLookup.insert("complement",                      "&#x02201;"          );
+    valueLookup.insert("complexes",                       "&#x02102;"          );
+    valueLookup.insert("Congruent",                       "&#x02261;"          );
+    valueLookup.insert("ContourIntegral",                 "&#x0222E;"          );
+    valueLookup.insert("Coproduct",                       "&#x02210;"          );
+    valueLookup.insert("CounterClockwiseContourIntegral", "&#x02233;"          );
+    valueLookup.insert("CupCap",                          "&#x0224D;"          );
+    valueLookup.insert("curlyeqprec",                     "&#x022DE;"          );
+    valueLookup.insert("curlyeqsucc",                     "&#x022DF;"          );
+    valueLookup.insert("curlyvee",                        "&#x022CE;"          );
+    valueLookup.insert("curlywedge",                      "&#x022CF;"          );
+    valueLookup.insert("curvearrowleft",                  "&#x021B6;"          );
+    valueLookup.insert("curvearrowright",                 "&#x021B7;"          );
+    valueLookup.insert("dbkarow",                         "&#x0290F;"          );
+    valueLookup.insert("ddagger",                         "&#x02021;"          );
+    valueLookup.insert("ddotseq",                         "&#x02A77;"          );
+    valueLookup.insert("Del",                             "&#x02207;"          );
+    valueLookup.insert("DiacriticalAcute",                "&#x000B4;"          );
+    valueLookup.insert("DiacriticalDot",                  "&#x002D9;"          );
+    valueLookup.insert("DiacriticalDoubleAcute",          "&#x002DD;"          );
+    valueLookup.insert("DiacriticalGrave",                "&#x00060;"          );
+    valueLookup.insert("DiacriticalTilde",                "&#x002DC;"          );
+    valueLookup.insert("Diamond",                         "&#x022C4;"          );
+    valueLookup.insert("diamond",                         "&#x022C4;"          );
+    valueLookup.insert("diamondsuit",                     "&#x02666;"          );
+    valueLookup.insert("DifferentialD",                   "&#x02146;"          );
+    valueLookup.insert("digamma",                         "&#x003DD;"          );
+    valueLookup.insert("div",                             "&#x000F7;"          );
+    valueLookup.insert("divideontimes",                   "&#x022C7;"          );
+    valueLookup.insert("doteq",                           "&#x02250;"          );
+    valueLookup.insert("doteqdot",                        "&#x02251;"          );
+    valueLookup.insert("DotEqual",                        "&#x02250;"          );
+    valueLookup.insert("dotminus",                        "&#x02238;"          );
+    valueLookup.insert("dotplus",                         "&#x02214;"          );
+    valueLookup.insert("dotsquare",                       "&#x022A1;"          );
+    valueLookup.insert("doublebarwedge",                  "&#x02306;"          );
+    valueLookup.insert("DoubleContourIntegral",           "&#x0222F;"          );
+    valueLookup.insert("DoubleDot",                       "&#x000A8;"          );
+    valueLookup.insert("DoubleDownArrow",                 "&#x021D3;"          );
+    valueLookup.insert("DoubleLeftArrow",                 "&#x021D0;"          );
+    valueLookup.insert("DoubleLeftRightArrow",            "&#x021D4;"          );
+    valueLookup.insert("DoubleLeftTee",                   "&#x02AE4;"          );
+    valueLookup.insert("DoubleLongLeftArrow",             "&#x027F8;"          );
+    valueLookup.insert("DoubleLongLeftRightArrow",        "&#x027FA;"          );
+    valueLookup.insert("DoubleLongRightArrow",            "&#x027F9;"          );
+    valueLookup.insert("DoubleRightArrow",                "&#x021D2;"          );
+    valueLookup.insert("DoubleRightTee",                  "&#x022A8;"          );
+    valueLookup.insert("DoubleUpArrow",                   "&#x021D1;"          );
+    valueLookup.insert("DoubleUpDownArrow",               "&#x021D5;"          );
+    valueLookup.insert("DoubleVerticalBar",               "&#x02225;"          );
+    valueLookup.insert("DownArrow",                       "&#x02193;"          );
+    valueLookup.insert("Downarrow",                       "&#x021D3;"          );
+    valueLookup.insert("downarrow",                       "&#x02193;"          );
+    valueLookup.insert("DownArrowUpArrow",                "&#x021F5;"          );
+    valueLookup.insert("downdownarrows",                  "&#x021CA;"          );
+    valueLookup.insert("downharpoonleft",                 "&#x021C3;"          );
+    valueLookup.insert("downharpoonright",                "&#x021C2;"          );
+    valueLookup.insert("DownLeftVector",                  "&#x021BD;"          );
+    valueLookup.insert("DownRightVector",                 "&#x021C1;"          );
+    valueLookup.insert("DownTee",                         "&#x022A4;"          );
+    valueLookup.insert("DownTeeArrow",                    "&#x021A7;"          );
+    valueLookup.insert("drbkarow",                        "&#x02910;"          );
+    valueLookup.insert("Element",                         "&#x02208;"          );
+    valueLookup.insert("emptyset",                        "&#x02205;"          );
+    valueLookup.insert("eqcirc",                          "&#x02256;"          );
+    valueLookup.insert("eqcolon",                         "&#x02255;"          );
+    valueLookup.insert("eqsim",                           "&#x02242;"          );
+    valueLookup.insert("eqslantgtr",                      "&#x02A96;"          );
+    valueLookup.insert("eqslantless",                     "&#x02A95;"          );
+    valueLookup.insert("EqualTilde",                      "&#x02242;"          );
+    valueLookup.insert("Equilibrium",                     "&#x021CC;"          );
+    valueLookup.insert("Exists",                          "&#x02203;"          );
+    valueLookup.insert("expectation",                     "&#x02130;"          );
+    valueLookup.insert("ExponentialE",                    "&#x02147;"          );
+    valueLookup.insert("exponentiale",                    "&#x02147;"          );
+    valueLookup.insert("fallingdotseq",                   "&#x02252;"          );
+    valueLookup.insert("ForAll",                          "&#x02200;"          );
+    valueLookup.insert("Fouriertrf",                      "&#x02131;"          );
+    valueLookup.insert("geq",                             "&#x02265;"          );
+    valueLookup.insert("geqq",                            "&#x02267;"          );
+    valueLookup.insert("geqslant",                        "&#x02A7E;"          );
+    valueLookup.insert("gg",                              "&#x0226B;"          );
+    valueLookup.insert("ggg",                             "&#x022D9;"          );
+    valueLookup.insert("gnapprox",                        "&#x02A8A;"          );
+    valueLookup.insert("gneq",                            "&#x02A88;"          );
+    valueLookup.insert("gneqq",                           "&#x02269;"          );
+    valueLookup.insert("GreaterEqual",                    "&#x02265;"          );
+    valueLookup.insert("GreaterEqualLess",                "&#x022DB;"          );
+    valueLookup.insert("GreaterFullEqual",                "&#x02267;"          );
+    valueLookup.insert("GreaterLess",                     "&#x02277;"          );
+    valueLookup.insert("GreaterSlantEqual",               "&#x02A7E;"          );
+    valueLookup.insert("GreaterTilde",                    "&#x02273;"          );
+    valueLookup.insert("gtrapprox",                       "&#x02A86;"          );
+    valueLookup.insert("gtrdot",                          "&#x022D7;"          );
+    valueLookup.insert("gtreqless",                       "&#x022DB;"          );
+    valueLookup.insert("gtreqqless",                      "&#x02A8C;"          );
+    valueLookup.insert("gtrless",                         "&#x02277;"          );
+    valueLookup.insert("gtrsim",                          "&#x02273;"          );
+    valueLookup.insert("gvertneqq",                       "&#x02269;&#x0FE00;" );
+    valueLookup.insert("Hacek",                           "&#x002C7;"          );
+    valueLookup.insert("hbar",                            "&#x0210F;"          );
+    valueLookup.insert("heartsuit",                       "&#x02665;"          );
+    valueLookup.insert("HilbertSpace",                    "&#x0210B;"          );
+    valueLookup.insert("hksearow",                        "&#x02925;"          );
+    valueLookup.insert("hkswarow",                        "&#x02926;"          );
+    valueLookup.insert("hookleftarrow",                   "&#x021A9;"          );
+    valueLookup.insert("hookrightarrow",                  "&#x021AA;"          );
+    valueLookup.insert("hslash",                          "&#x0210F;"          );
+    valueLookup.insert("HumpDownHump",                    "&#x0224E;"          );
+    valueLookup.insert("HumpEqual",                       "&#x0224F;"          );
+    valueLookup.insert("iiiint",                          "&#x02A0C;"          );
+    valueLookup.insert("iiint",                           "&#x0222D;"          );
+    valueLookup.insert("Im",                              "&#x02111;"          );
+    valueLookup.insert("ImaginaryI",                      "&#x02148;"          );
+    valueLookup.insert("imagline",                        "&#x02110;"          );
+    valueLookup.insert("imagpart",                        "&#x02111;"          );
+    valueLookup.insert("Implies",                         "&#x021D2;"          );
+    valueLookup.insert("in",                              "&#x02208;"          );
+    valueLookup.insert("integers",                        "&#x02124;"          );
+    valueLookup.insert("Integral",                        "&#x0222B;"          );
+    valueLookup.insert("intercal",                        "&#x022BA;"          );
+    valueLookup.insert("Intersection",                    "&#x022C2;"          );
+    valueLookup.insert("intprod",                         "&#x02A3C;"          );
+    valueLookup.insert("InvisibleComma",                  "&#x02063;"          );
+    valueLookup.insert("InvisibleTimes",                  "&#x02062;"          );
+    valueLookup.insert("langle",                          "&#x02329;"          );
+    valueLookup.insert("Laplacetrf",                      "&#x02112;"          );
+    valueLookup.insert("lbrace",                          "&#x0007B;"          );
+    valueLookup.insert("lbrack",                          "&#x0005B;"          );
+    valueLookup.insert("LeftAngleBracket",                "&#x02329;"          );
+    valueLookup.insert("LeftArrow",                       "&#x02190;"          );
+    valueLookup.insert("Leftarrow",                       "&#x021D0;"          );
+    valueLookup.insert("leftarrow",                       "&#x02190;"          );
+    valueLookup.insert("LeftArrowBar",                    "&#x021E4;"          );
+    valueLookup.insert("LeftArrowRightArrow",             "&#x021C6;"          );
+    valueLookup.insert("leftarrowtail",                   "&#x021A2;"          );
+    valueLookup.insert("LeftCeiling",                     "&#x02308;"          );
+    valueLookup.insert("LeftDoubleBracket",               "&#x0301A;"          );
+    valueLookup.insert("LeftDownVector",                  "&#x021C3;"          );
+    valueLookup.insert("LeftFloor",                       "&#x0230A;"          );
+    valueLookup.insert("leftharpoondown",                 "&#x021BD;"          );
+    valueLookup.insert("leftharpoonup",                   "&#x021BC;"          );
+    valueLookup.insert("leftleftarrows",                  "&#x021C7;"          );
+    valueLookup.insert("LeftRightArrow",                  "&#x02194;"          );
+    valueLookup.insert("Leftrightarrow",                  "&#x021D4;"          );
+    valueLookup.insert("leftrightarrow",                  "&#x02194;"          );
+    valueLookup.insert("leftrightarrows",                 "&#x021C6;"          );
+    valueLookup.insert("leftrightharpoons",               "&#x021CB;"          );
+    valueLookup.insert("leftrightsquigarrow",             "&#x021AD;"          );
+    valueLookup.insert("LeftTee",                         "&#x022A3;"          );
+    valueLookup.insert("LeftTeeArrow",                    "&#x021A4;"          );
+    valueLookup.insert("leftthreetimes",                  "&#x022CB;"          );
+    valueLookup.insert("LeftTriangle",                    "&#x022B2;"          );
+    valueLookup.insert("LeftTriangleEqual",               "&#x022B4;"          );
+    valueLookup.insert("LeftUpVector",                    "&#x021BF;"          );
+    valueLookup.insert("LeftVector",                      "&#x021BC;"          );
+    valueLookup.insert("leq",                             "&#x02264;"          );
+    valueLookup.insert("leqq",                            "&#x02266;"          );
+    valueLookup.insert("leqslant",                        "&#x02A7D;"          );
+    valueLookup.insert("lessapprox",                      "&#x02A85;"          );
+    valueLookup.insert("lessdot",                         "&#x022D6;"          );
+    valueLookup.insert("lesseqgtr",                       "&#x022DA;"          );
+    valueLookup.insert("lesseqqgtr",                      "&#x02A8B;"          );
+    valueLookup.insert("LessEqualGreater",                "&#x022DA;"          );
+    valueLookup.insert("LessFullEqual",                   "&#x02266;"          );
+    valueLookup.insert("LessGreater",                     "&#x02276;"          );
+    valueLookup.insert("lessgtr",                         "&#x02276;"          );
+    valueLookup.insert("lesssim",                         "&#x02272;"          );
+    valueLookup.insert("LessSlantEqual",                  "&#x02A7D;"          );
+    valueLookup.insert("LessTilde",                       "&#x02272;"          );
+    valueLookup.insert("ll",                              "&#x0226A;"          );
+    valueLookup.insert("llcorner",                        "&#x0231E;"          );
+    valueLookup.insert("Lleftarrow",                      "&#x021DA;"          );
+    valueLookup.insert("lmoustache",                      "&#x023B0;"          );
+    valueLookup.insert("lnapprox",                        "&#x02A89;"          );
+    valueLookup.insert("lneq",                            "&#x02A87;"          );
+    valueLookup.insert("lneqq",                           "&#x02268;"          );
+    valueLookup.insert("LongLeftArrow",                   "&#x027F5;"          );
+    valueLookup.insert("Longleftarrow",                   "&#x027F8;"          );
+    valueLookup.insert("longleftarrow",                   "&#x027F5;"          );
+    valueLookup.insert("LongLeftRightArrow",              "&#x027F7;"          );
+    valueLookup.insert("Longleftrightarrow",              "&#x027FA;"          );
+    valueLookup.insert("longleftrightarrow",              "&#x027F7;"          );
+    valueLookup.insert("longmapsto",                      "&#x027FC;"          );
+    valueLookup.insert("LongRightArrow",                  "&#x027F6;"          );
+    valueLookup.insert("Longrightarrow",                  "&#x027F9;"          );
+    valueLookup.insert("longrightarrow",                  "&#x027F6;"          );
+    valueLookup.insert("looparrowleft",                   "&#x021AB;"          );
+    valueLookup.insert("looparrowright",                  "&#x021AC;"          );
+    valueLookup.insert("LowerLeftArrow",                  "&#x02199;"          );
+    valueLookup.insert("LowerRightArrow",                 "&#x02198;"          );
+    valueLookup.insert("lozenge",                         "&#x025CA;"          );
+    valueLookup.insert("lrcorner",                        "&#x0231F;"          );
+    valueLookup.insert("Lsh",                             "&#x021B0;"          );
+    valueLookup.insert("lvertneqq",                       "&#x02268;&#x0FE00;" );
+    valueLookup.insert("maltese",                         "&#x02720;"          );
+    valueLookup.insert("mapsto",                          "&#x021A6;"          );
+    valueLookup.insert("measuredangle",                   "&#x02221;"          );
+    valueLookup.insert("Mellintrf",                       "&#x02133;"          );
+    valueLookup.insert("MinusPlus",                       "&#x02213;"          );
+    valueLookup.insert("mp",                              "&#x02213;"          );
+    valueLookup.insert("multimap",                        "&#x022B8;"          );
+    valueLookup.insert("napprox",                         "&#x02249;"          );
+    valueLookup.insert("natural",                         "&#x0266E;"          );
+    valueLookup.insert("naturals",                        "&#x02115;"          );
+    valueLookup.insert("nearrow",                         "&#x02197;"          );
+    valueLookup.insert("NegativeMediumSpace",             "&#x0200B;"          );
+    valueLookup.insert("NegativeThickSpace",              "&#x0200B;"          );
+    valueLookup.insert("NegativeThinSpace",               "&#x0200B;"          );
+    valueLookup.insert("NegativeVeryThinSpace",           "&#x0200B;"          );
+    valueLookup.insert("NestedGreaterGreater",            "&#x0226B;"          );
+    valueLookup.insert("NestedLessLess",                  "&#x0226A;"          );
+    valueLookup.insert("nexists",                         "&#x02204;"          );
+    valueLookup.insert("ngeq",                            "&#x02271;"          );
+    valueLookup.insert("ngeqq",                           "&#x02267;&#x00338;" );
+    valueLookup.insert("ngeqslant",                       "&#x02A7E;&#x00338;" );
+    valueLookup.insert("ngtr",                            "&#x0226F;"          );
+    valueLookup.insert("nLeftarrow",                      "&#x021CD;"          );
+    valueLookup.insert("nleftarrow",                      "&#x0219A;"          );
+    valueLookup.insert("nLeftrightarrow",                 "&#x021CE;"          );
+    valueLookup.insert("nleftrightarrow",                 "&#x021AE;"          );
+    valueLookup.insert("nleq",                            "&#x02270;"          );
+    valueLookup.insert("nleqq",                           "&#x02266;&#x00338;" );
+    valueLookup.insert("nleqslant",                       "&#x02A7D;&#x00338;" );
+    valueLookup.insert("nless",                           "&#x0226E;"          );
+    valueLookup.insert("NonBreakingSpace",                "&#x000A0;"          );
+    valueLookup.insert("NotCongruent",                    "&#x02262;"          );
+    valueLookup.insert("NotDoubleVerticalBar",            "&#x02226;"          );
+    valueLookup.insert("NotElement",                      "&#x02209;"          );
+    valueLookup.insert("NotEqual",                        "&#x02260;"          );
+    valueLookup.insert("NotEqualTilde",                   "&#x02242;&#x00338;" );
+    valueLookup.insert("NotExists",                       "&#x02204;"          );
+    valueLookup.insert("NotGreater",                      "&#x0226F;"          );
+    valueLookup.insert("NotGreaterEqual",                 "&#x02271;"          );
+    valueLookup.insert("NotGreaterFullEqual",             "&#x02266;&#x00338;" );
+    valueLookup.insert("NotGreaterGreater",               "&#x0226B;&#x00338;" );
+    valueLookup.insert("NotGreaterLess",                  "&#x02279;"          );
+    valueLookup.insert("NotGreaterSlantEqual",            "&#x02A7E;&#x00338;" );
+    valueLookup.insert("NotGreaterTilde",                 "&#x02275;"          );
+    valueLookup.insert("NotHumpDownHump",                 "&#x0224E;&#x00338;" );
+    valueLookup.insert("NotLeftTriangle",                 "&#x022EA;"          );
+    valueLookup.insert("NotLeftTriangleEqual",            "&#x022EC;"          );
+    valueLookup.insert("NotLess",                         "&#x0226E;"          );
+    valueLookup.insert("NotLessEqual",                    "&#x02270;"          );
+    valueLookup.insert("NotLessGreater",                  "&#x02278;"          );
+    valueLookup.insert("NotLessLess",                     "&#x0226A;&#x00338;" );
+    valueLookup.insert("NotLessSlantEqual",               "&#x02A7D;&#x00338;" );
+    valueLookup.insert("NotLessTilde",                    "&#x02274;"          );
+    valueLookup.insert("NotPrecedes",                     "&#x02280;"          );
+    valueLookup.insert("NotPrecedesEqual",                "&#x02AAF;&#x00338;" );
+    valueLookup.insert("NotPrecedesSlantEqual",           "&#x022E0;"          );
+    valueLookup.insert("NotReverseElement",               "&#x0220C;"          );
+    valueLookup.insert("NotRightTriangle",                "&#x022EB;"          );
+    valueLookup.insert("NotRightTriangleEqual",           "&#x022ED;"          );
+    valueLookup.insert("NotSquareSubsetEqual",            "&#x022E2;"          );
+    valueLookup.insert("NotSquareSupersetEqual",          "&#x022E3;"          );
+    valueLookup.insert("NotSubset",                       "&#x02282;&#x020D2;" );
+    valueLookup.insert("NotSubsetEqual",                  "&#x02288;"          );
+    valueLookup.insert("NotSucceeds",                     "&#x02281;"          );
+    valueLookup.insert("NotSucceedsEqual",                "&#x02AB0;&#x00338;" );
+    valueLookup.insert("NotSucceedsSlantEqual",           "&#x022E1;"          );
+    valueLookup.insert("NotSuperset",                     "&#x02283;&#x020D2;" );
+    valueLookup.insert("NotSupersetEqual",                "&#x02289;"          );
+    valueLookup.insert("NotTilde",                        "&#x02241;"          );
+    valueLookup.insert("NotTildeEqual",                   "&#x02244;"          );
+    valueLookup.insert("NotTildeFullEqual",               "&#x02247;"          );
+    valueLookup.insert("NotTildeTilde",                   "&#x02249;"          );
+    valueLookup.insert("NotVerticalBar",                  "&#x02224;"          );
+    valueLookup.insert("nparallel",                       "&#x02226;"          );
+    valueLookup.insert("nprec",                           "&#x02280;"          );
+    valueLookup.insert("npreceq",                         "&#x02AAF;&#x00338;" );
+    valueLookup.insert("nRightarrow",                     "&#x021CF;"          );
+    valueLookup.insert("nrightarrow",                     "&#x0219B;"          );
+    valueLookup.insert("nshortmid",                       "&#x02224;"          );
+    valueLookup.insert("nshortparallel",                  "&#x02226;"          );
+    valueLookup.insert("nsimeq",                          "&#x02244;"          );
+    valueLookup.insert("nsubset",                         "&#x02282;&#x020D2;" );
+    valueLookup.insert("nsubseteq",                       "&#x02288;"          );
+    valueLookup.insert("nsubseteqq",                      "&#x02AC5;&#x0338;"  );
+    valueLookup.insert("nsucc",                           "&#x02281;"          );
+    valueLookup.insert("nsucceq",                         "&#x02AB0;&#x00338;" );
+    valueLookup.insert("nsupset",                         "&#x02283;&#x020D2;" );
+    valueLookup.insert("nsupseteq",                       "&#x02289;"          );
+    valueLookup.insert("nsupseteqq",                      "&#x02AC6;&#x0338;"  );
+    valueLookup.insert("ntriangleleft",                   "&#x022EA;"          );
+    valueLookup.insert("ntrianglelefteq",                 "&#x022EC;"          );
+    valueLookup.insert("ntriangleright",                  "&#x022EB;"          );
+    valueLookup.insert("ntrianglerighteq",                "&#x022ED;"          );
+    valueLookup.insert("nwarrow",                         "&#x02196;"          );
+    valueLookup.insert("oint",                            "&#x0222E;"          );
+    valueLookup.insert("OpenCurlyDoubleQuote",            "&#x0201C;"          );
+    valueLookup.insert("OpenCurlyQuote",                  "&#x02018;"          );
+    valueLookup.insert("orderof",                         "&#x02134;"          );
+    valueLookup.insert("parallel",                        "&#x02225;"          );
+    valueLookup.insert("PartialD",                        "&#x02202;"          );
+    valueLookup.insert("pitchfork",                       "&#x022D4;"          );
+    valueLookup.insert("PlusMinus",                       "&#x000B1;"          );
+    valueLookup.insert("pm",                              "&#x000B1;"          );
+    valueLookup.insert("Poincareplane",                   "&#x0210C;"          );
+    valueLookup.insert("prec",                            "&#x0227A;"          );
+    valueLookup.insert("precapprox",                      "&#x02AB7;"          );
+    valueLookup.insert("preccurlyeq",                     "&#x0227C;"          );
+    valueLookup.insert("Precedes",                        "&#x0227A;"          );
+    valueLookup.insert("PrecedesEqual",                   "&#x02AAF;"          );
+    valueLookup.insert("PrecedesSlantEqual",              "&#x0227C;"          );
+    valueLookup.insert("PrecedesTilde",                   "&#x0227E;"          );
+    valueLookup.insert("preceq",                          "&#x02AAF;"          );
+    valueLookup.insert("precnapprox",                     "&#x02AB9;"          );
+    valueLookup.insert("precneqq",                        "&#x02AB5;"          );
+    valueLookup.insert("precnsim",                        "&#x022E8;"          );
+    valueLookup.insert("precsim",                         "&#x0227E;"          );
+    valueLookup.insert("primes",                          "&#x02119;"          );
+    valueLookup.insert("Proportion",                      "&#x02237;"          );
+    valueLookup.insert("Proportional",                    "&#x0221D;"          );
+    valueLookup.insert("propto",                          "&#x0221D;"          );
+    valueLookup.insert("quaternions",                     "&#x0210D;"          );
+    valueLookup.insert("questeq",                         "&#x0225F;"          );
+    valueLookup.insert("rangle",                          "&#x0232A;"          );
+    valueLookup.insert("rationals",                       "&#x0211A;"          );
+    valueLookup.insert("rbrace",                          "&#x0007D;"          );
+    valueLookup.insert("rbrack",                          "&#x0005D;"          );
+    valueLookup.insert("Re",                              "&#x0211C;"          );
+    valueLookup.insert("realine",                         "&#x0211B;"          );
+    valueLookup.insert("realpart",                        "&#x0211C;"          );
+    valueLookup.insert("reals",                           "&#x0211D;"          );
+    valueLookup.insert("ReverseElement",                  "&#x0220B;"          );
+    valueLookup.insert("ReverseEquilibrium",              "&#x021CB;"          );
+    valueLookup.insert("ReverseUpEquilibrium",            "&#x0296F;"          );
+    valueLookup.insert("RightAngleBracket",               "&#x0232A;"          );
+    valueLookup.insert("RightArrow",                      "&#x02192;"          );
+    valueLookup.insert("Rightarrow",                      "&#x021D2;"          );
+    valueLookup.insert("rightarrow",                      "&#x02192;"          );
+    valueLookup.insert("RightArrowBar",                   "&#x021E5;"          );
+    valueLookup.insert("RightArrowLeftArrow",             "&#x021C4;"          );
+    valueLookup.insert("rightarrowtail",                  "&#x021A3;"          );
+    valueLookup.insert("RightCeiling",                    "&#x02309;"          );
+    valueLookup.insert("RightDoubleBracket",              "&#x0301B;"          );
+    valueLookup.insert("RightDownVector",                 "&#x021C2;"          );
+    valueLookup.insert("RightFloor",                      "&#x0230B;"          );
+    valueLookup.insert("rightharpoondown",                "&#x021C1;"          );
+    valueLookup.insert("rightharpoonup",                  "&#x021C0;"          );
+    valueLookup.insert("rightleftarrows",                 "&#x021C4;"          );
+    valueLookup.insert("rightleftharpoons",               "&#x021CC;"          );
+    valueLookup.insert("rightrightarrows",                "&#x021C9;"          );
+    valueLookup.insert("rightsquigarrow",                 "&#x0219D;"          );
+    valueLookup.insert("RightTee",                        "&#x022A2;"          );
+    valueLookup.insert("RightTeeArrow",                   "&#x021A6;"          );
+    valueLookup.insert("rightthreetimes",                 "&#x022CC;"          );
+    valueLookup.insert("RightTriangle",                   "&#x022B3;"          );
+    valueLookup.insert("RightTriangleEqual",              "&#x022B5;"          );
+    valueLookup.insert("RightUpVector",                   "&#x021BE;"          );
+    valueLookup.insert("RightVector",                     "&#x021C0;"          );
+    valueLookup.insert("risingdotseq",                    "&#x02253;"          );
+    valueLookup.insert("rmoustache",                      "&#x023B1;"          );
+    valueLookup.insert("Rrightarrow",                     "&#x021DB;"          );
+    valueLookup.insert("Rsh",                             "&#x021B1;"          );
+    valueLookup.insert("searrow",                         "&#x02198;"          );
+    valueLookup.insert("setminus",                        "&#x02216;"          );
+    valueLookup.insert("ShortDownArrow",                  "&#x02193;"          );
+    valueLookup.insert("ShortLeftArrow",                  "&#x02190;"          );
+    valueLookup.insert("shortmid",                        "&#x02223;"          );
+    valueLookup.insert("shortparallel",                   "&#x02225;"          );
+    valueLookup.insert("ShortRightArrow",                 "&#x02192;"          );
+    valueLookup.insert("ShortUpArrow",                    "&#x02191;"          );
+    valueLookup.insert("simeq",                           "&#x02243;"          );
+    valueLookup.insert("SmallCircle",                     "&#x02218;"          );
+    valueLookup.insert("smallsetminus",                   "&#x02216;"          );
+    valueLookup.insert("spadesuit",                       "&#x02660;"          );
+    valueLookup.insert("Sqrt",                            "&#x0221A;"          );
+    valueLookup.insert("sqsubset",                        "&#x0228F;"          );
+    valueLookup.insert("sqsubseteq",                      "&#x02291;"          );
+    valueLookup.insert("sqsupset",                        "&#x02290;"          );
+    valueLookup.insert("sqsupseteq",                      "&#x02292;"          );
+    valueLookup.insert("Square",                          "&#x025A1;"          );
+    valueLookup.insert("SquareIntersection",              "&#x02293;"          );
+    valueLookup.insert("SquareSubset",                    "&#x0228F;"          );
+    valueLookup.insert("SquareSubsetEqual",               "&#x02291;"          );
+    valueLookup.insert("SquareSuperset",                  "&#x02290;"          );
+    valueLookup.insert("SquareSupersetEqual",             "&#x02292;"          );
+    valueLookup.insert("SquareUnion",                     "&#x02294;"          );
+    valueLookup.insert("Star",                            "&#x022C6;"          );
+    valueLookup.insert("straightepsilon",                 "&#x003B5;"          );
+    valueLookup.insert("straightphi",                     "&#x003D5;"          );
+    valueLookup.insert("Subset",                          "&#x022D0;"          );
+    valueLookup.insert("subset",                          "&#x02282;"          );
+    valueLookup.insert("subseteq",                        "&#x02286;"          );
+    valueLookup.insert("subseteqq",                       "&#x02AC5;"          );
+    valueLookup.insert("SubsetEqual",                     "&#x02286;"          );
+    valueLookup.insert("subsetneq",                       "&#x0228A;"          );
+    valueLookup.insert("subsetneqq",                      "&#x02ACB;"          );
+    valueLookup.insert("succ",                            "&#x0227B;"          );
+    valueLookup.insert("succapprox",                      "&#x02AB8;"          );
+    valueLookup.insert("succcurlyeq",                     "&#x0227D;"          );
+    valueLookup.insert("Succeeds",                        "&#x0227B;"          );
+    valueLookup.insert("SucceedsEqual",                   "&#x02AB0;"          );
+    valueLookup.insert("SucceedsSlantEqual",              "&#x0227D;"          );
+    valueLookup.insert("SucceedsTilde",                   "&#x0227F;"          );
+    valueLookup.insert("succeq",                          "&#x02AB0;"          );
+    valueLookup.insert("succnapprox",                     "&#x02ABA;"          );
+    valueLookup.insert("succneqq",                        "&#x02AB6;"          );
+    valueLookup.insert("succnsim",                        "&#x022E9;"          );
+    valueLookup.insert("succsim",                         "&#x0227F;"          );
+    valueLookup.insert("SuchThat",                        "&#x0220B;"          );
+    valueLookup.insert("Sum",                             "&#x02211;"          );
+    valueLookup.insert("Superset",                        "&#x02283;"          );
+    valueLookup.insert("SupersetEqual",                   "&#x02287;"          );
+    valueLookup.insert("Supset",                          "&#x022D1;"          );
+    valueLookup.insert("supset",                          "&#x02283;"          );
+    valueLookup.insert("supseteq",                        "&#x02287;"          );
+    valueLookup.insert("supseteqq",                       "&#x02AC6;"          );
+    valueLookup.insert("supsetneq",                       "&#x0228B;"          );
+    valueLookup.insert("supsetneqq",                      "&#x02ACC;"          );
+    valueLookup.insert("swarrow",                         "&#x02199;"          );
+    valueLookup.insert("Therefore",                       "&#x02234;"          );
+    valueLookup.insert("therefore",                       "&#x02234;"          );
+    valueLookup.insert("thickapprox",                     "&#x02248;"          );
+    valueLookup.insert("thicksim",                        "&#x0223C;"          );
+    valueLookup.insert("ThinSpace",                       "&#x02009;"          );
+    valueLookup.insert("Tilde",                           "&#x0223C;"          );
+    valueLookup.insert("TildeEqual",                      "&#x02243;"          );
+    valueLookup.insert("TildeFullEqual",                  "&#x02245;"          );
+    valueLookup.insert("TildeTilde",                      "&#x02248;"          );
+    valueLookup.insert("toea",                            "&#x02928;"          );
+    valueLookup.insert("tosa",                            "&#x02929;"          );
+    valueLookup.insert("triangle",                        "&#x025B5;"          );
+    valueLookup.insert("triangledown",                    "&#x025BF;"          );
+    valueLookup.insert("triangleleft",                    "&#x025C3;"          );
+    valueLookup.insert("trianglelefteq",                  "&#x022B4;"          );
+    valueLookup.insert("triangleq",                       "&#x0225C;"          );
+    valueLookup.insert("triangleright",                   "&#x025B9;"          );
+    valueLookup.insert("trianglerighteq",                 "&#x022B5;"          );
+    valueLookup.insert("TripleDot",                       "&#x020DB;"          );
+    valueLookup.insert("twoheadleftarrow",                "&#x0219E;"          );
+    valueLookup.insert("twoheadrightarrow",               "&#x021A0;"          );
+    valueLookup.insert("ulcorner",                        "&#x0231C;"          );
+    valueLookup.insert("Union",                           "&#x022C3;"          );
+    valueLookup.insert("UnionPlus",                       "&#x0228E;"          );
+    valueLookup.insert("UpArrow",                         "&#x02191;"          );
+    valueLookup.insert("Uparrow",                         "&#x021D1;"          );
+    valueLookup.insert("uparrow",                         "&#x02191;"          );
+    valueLookup.insert("UpArrowDownArrow",                "&#x021C5;"          );
+    valueLookup.insert("UpDownArrow",                     "&#x02195;"          );
+    valueLookup.insert("Updownarrow",                     "&#x021D5;"          );
+    valueLookup.insert("updownarrow",                     "&#x02195;"          );
+    valueLookup.insert("UpEquilibrium",                   "&#x0296E;"          );
+    valueLookup.insert("upharpoonleft",                   "&#x021BF;"          );
+    valueLookup.insert("upharpoonright",                  "&#x021BE;"          );
+    valueLookup.insert("UpperLeftArrow",                  "&#x02196;"          );
+    valueLookup.insert("UpperRightArrow",                 "&#x02197;"          );
+    valueLookup.insert("upsilon",                         "&#x003C5;"          );
+    valueLookup.insert("UpTee",                           "&#x022A5;"          );
+    valueLookup.insert("UpTeeArrow",                      "&#x021A5;"          );
+    valueLookup.insert("upuparrows",                      "&#x021C8;"          );
+    valueLookup.insert("urcorner",                        "&#x0231D;"          );
+    valueLookup.insert("varepsilon",                      "&#x0025B;"          );
+    valueLookup.insert("varkappa",                        "&#x003F0;"          );
+    valueLookup.insert("varnothing",                      "&#x02205;"          );
+    valueLookup.insert("varphi",                          "&#x003C6;"          );
+    valueLookup.insert("varpi",                           "&#x003D6;"          );
+    valueLookup.insert("varpropto",                       "&#x0221D;"          );
+    valueLookup.insert("varrho",                          "&#x003F1;"          );
+    valueLookup.insert("varsigma",                        "&#x003C2;"          );
+    valueLookup.insert("varsubsetneq",                    "&#x0228A;&#x0FE00;" );
+    valueLookup.insert("varsubsetneqq",                   "&#x02ACB;&#x0FE00;" );
+    valueLookup.insert("varsupsetneq",                    "&#x0228B;&#x0FE00;" );
+    valueLookup.insert("varsupsetneqq",                   "&#x02ACC;&#x0FE00;" );
+    valueLookup.insert("vartheta",                        "&#x003D1;"          );
+    valueLookup.insert("vartriangleleft",                 "&#x022B2;"          );
+    valueLookup.insert("vartriangleright",                "&#x022B3;"          );
+    valueLookup.insert("Vee",                             "&#x022C1;"          );
+    valueLookup.insert("vee",                             "&#x02228;"          );
+    valueLookup.insert("Vert",                            "&#x02016;"          );
+    valueLookup.insert("vert",                            "&#x0007C;"          );
+    valueLookup.insert("VerticalBar",                     "&#x02223;"          );
+    valueLookup.insert("VerticalTilde",                   "&#x02240;"          );
+    valueLookup.insert("VeryThinSpace",                   "&#x0200A;"          );
+    valueLookup.insert("Wedge",                           "&#x022C0;"          );
+    valueLookup.insert("wedge",                           "&#x02227;"          );
+    valueLookup.insert("wp",                              "&#x02118;"          );
+    valueLookup.insert("wr",                              "&#x02240;"          );
+    valueLookup.insert("zeetrf",                          "&#x02128;"          );
+}
 
 static QString mmlDecodeEntityValue( QString literal )
 {
@@ -2031,12 +2100,10 @@ QString QwtMMLEntityTable::entities(QString text, uint &prefix_lines)
     const QwtMMLEntityTable::Spec *entity = mml_entity_data;
 
     foreach (const QString &item, list) {
-        entity = mml_entity_data;
-        for ( ; entity->name != 0; ++entity ) {
-            if (QString(entity->name).compare(item) == 0) {
-                result += "\t<!ENTITY " + QString( entity->name ) + " \"" + entity->value + "\">\n";
-                break;
-            }
+        QHash<QString, QString>::const_iterator i = valueLookup.find(item);
+        while (i != hash.end() && i.key() == item) {
+            result += "\t<!ENTITY " + QString( item ) + " \"" + i.value() + "\">\n";
+            ++i;
         }
     }
 
