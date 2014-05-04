@@ -4010,20 +4010,11 @@ static const QwtMmlOperSpec *mmlFindOperSpec( const QString &text,
     {
         // Try to find other names for the operator represented by text.
 
-
-#warning region to change (needs a QMultiHash as returnvalue of the search function)
-
-        const QwtMMLEntityTable::Spec ent = 0;
-        for ( ;; )
-        {
-            ent = mmlEntityTable.search( text, ent );
-            if ( ent.name.isEmpty() )
-                break;
-            name_list.append( '&' + QString( ent->name ) + ';' );
-            ++ent;
+        QList<QString> nameList;
+        nameList = mmlEntityTable.search(text);
+        foreach (const QString &name, nameList) {
+            name_list.append( '&' + QString( name ) + ';' );
         }
-
-#warning region to change end
 
         result = _mmlFindOperSpec( name_list, form );
     }

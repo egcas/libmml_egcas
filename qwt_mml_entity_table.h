@@ -57,27 +57,23 @@
 #include <qstring.h>
 #include <QHash>
 
+/**
+ * @brief The QwtMMLEntityTable class implements some hash lists for searching
+ * for MathMl spec names and their character representation
+ */
 class QwtMMLEntityTable
 {
 public:
     QwtMMLEntityTable();
     virtual ~QwtMMLEntityTable() {}
 
-    struct Spec
-    {
-        const QString name;
-        const QString value;
-    };
-
     QString entities(QString text, uint &prefix_lines);
-    const Spec search(const QString &value) const;
+    QList<QString> search(const QString &value) const;
 private:
-    static bool alreadyInitialized;
-    static QHash<QString,QString> valueLookup;
-    static QHash<QString,QString> nameLookup;
-    static void init(void);
-    static void initValueLookup(void);
-    static void initNameLookup(void);
+    static QHash<QString, QString> valueLookup;
+    static QMultiHash<QString, QString> nameLookup;
+    static QHash<QString, QString> initValueLookup(void);
+    static QHash<QString, QString> initNameLookup(void);
 
 };
 
