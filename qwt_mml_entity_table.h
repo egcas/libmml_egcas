@@ -66,8 +66,18 @@ class QwtMMLEntityTable
 public:
     QwtMMLEntityTable();
     virtual ~QwtMMLEntityTable() {}
-
+    /**
+     * @brief setup the document with all character entities in the mathml code
+     * @param text the mathml text
+     * @param prefix_lines the number of prefix lines
+     * @return the mathml code with prefixed xml lines (entities)
+     */
     QString entities(QString text, uint &prefix_lines);
+    /**
+     * @brief lookup the name of the character entitiy given
+     * @param value character entity as value representation
+     * @return the character entity name found
+     */
     QList<QString> search(const QString &value) const;
 private:
     static QHash<QString, QString> valueLookup;
