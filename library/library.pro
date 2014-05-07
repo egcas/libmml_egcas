@@ -3,7 +3,8 @@ TARGET   = egcas
 
 CONFIG += qt 
 CONFIG += warn_on
-CONFIG += sharedlib
+#CONFIG += sharedlib
+CONFIG += staticlib
 
 QT += xml
 QT += widgets
