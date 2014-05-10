@@ -30,7 +30,7 @@ MainWindow::MainWindow()
     for ( int i = 8; i <= 128; i += 2 )
         fontSizes << QString::number( i );
     comboFontSizes->addItems( fontSizes );
-    comboFontSizes->setCurrentIndex( 32 );
+    comboFontSizes->setCurrentIndex( 5 );
     toolBar->addWidget( comboFontSizes );
 
     QCheckBox *checkTransformation = new QCheckBox( toolBar );
