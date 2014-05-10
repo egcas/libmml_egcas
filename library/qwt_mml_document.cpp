@@ -2357,10 +2357,13 @@ int QwtMmlRootBaseNode::scriptlevel( const QwtMmlNode *child ) const
 QRectF QwtMmlRootBaseNode::baseRect() const
 {
     QwtMmlNode *b = base();
-    if ( b == 0 )
-        return QRectF( 0.0, 0.0, 1.0, 1.0 );
-    else
+    if ( b == 0 ) { // in case of a sqrt without an element or with an unvisible element, choose to render the rect of a "0"
+        QRectF br = QFontMetricsF( font() ).tightBoundingRect( "0" );
+        br.translate( 0.0, basePos() );
+        return br;
+    } else {
         return b->myRect();
+    }
 }
 
 QRectF QwtMmlRootBaseNode::radicalRect() const
