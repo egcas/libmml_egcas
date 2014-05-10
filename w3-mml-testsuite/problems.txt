@@ -1,0 +1,11 @@
+the following examples don't work perfectly so far:
+mpaddedAwith6.mml
+mphantomSinheritance5.mml
+mfracSscriptlevel15.mml
+mfracSscriptlevel14.mml
+mfracBalign16.mml
+mfencedSfonts9.mml
+merrorB3.mml
+rec-enclose3.mml
+rec-enclose2.mml
+rec-enclose1.mml
