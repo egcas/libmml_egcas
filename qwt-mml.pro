@@ -6,3 +6,7 @@ SUBDIRS = library test
 
 #QT += xml
 #QT += widgets
+
+
+CODECFORTR = UTF-8
+CODECFORSRC = UTF-8

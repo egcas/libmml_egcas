@@ -20,3 +20,12 @@ HEADERS = \
 SOURCES = \
 	qwt_mml_document.cpp \
         qwt_mml_entity_table.cpp
+
+        
+headers.path = /usr/local/include/libegcas/
+headers.files = qwt_mml_document.h \
+		qwt_mml_entity_table.h
+INSTALLS += headers 
+
+target.path = /lib
+INSTALLS += target
