@@ -1256,6 +1256,9 @@ QwtMmlDocument::QwtMmlDocument()
     m_doublestruck_font_name = "Doublestruck";
     m_base_font_point_size = 16;
 
+    m_foreground_color = Qt::black;
+    m_background_color = Qt::transparent;
+
 #ifdef MML_TEST
     m_foreground_color = Qt::black;
     m_background_color = Qt::white;

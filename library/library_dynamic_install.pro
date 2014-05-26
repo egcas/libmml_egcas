@@ -27,5 +27,5 @@ headers.files = qwt_mml_document.h \
 		qwt_mml_entity_table.h
 INSTALLS += headers 
 
-target.path = /lib
+target.path = /usr/local/lib
 INSTALLS += target
