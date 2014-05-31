@@ -83,12 +83,12 @@ public:
     bool setContent( const QString &text, QString *errorMsg = 0,
                      int *errorLine = 0, int *errorColumn = 0 );
     void paint( QPainter *, const QPointF &pos ) const;
-    QSizeF size() const;
+    QSizeF size();
 
     QString fontName( MmlFont type ) const;
     void setFontName( MmlFont type, const QString &name );
 
-    qreal baseFontPointSize() const;
+    qreal baseFontPointSize();
     void setBaseFontPointSize( qreal size );
 
     QColor foregroundColor() const;
@@ -97,13 +97,12 @@ public:
     QColor backgroundColor() const;
     void setBackgroundColor( const QColor &color );
 
-#ifdef MML_TEST
     bool drawFrames() const;
     void setDrawFrames( bool );
-#endif
 
 private:
-    QwtMmlDocument *m_doc;
+    QwtMmlDocument *m_doc;      ///< pointer to math Ml formula
+    QSizeF m_size;      ///< this improves speed when calculating the bounding box algorithm while painting
 };
 
 #endif

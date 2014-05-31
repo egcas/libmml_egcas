@@ -190,10 +190,8 @@ public:
     QColor backgroundColor() const { return m_background_color; }
     void setBackgroundColor( const QColor &color ) { m_background_color = color; }
 
-#ifdef MML_TEST
     bool drawFrames() const { return m_draw_frames; }
     void setDrawFrames( const bool &drawFrames ) { m_draw_frames = drawFrames; }
-#endif
 
 private:
     void _dump( const QwtMmlNode *node, const QString &indent ) const;
@@ -221,9 +219,7 @@ private:
     qreal m_base_font_point_size;
     QColor m_foreground_color;
     QColor m_background_color;
-#ifdef MML_TEST
     bool m_draw_frames;
-#endif
 };
 
 class QwtMmlNode : public QwtMml
@@ -1259,11 +1255,7 @@ QwtMmlDocument::QwtMmlDocument()
     m_foreground_color = Qt::black;
     m_background_color = Qt::transparent;
 
-#ifdef MML_TEST
-    m_foreground_color = Qt::black;
-    m_background_color = Qt::white;
     m_draw_frames = false;
-#endif
 }
 
 QwtMmlDocument::~QwtMmlDocument()
@@ -2182,8 +2174,6 @@ void QwtMmlNode::paint(
 
 void QwtMmlNode::paintSymbol( QPainter *painter, qreal, qreal ) const
 {
-
-#ifdef MML_TEST
     QRectF d_rect = deviceRect();
     if ( m_document->drawFrames() && d_rect.isValid() )
     {
@@ -2204,9 +2194,6 @@ void QwtMmlNode::paintSymbol( QPainter *painter, qreal, qreal ) const
 
         painter->restore();
     }
-#else
-    Q_UNUSED( painter )
-#endif
 }
 
 void QwtMmlNode::stretch()
@@ -4347,9 +4334,9 @@ static QFont mmlInterpretMathSize( const QString &value, QFont &fn, qreal em, qr
 /*!
   Constructs an empty MML document.
 */
-QwtMathMLDocument::QwtMathMLDocument()
+QwtMathMLDocument::QwtMathMLDocument() : m_size(QSizeF(0.0, 0.0))
 {
-    m_doc = new QwtMmlDocument;
+        m_doc = new QwtMmlDocument;
 }
 
 /*!
@@ -4357,7 +4344,7 @@ QwtMathMLDocument::QwtMathMLDocument()
 */
 QwtMathMLDocument::~QwtMathMLDocument()
 {
-    delete m_doc;
+        delete m_doc;
 }
 
 /*!
@@ -4365,7 +4352,8 @@ QwtMathMLDocument::~QwtMathMLDocument()
 */
 void QwtMathMLDocument::clear()
 {
-    m_doc->clear();
+        m_doc->clear();
+        m_size = QSizeF(0.0, 0.0);
 }
 
 /*!
@@ -4383,7 +4371,8 @@ void QwtMathMLDocument::clear()
 bool QwtMathMLDocument::setContent( const QString &text, QString *errorMsg,
                                     int *errorLine, int *errorColumn )
 {
-    return m_doc->setContent( text, errorMsg, errorLine, errorColumn );
+        m_size = QSizeF(0.0, 0.0);
+        return m_doc->setContent( text, errorMsg, errorLine, errorColumn );
 }
 
 /*!
@@ -4391,15 +4380,18 @@ bool QwtMathMLDocument::setContent( const QString &text, QString *errorMsg,
 */
 void QwtMathMLDocument::paint( QPainter *painter, const QPointF &pos ) const
 {
-    m_doc->paint( painter, pos );
+        m_doc->paint( painter, pos );
 }
 
 /*!
     Returns the size of this MML document, as rendered, in pixels.
 */
-QSizeF QwtMathMLDocument::size() const
+QSizeF QwtMathMLDocument::size()
 {
-    return m_doc->size();
+        if (m_size.isNull())
+                m_size = m_doc->size();
+
+        return m_size;
 }
 
 /*!
@@ -4409,7 +4401,7 @@ QSizeF QwtMathMLDocument::size() const
 */
 QString QwtMathMLDocument::fontName( QwtMathMLDocument::MmlFont type ) const
 {
-    return m_doc->fontName( type );
+        return m_doc->fontName( type );
 }
 
 /*!
@@ -4420,11 +4412,13 @@ QString QwtMathMLDocument::fontName( QwtMathMLDocument::MmlFont type ) const
 void QwtMathMLDocument::setFontName( QwtMathMLDocument::MmlFont type,
                                      const QString &name )
 {
-    if ( name == m_doc->fontName( type ) )
+        m_size = QSizeF(0.0, 0.0);
+
+        if ( name == m_doc->fontName( type ) )
         return;
 
-    m_doc->setFontName( type, name );
-    m_doc->layout();
+        m_doc->setFontName( type, name );
+        m_doc->layout();
 }
 
 /*!
@@ -4433,9 +4427,11 @@ void QwtMathMLDocument::setFontName( QwtMathMLDocument::MmlFont type,
 
     \sa setBaseFontPointSize() fontName() setFontName()
 */
-qreal QwtMathMLDocument::baseFontPointSize() const
+qreal QwtMathMLDocument::baseFontPointSize()
 {
-    return m_doc->baseFontPointSize();
+        m_size = QSizeF(0.0, 0.0);
+
+        return m_doc->baseFontPointSize();
 }
 
 /*!
@@ -4446,14 +4442,14 @@ qreal QwtMathMLDocument::baseFontPointSize() const
 */
 void QwtMathMLDocument::setBaseFontPointSize( qreal size )
 {
-    if ( size < g_min_font_point_size )
+        if ( size < g_min_font_point_size )
         size = g_min_font_point_size;
 
-    if ( size == m_doc->baseFontPointSize() )
+        if ( size == m_doc->baseFontPointSize() )
         return;
 
-    m_doc->setBaseFontPointSize( size );
-    m_doc->layout();
+        m_doc->setBaseFontPointSize( size );
+        m_doc->layout();
 }
 
 /*!
@@ -4461,7 +4457,7 @@ void QwtMathMLDocument::setBaseFontPointSize( qreal size )
 */
 QColor QwtMathMLDocument::foregroundColor() const
 {
-    return m_doc->foregroundColor();
+        return m_doc->foregroundColor();
 }
 
 /*!
@@ -4469,10 +4465,10 @@ QColor QwtMathMLDocument::foregroundColor() const
 */
 void QwtMathMLDocument::setForegroundColor( const QColor &color )
 {
-    if ( color == m_doc->foregroundColor() )
+        if ( color == m_doc->foregroundColor() )
         return;
 
-    m_doc->setForegroundColor( color );
+        m_doc->setForegroundColor( color );
 }
 
 /*!
@@ -4480,7 +4476,7 @@ void QwtMathMLDocument::setForegroundColor( const QColor &color )
 */
 QColor QwtMathMLDocument::backgroundColor() const
 {
-    return m_doc->backgroundColor();
+        return m_doc->backgroundColor();
 }
 
 /*!
@@ -4488,19 +4484,18 @@ QColor QwtMathMLDocument::backgroundColor() const
 */
 void QwtMathMLDocument::setBackgroundColor( const QColor &color )
 {
-    if ( color == m_doc->backgroundColor() )
+        if ( color == m_doc->backgroundColor() )
         return;
 
-    m_doc->setBackgroundColor( color );
+        m_doc->setBackgroundColor( color );
 }
 
-#ifdef MML_TEST
 /*!
     Returns whether frames are to be drawn.
 */
 bool QwtMathMLDocument::drawFrames() const
 {
-    return m_doc->drawFrames();
+        return m_doc->drawFrames();
 }
 
 /*!
@@ -4508,10 +4503,8 @@ bool QwtMathMLDocument::drawFrames() const
 */
 void QwtMathMLDocument::setDrawFrames( bool drawFrames )
 {
-    if ( drawFrames == m_doc->drawFrames() )
+        if ( drawFrames == m_doc->drawFrames() )
         return;
 
-    m_doc->setDrawFrames( drawFrames );
+        m_doc->setDrawFrames( drawFrames );
 }
-
-#endif
