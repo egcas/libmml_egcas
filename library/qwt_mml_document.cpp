@@ -73,7 +73,8 @@ static const qreal   g_mroot_base_line        = 0.5;
 static const qreal   g_script_size_multiplier = 0.5;
 static const qreal   g_sup_shift_multiplier   = 0.5;
 static const char *  g_subsup_spacing         = "veryverythinmathspace";
-static const qreal   g_min_font_point_size    = 8.0;
+static const qreal   g_min_font_pixel_size    = 8.0;
+static qreal         g_min_font_pixel_size_calc = 8.0;
 static const ushort  g_radical                = ( 0x22 << 8 ) | 0x1B;
 static const int     g_oper_spec_rows         = 9;
 
@@ -181,8 +182,8 @@ public:
     QString fontName( QwtMathMLDocument::MmlFont type ) const;
     void setFontName( QwtMathMLDocument::MmlFont type, const QString &name );
 
-    qreal baseFontPointSize() const { return m_base_font_point_size; }
-    void setBaseFontPointSize( qreal size ) { m_base_font_point_size = size; }
+    qreal baseFontPixelSize() const { return m_base_font_pixel_size; }
+    void setBaseFontPixelSize( qreal size ) { m_base_font_pixel_size = size;}
 
     QColor foregroundColor() const { return m_foreground_color; }
     void setForegroundColor( const QColor &color ) { m_foreground_color = color; }
@@ -192,6 +193,9 @@ public:
 
     bool drawFrames() const { return m_draw_frames; }
     void setDrawFrames( const bool &drawFrames ) { m_draw_frames = drawFrames; }
+
+    static void setMmToPixelFactor(qreal factor) { s_MmToPixelFactor = factor; g_min_font_pixel_size_calc = factor * g_min_font_pixel_size; }
+    static qreal MmToPixelFactor(void) { return s_MmToPixelFactor; }
 
 private:
     void _dump( const QwtMmlNode *node, const QString &indent ) const;
@@ -216,11 +220,14 @@ private:
     QString m_script_font_name;
     QString m_monospace_font_name;
     QString m_doublestruck_font_name;
-    qreal m_base_font_point_size;
+    qreal m_base_font_pixel_size;
     QColor m_foreground_color;
     QColor m_background_color;
     bool m_draw_frames;
+    static qreal s_MmToPixelFactor;
 };
+
+qreal QwtMmlDocument::s_MmToPixelFactor = 1;
 
 class QwtMmlNode : public QwtMml
 {
@@ -264,6 +271,7 @@ public:
     virtual QColor color() const;
     virtual QColor background() const;
     virtual int scriptlevel( const QwtMmlNode *child = 0 ) const;
+    qreal baseFontPixelSize( void ) const { return m_document->baseFontPixelSize(); }
 
 
     // Node stuff
@@ -685,17 +693,17 @@ static bool mmlCheckAttributes( QwtMml::NodeType child_type,
                                 const QwtMmlAttributeMap &attr, QString *error_str );
 static QString mmlDictAttribute( const QString &name, const QwtMmlOperSpec *spec );
 static const QwtMmlOperSpec *mmlFindOperSpec( const QString &name, QwtMml::FormType form );
-static qreal mmlInterpretSpacing( QString name, qreal em, qreal ex, bool *ok );
+static qreal mmlInterpretSpacing(QString name, qreal em, qreal ex, bool *ok , const qreal fontsize, const qreal MmToPixFactor);
 static qreal mmlInterpretPercentSpacing( QString value, qreal base, bool *ok );
 static int mmlInterpretMathVariant( const QString &value, bool *ok );
 static QwtMml::FormType mmlInterpretForm( const QString &value, bool *ok );
 static QwtMml::FrameType mmlInterpretFrameType( const QString &value_list, int idx, bool *ok );
-static QwtMml::FrameSpacing mmlInterpretFrameSpacing( const QString &value_list, qreal em, qreal ex, bool *ok );
+static QwtMml::FrameSpacing mmlInterpretFrameSpacing(const QString &value_list, qreal em, qreal ex, bool *ok, const qreal fontsize);
 static QwtMml::ColAlign mmlInterpretColAlign( const QString &value_list, int colnum, bool *ok );
 static QwtMml::RowAlign mmlInterpretRowAlign( const QString &value_list, int rownum, bool *ok );
 static QwtMml::FrameType mmlInterpretFrameType( const QString &value_list, int idx, bool *ok );
-static QFont mmlInterpretDepreciatedFontAttr( const QwtMmlAttributeMap &font_attr, QFont &fn, qreal em, qreal ex );
-static QFont mmlInterpretMathSize( const QString &value, QFont &fn, qreal em, qreal ex, bool *ok );
+static QFont mmlInterpretDepreciatedFontAttr(const QwtMmlAttributeMap &font_attr, QFont &fn, qreal em, qreal ex , const qreal fontsize);
+static QFont mmlInterpretMathSize(const QString &value, QFont &fn, qreal em, qreal ex, bool *ok, const qreal fontsize);
 static QString mmlInterpretListAttr( const QString &value_list, int idx, const QString &def );
 static qreal mmlQstringToQreal( const QString &string, bool *ok = 0 );
 
@@ -1215,7 +1223,7 @@ QwtMml::NodeType domToQwtMmlNodeType( const QDomNode &dom_node )
 }
 
 
-QwtMmlDocument::QwtMmlDocument()
+QwtMmlDocument::QwtMmlDocument() : m_base_font_pixel_size(15)
 {
     m_root_node = 0;
 
@@ -1250,8 +1258,6 @@ QwtMmlDocument::QwtMmlDocument()
     m_script_font_name = "Urw Chancery L";
     m_monospace_font_name = "Luxi Mono";
     m_doublestruck_font_name = "Doublestruck";
-    m_base_font_point_size = 16;
-
     m_foreground_color = Qt::black;
     m_background_color = Qt::transparent;
 
@@ -1775,7 +1781,7 @@ QString QwtMmlNode::toStr() const
 
 qreal QwtMmlNode::interpretSpacing( const QString &value, bool *ok ) const
 {
-    return mmlInterpretSpacing( value, em(), ex(), ok );
+        return mmlInterpretSpacing( value, em(), ex(), ok , m_document->baseFontPixelSize(), QwtMmlDocument::MmToPixelFactor());
 }
 
 qreal QwtMmlNode::lineWidth() const
@@ -1956,8 +1962,8 @@ static QwtMmlAttributeMap collectFontAttributes( const QwtMmlNode *node )
 
 QFont QwtMmlNode::font() const
 {
-    QFont fn( m_document->fontName( QwtMathMLDocument::NormalFont ) );
-    fn.setPointSizeF( m_document->baseFontPointSize() );
+    QFont fn( m_document->fontName( QwtMathMLDocument::NormalFont ) );    
+    fn.setPixelSize(static_cast<int>(m_document->baseFontPixelSize()) );
 
     qreal ps = fn.pointSizeF();
     int sl = scriptlevel();
@@ -1971,8 +1977,8 @@ QFont QwtMmlNode::font() const
         for ( int i = 0; i > sl; --i )
             ps = ps / g_script_size_multiplier;
     }
-    if ( ps < g_min_font_point_size )
-        ps = g_min_font_point_size;
+    if ( ps < g_min_font_pixel_size_calc )
+        ps = g_min_font_pixel_size_calc;
     fn.setPointSize( ps );
 
     const qreal em = QFontMetricsF( fn ).boundingRect( 'm' ).width();
@@ -2015,10 +2021,10 @@ QFont QwtMmlNode::font() const
     if ( font_attr.contains( "mathsize" ) )
     {
         QString value = font_attr["mathsize"];
-        fn = mmlInterpretMathSize( value, fn, em, ex, 0 );
+        fn = mmlInterpretMathSize( value, fn, em, ex, 0, baseFontPixelSize() );
     }
 
-    fn = mmlInterpretDepreciatedFontAttr( font_attr, fn, em, ex );
+    fn = mmlInterpretDepreciatedFontAttr( font_attr, fn, em, ex, baseFontPixelSize() );
 
     if ( m_node_type == MiNode
             && !font_attr.contains( "mathvariant" )
@@ -3081,7 +3087,7 @@ qreal QwtMmlMtableNode::framespacing_ver() const
     QString value = explicitAttribute( "framespacing", "0.4em 0.5ex" );
 
     bool ok;
-    FrameSpacing fs = mmlInterpretFrameSpacing( value, em(), ex(), &ok );
+    FrameSpacing fs = mmlInterpretFrameSpacing( value, em(), ex(), &ok, baseFontPixelSize() );
     if ( ok )
         return fs.m_ver;
     else
@@ -3096,7 +3102,7 @@ qreal QwtMmlMtableNode::framespacing_hor() const
     QString value = explicitAttribute( "framespacing", "0.4em 0.5ex" );
 
     bool ok;
-    FrameSpacing fs = mmlInterpretFrameSpacing( value, em(), ex(), &ok );
+    FrameSpacing fs = mmlInterpretFrameSpacing( value, em(), ex(), &ok, baseFontPixelSize() );
     if ( ok )
         return fs.m_hor;
     else
@@ -3144,7 +3150,7 @@ void QwtMmlMtdNode::setMyRect( const QRectF &rect )
     if ( rect.width() < child->myRect().width() )
     {
         while ( rect.width() < child->myRect().width()
-                && child->font().pointSize() > g_min_font_point_size )
+                && child->font().pointSize() > g_min_font_pixel_size_calc )
         {
             qWarning() << "QwtMmlMtdNode::setMyRect(): rect.width()=" << rect.width()
                        << ", child->myRect().width=" << child->myRect().width()
@@ -3561,19 +3567,19 @@ QRectF QwtMmlMpaddedNode::symbolRect() const
 // Static helper functions
 // *******************************************************************
 
-static qreal mmlInterpretSpacing( QString value, qreal em, qreal ex, bool *ok )
+static qreal mmlInterpretSpacing(QString value, qreal em, qreal ex, bool *ok, qreal fontsize, qreal MmToPixFactor)
 {
     if ( ok != 0 )
         *ok = true;
 
     if ( value == "thin" )
-        return 1.0;
+            return fontsize * 0.0666;
 
     if ( value == "medium" )
-        return 2.0;
+        return fontsize * 0.1333;
 
     if ( value == "thick" )
-        return 3.0;
+        return fontsize * 0.2;
 
     struct HSpacingValue
     {
@@ -3639,11 +3645,7 @@ static qreal mmlInterpretSpacing( QString value, qreal em, qreal ex, bool *ok )
         qreal factor = mmlQstringToQreal( value, &qreal_ok );
         if ( qreal_ok && factor >= 0.0 )
         {
-            Q_ASSERT( qApp->desktop() != 0 );
-            QDesktopWidget *dw = qApp->desktop();
-            Q_ASSERT( dw->width() != 0 );
-            Q_ASSERT( dw->widthMM() != 0 );
-            return factor * 10.0 * dw->width() / dw->widthMM();
+            return factor * 10.0 * MmToPixFactor;
         }
         else
         {
@@ -3661,11 +3663,7 @@ static qreal mmlInterpretSpacing( QString value, qreal em, qreal ex, bool *ok )
         qreal factor = mmlQstringToQreal( value, &qreal_ok );
         if ( qreal_ok && factor >= 0.0 )
         {
-            Q_ASSERT( qApp->desktop() != 0 );
-            QDesktopWidget *dw = qApp->desktop();
-            Q_ASSERT( dw->width() != 0 );
-            Q_ASSERT( dw->widthMM() != 0 );
-            return factor * dw->width() / dw->widthMM();
+            return factor * MmToPixFactor;
         }
         else
         {
@@ -3687,7 +3685,7 @@ static qreal mmlInterpretSpacing( QString value, qreal em, qreal ex, bool *ok )
             QDesktopWidget *dw = qApp->desktop();
             Q_ASSERT( dw->width() != 0 );
             Q_ASSERT( dw->widthMM() != 0 );
-            return factor * 10.0 * dw->width() / ( 2.54 * dw->widthMM() );
+            return factor * 10.0 * MmToPixFactor * 2.54;
         }
         else
         {
@@ -3771,6 +3769,31 @@ static qreal mmlInterpretPointSize( QString value, bool *ok )
     }
 
     qWarning( "interpretPointSize(): could not parse \"%spt\"", qPrintable( value ) );
+    if ( ok != 0 )
+        *ok = false;
+    return 0.0;
+}
+
+static qreal mmlInterpretPixelSize( QString value, bool *ok )
+{
+    if ( !value.endsWith( "px" ) )
+    {
+        if ( ok != 0 )
+            *ok = false;
+        return 0;
+    }
+
+    value.truncate( value.length() - 2 );
+    bool int_ok;
+    qreal px_size = mmlQstringToQreal( value, &int_ok );
+    if ( int_ok && px_size > 0.0 )
+    {
+        if ( ok != 0 )
+            *ok = true;
+        return px_size;
+    }
+
+    qWarning( "interpretPointSize(): could not parse \"%spx\"", qPrintable( value ) );
     if ( ok != 0 )
         *ok = false;
     return 0.0;
@@ -4189,8 +4212,7 @@ static QwtMml::FrameType mmlInterpretFrameType(
     return QwtMml::FrameNone;
 }
 
-static QwtMml::FrameSpacing mmlInterpretFrameSpacing(
-    const QString &value_list, qreal em, qreal ex, bool *ok )
+static QwtMml::FrameSpacing mmlInterpretFrameSpacing(const QString &value_list, qreal em, qreal ex, bool *ok , const qreal fontsize)
 {
     QwtMml::FrameSpacing fs;
 
@@ -4204,8 +4226,8 @@ static QwtMml::FrameSpacing mmlInterpretFrameSpacing(
     }
 
     bool hor_ok, ver_ok;
-    fs.m_hor = mmlInterpretSpacing( l[0], em, ex, &hor_ok );
-    fs.m_ver = mmlInterpretSpacing( l[1], em, ex, &ver_ok );
+    fs.m_hor = mmlInterpretSpacing( l[0], em, ex, &hor_ok, fontsize, QwtMmlDocument::MmToPixelFactor() );
+    fs.m_ver = mmlInterpretSpacing( l[1], em, ex, &ver_ok, fontsize, QwtMmlDocument::MmToPixelFactor() );
 
     if ( ok != 0 )
         *ok = hor_ok && ver_ok;
@@ -4214,7 +4236,7 @@ static QwtMml::FrameSpacing mmlInterpretFrameSpacing(
 }
 
 static QFont mmlInterpretDepreciatedFontAttr(
-    const QwtMmlAttributeMap &font_attr, QFont &fn, qreal em, qreal ex )
+    const QwtMmlAttributeMap &font_attr, QFont &fn, qreal em, qreal ex, const qreal fontsize )
 {
     if ( font_attr.contains( "fontsize" ) )
     {
@@ -4237,7 +4259,7 @@ static QFont mmlInterpretDepreciatedFontAttr(
                 break;
             }
 
-            qreal size = mmlInterpretSpacing( value, em, ex, &ok );
+            qreal size = mmlInterpretSpacing( value, em, ex, &ok, fontsize, QwtMmlDocument::MmToPixelFactor() );
             if ( ok )
             {
 #if 1
@@ -4281,15 +4303,16 @@ static QFont mmlInterpretDepreciatedFontAttr(
     return fn;
 }
 
-static QFont mmlInterpretMathSize( const QString &value, QFont &fn, qreal em, qreal ex, bool *ok )
+static QFont mmlInterpretMathSize(const QString &value, QFont &fn, qreal em, qreal ex, bool *ok, const qreal fontsize)
 {
     if ( ok != 0 )
         *ok = true;
 
     if ( value == "small" )
     {
-        fn.setPointSizeF( fn.pointSizeF() * 0.7 );
-        return fn;
+            fn.setPixelSize(static_cast<int>(static_cast<qreal>(fn.pixelSize()) * 0.7));
+
+            return fn;
     }
 
     if ( value == "normal" )
@@ -4297,7 +4320,8 @@ static QFont mmlInterpretMathSize( const QString &value, QFont &fn, qreal em, qr
 
     if ( value == "big" )
     {
-        fn.setPointSizeF( fn.pointSizeF() * 1.5 );
+        fn.setPixelSize(static_cast<int>(static_cast<qreal>(fn.pixelSize()) * 1.5));
+
         return fn;
     }
 
@@ -4310,12 +4334,18 @@ static QFont mmlInterpretMathSize( const QString &value, QFont &fn, qreal em, qr
         return fn;
     }
 
-    qreal size = mmlInterpretSpacing( value, em, ex, &size_ok );
+    qreal pxsize = mmlInterpretPixelSize( value, &size_ok );
     if ( size_ok )
     {
-#if 1
-        fn.setPixelSize( size );  // setPointSizeF ???
-#endif
+        fn.setPixelSize( static_cast<int>(pxsize) );
+        return fn;
+    }
+
+    qreal size = mmlInterpretSpacing( value, em, ex, &size_ok, fontsize, QwtMmlDocument::MmToPixelFactor()  );
+    if ( size_ok )
+    {
+        fn.setPixelSize( static_cast<int>(size));
+
         return fn;
     }
 
@@ -4427,11 +4457,11 @@ void QwtMathMLDocument::setFontName( QwtMathMLDocument::MmlFont type,
 
     \sa setBaseFontPointSize() fontName() setFontName()
 */
-qreal QwtMathMLDocument::baseFontPointSize()
+qreal QwtMathMLDocument::baseFontPixelSize()
 {
         m_size = QSizeF(0.0, 0.0);
 
-        return m_doc->baseFontPointSize();
+        return m_doc->baseFontPixelSize();
 }
 
 /*!
@@ -4440,15 +4470,15 @@ qreal QwtMathMLDocument::baseFontPointSize()
 
     \sa baseFontPointSize() fontName() setFontName()
 */
-void QwtMathMLDocument::setBaseFontPointSize( qreal size )
+void QwtMathMLDocument::setBaseFontPixelSize( qreal size )
 {
-        if ( size < g_min_font_point_size )
-        size = g_min_font_point_size;
+        if ( size < g_min_font_pixel_size_calc )
+        size = g_min_font_pixel_size_calc;
 
-        if ( size == m_doc->baseFontPointSize() )
+        if ( size == m_doc->baseFontPixelSize() )
         return;
 
-        m_doc->setBaseFontPointSize( size );
+        m_doc->setBaseFontPixelSize( size );
         m_doc->layout();
 }
 
