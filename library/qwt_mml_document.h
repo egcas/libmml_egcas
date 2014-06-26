@@ -88,8 +88,8 @@ public:
     QString fontName( MmlFont type ) const;
     void setFontName( MmlFont type, const QString &name );
 
-    qreal baseFontPointSize();
-    void setBaseFontPointSize( qreal size );
+    qreal baseFontPixelSize();
+    void setBaseFontPixelSize( qreal size );
 
     QColor foregroundColor() const;
     void setForegroundColor( const QColor &color );
@@ -99,6 +99,18 @@ public:
 
     bool drawFrames() const;
     void setDrawFrames( bool );
+
+    /**
+     * @brief setMmToPixelFactor
+     * @param factor
+     */
+    static void setMmToPixelFactor(qreal factor);
+
+    /**
+     * @brief MmToPixelFactor
+     * @return
+     */
+    static qreal MmToPixelFactor(void);
 
 private:
     QwtMmlDocument *m_doc;      ///< pointer to math Ml formula

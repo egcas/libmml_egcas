@@ -85,7 +85,7 @@ void FormulaView::renderFormula( QPainter *painter ) const
         doc.setBackgroundColor( Qt::white );
         doc.setForegroundColor( Qt::black );
     }
-    doc.setBaseFontPointSize( d_fontSize );
+    doc.setBaseFontPixelSize( d_fontSize );
     doc.setDrawFrames( d_drawFrames );
 
     QRectF docRect;
