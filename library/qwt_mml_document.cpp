@@ -1965,7 +1965,7 @@ QFont QwtMmlNode::font() const
     QFont fn( m_document->fontName( QwtMathMLDocument::NormalFont ) );    
     fn.setPixelSize(static_cast<int>(m_document->baseFontPixelSize()) );
 
-    qreal ps = fn.pointSizeF();
+    qreal ps = static_cast<qreal>(fn.pixelSize());
     int sl = scriptlevel();
     if ( sl >= 0 )
     {
@@ -1979,7 +1979,7 @@ QFont QwtMmlNode::font() const
     }
     if ( ps < g_min_font_pixel_size_calc )
         ps = g_min_font_pixel_size_calc;
-    fn.setPointSize( ps );
+    fn.setPixelSize( static_cast<int>(ps) );
 
     const qreal em = QFontMetricsF( fn ).boundingRect( 'm' ).width();
     const qreal ex = QFontMetricsF( fn ).boundingRect( 'x' ).height();
@@ -3150,7 +3150,7 @@ void QwtMmlMtdNode::setMyRect( const QRectF &rect )
     if ( rect.width() < child->myRect().width() )
     {
         while ( rect.width() < child->myRect().width()
-                && child->font().pointSize() > g_min_font_pixel_size_calc )
+                && static_cast<qreal>(child->font().pixelSize()) > g_min_font_pixel_size_calc )
         {
             qWarning() << "QwtMmlMtdNode::setMyRect(): rect.width()=" << rect.width()
                        << ", child->myRect().width=" << child->myRect().width()
@@ -3765,7 +3765,7 @@ static qreal mmlInterpretPointSize( QString value, bool *ok )
     {
         if ( ok != 0 )
             *ok = true;
-        return pt_size;
+        return pt_size * QwtMmlDocument::MmToPixelFactor() * 0.35275;  //now we have the pixel factor
     }
 
     qWarning( "interpretPointSize(): could not parse \"%spt\"", qPrintable( value ) );
@@ -3793,7 +3793,7 @@ static qreal mmlInterpretPixelSize( QString value, bool *ok )
         return px_size;
     }
 
-    qWarning( "interpretPointSize(): could not parse \"%spx\"", qPrintable( value ) );
+    qWarning( "interpretPixelSize(): could not parse \"%spx\"", qPrintable( value ) );
     if ( ok != 0 )
         *ok = false;
     return 0.0;
@@ -4245,17 +4245,17 @@ static QFont mmlInterpretDepreciatedFontAttr(
         for ( ;; )
         {
             bool ok;
-            qreal ptsize = mmlInterpretPointSize( value, &ok );
+            qreal pxsize = mmlInterpretPointSize( value, &ok );
             if ( ok )
             {
-                fn.setPointSizeF( ptsize );
+                fn.setPixelSize( static_cast<int>(pxsize) );
                 break;
             }
 
-            ptsize = mmlInterpretPercentSpacing( value, fn.pointSize(), &ok );
+            pxsize = mmlInterpretPercentSpacing( value, fn.pixelSize(), &ok );
             if ( ok )
             {
-                fn.setPointSizeF( ptsize );
+                fn.setPixelSize( static_cast<int>(pxsize) );
                 break;
             }
 
@@ -4327,14 +4327,14 @@ static QFont mmlInterpretMathSize(const QString &value, QFont &fn, qreal em, qre
 
     bool size_ok;
 
-    qreal ptsize = mmlInterpretPointSize( value, &size_ok );
+    qreal pxsize = mmlInterpretPointSize( value, &size_ok );
     if ( size_ok )
     {
-        fn.setPointSizeF( ptsize );
+        fn.setPixelSize( static_cast<int>(pxsize) );
         return fn;
     }
 
-    qreal pxsize = mmlInterpretPixelSize( value, &size_ok );
+    pxsize = mmlInterpretPixelSize( value, &size_ok );
     if ( size_ok )
     {
         fn.setPixelSize( static_cast<int>(pxsize) );
@@ -4427,7 +4427,7 @@ QSizeF QwtMathMLDocument::size()
 /*!
     Returns the name of the font used to render the font \a type.
 
-    \sa setFontName()  setBaseFontPointSize() baseFontPointSize() QwtMathMLDocument::MmlFont
+    \sa setFontName()  setBaseFontPixelSize() baseFontPixelSize() QwtMathMLDocument::MmlFont
 */
 QString QwtMathMLDocument::fontName( QwtMathMLDocument::MmlFont type ) const
 {
@@ -4437,7 +4437,7 @@ QString QwtMathMLDocument::fontName( QwtMathMLDocument::MmlFont type ) const
 /*!
     Sets the name of the font used to render the font \a type to \a name.
 
-    \sa fontName() setBaseFontPointSize() baseFontPointSize() QwtMathMLDocument::MmlFont
+    \sa fontName() setBaseFontPixelSize() baseFontPixelSize() QwtMathMLDocument::MmlFont
 */
 void QwtMathMLDocument::setFontName( QwtMathMLDocument::MmlFont type,
                                      const QString &name )
@@ -4455,7 +4455,7 @@ void QwtMathMLDocument::setFontName( QwtMathMLDocument::MmlFont type,
     Returns the point size of the font used to render expressions
     which scriptlevel is 0.
 
-    \sa setBaseFontPointSize() fontName() setFontName()
+    \sa setBaseFontPixelSize() fontName() setFontName()
 */
 qreal QwtMathMLDocument::baseFontPixelSize()
 {
@@ -4468,7 +4468,7 @@ qreal QwtMathMLDocument::baseFontPixelSize()
     Sets the point \a size of the font used to render expressions
     which scriptlevel is 0.
 
-    \sa baseFontPointSize() fontName() setFontName()
+    \sa baseFontPixelSize() fontName() setFontName()
 */
 void QwtMathMLDocument::setBaseFontPixelSize( qreal size )
 {
