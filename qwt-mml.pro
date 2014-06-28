@@ -1,5 +1,7 @@
 TEMPLATE = subdirs
-SUBDIRS = library test
+CONFIG += ordered
+SUBDIRS = library \
+          test
 
 #CONFIG += qt
 #CONFIG += warn_on
