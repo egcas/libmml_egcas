@@ -3681,10 +3681,6 @@ static qreal mmlInterpretSpacing(QString value, qreal em, qreal ex, bool *ok, qr
         qreal factor = mmlQstringToQreal( value, &qreal_ok );
         if ( qreal_ok && factor >= 0.0 )
         {
-            Q_ASSERT( qApp->desktop() != 0 );
-            QDesktopWidget *dw = qApp->desktop();
-            Q_ASSERT( dw->width() != 0 );
-            Q_ASSERT( dw->widthMM() != 0 );
             return factor * 10.0 * MmToPixFactor * 2.54;
         }
         else
@@ -4459,8 +4455,6 @@ void QwtMathMLDocument::setFontName( QwtMathMLDocument::MmlFont type,
 */
 qreal QwtMathMLDocument::baseFontPixelSize()
 {
-        m_size = QSizeF(0.0, 0.0);
-
         return m_doc->baseFontPixelSize();
 }
 
@@ -4472,6 +4466,8 @@ qreal QwtMathMLDocument::baseFontPixelSize()
 */
 void QwtMathMLDocument::setBaseFontPixelSize( qreal size )
 {
+        m_size = QSizeF(0.0, 0.0);
+
         if ( size < g_min_font_pixel_size_calc )
         size = g_min_font_pixel_size_calc;
 

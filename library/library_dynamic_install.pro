@@ -5,6 +5,9 @@ CONFIG += qt
 CONFIG += warn_on
 CONFIG += sharedlib
 
+#remove for production
+CONFIG += debug
+
 QT += xml
 QT += widgets
 
