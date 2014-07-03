@@ -2398,7 +2398,7 @@ void QwtMmlRootBaseNode::layoutSymbol()
     if ( i != 0 )
     {
         QRectF i_rect = i->myRect();
-        i->setRelOrigin( QPointF( -0.33 * radicalRect().width() - i_rect.width(),
+        i->setRelOrigin( QPointF( -0.6 * radicalRect().width() - i_rect.width(),
                                   -1.1 * i_rect.bottom() ) );
     }
 }
