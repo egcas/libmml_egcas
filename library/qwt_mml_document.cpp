@@ -2158,8 +2158,9 @@ void QwtMmlNode::paint(
     if ( !m_my_rect.isValid() )
         return;
 
-#warning remove that after testing
-    emit m_document->m_QwtMathMLDocument->updatedRect(QwtMathMLDocument::UnknownNode,0,0);
+#warning remove that after testing    
+    QRectF test;
+    emit m_document->m_QwtMathMLDocument->updatedRect(QwtMathMLDocument::UnknownNode,0,0, test);
 
 
     painter->save();

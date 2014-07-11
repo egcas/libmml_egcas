@@ -138,7 +138,7 @@ signals:
      * @param sibling is the number of the current sibling inside a layer (starts with 0).
      * @param rect the rect of the current node
      */
-    void updatedRect(int node, quint32 layer, quint32 sibling/*, QRectF rect*/);
+    void updatedRect(const int& node, const quint32& layer, const quint32& sibling, const QRectF& rect);
 
 private:
 

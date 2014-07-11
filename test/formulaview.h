@@ -2,6 +2,7 @@
 #define _FORMULA_VIEW_H_
 
 #include <qwidget.h>
+#include <QRectF>
 
 class QPainter;
 
@@ -25,7 +26,7 @@ public Q_SLOTS:
     void setDrawFrames( const bool &drawFrames );
     void setColors( const bool &colors );
 #ifdef USE_FORMULA_SIGNAL
-    void nodeCoordinates(int node, quint32 layer, quint32 sibling/*, QRectF rect*/);
+    void nodeCoordinates(const int& node, const quint32& layer, const quint32& sibling, const QRectF& rect);
 #endif //#ifdef USE_FORMULA_SIGNAL
 
 protected:
