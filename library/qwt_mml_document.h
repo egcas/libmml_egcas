@@ -56,15 +56,33 @@
 #include <qcolor.h>
 #include <qstring.h>
 #include <qsize.h>
+#include <QObject>
 
 class QPainter;
 class QPointF;
 
 class QwtMmlDocument;
 
-class QwtMathMLDocument
+
+
+class QwtMathMLDocument : public QObject
 {
+        Q_OBJECT
+
 public:
+        /**
+         * @brief The QwtMathMLNodeType enum to be able to export the type of the node via signals
+         */
+        enum QwtMathMLNodeType
+        {
+            NoNode = 0, MiNode, MnNode, MfracNode, MrowNode, MsqrtNode,
+            MrootNode, MsupNode, MsubNode, MsubsupNode, MoNode,
+            MstyleNode, TextNode, MphantomNode, MfencedNode,
+            MtableNode, MtrNode, MtdNode, MoverNode, MunderNode,
+            MunderoverNode, MerrorNode, MtextNode, MpaddedNode,
+            MspaceNode, MalignMarkNode, UnknownNode
+        };
+
     enum MmlFont
     {
         NormalFont,
@@ -112,9 +130,20 @@ public:
      */
     static qreal MmToPixelFactor(void);
 
+signals:
+    /**
+     * @brief updatedRect defines a signal to update the surrounding rectangle and other data of a MathML math element
+     * @param node the node type that caused the signal to be emitted (enum QwtMathMLNodeType)
+     * @param layer the layer number on which the current node is (starts with 0).
+     * @param sibling is the number of the current sibling inside a layer (starts with 0).
+     * @param rect the rect of the current node
+     */
+    void updatedRect(int node, quint32 layer, quint32 sibling/*, QRectF rect*/);
+
 private:
-    QwtMmlDocument *m_doc;      ///< pointer to math Ml formula
-    QSizeF m_size;      ///< this improves speed when calculating the bounding box algorithm while painting
+
+    QwtMmlDocument *m_doc;        ///< pointer to math Ml formula
+    QSizeF m_size;                ///< this improves speed when calculating the bounding box algorithm while painting
 };
 
 #endif

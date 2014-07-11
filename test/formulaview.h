@@ -5,6 +5,8 @@
 
 class QPainter;
 
+#define USE_FORMULA_SIGNAL
+
 class FormulaView: public QWidget
 {
     Q_OBJECT
@@ -22,6 +24,9 @@ public Q_SLOTS:
     void setRotation( const qreal & );
     void setDrawFrames( const bool &drawFrames );
     void setColors( const bool &colors );
+#ifdef USE_FORMULA_SIGNAL
+    void nodeCoordinates(int node, quint32 layer, quint32 sibling/*, QRectF rect*/);
+#endif //#ifdef USE_FORMULA_SIGNAL
 
 protected:
     virtual void paintEvent( QPaintEvent * );

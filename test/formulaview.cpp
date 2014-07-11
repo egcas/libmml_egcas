@@ -74,6 +74,9 @@ void FormulaView::paintEvent( QPaintEvent *event )
 void FormulaView::renderFormula( QPainter *painter ) const
 {
     QwtMathMLDocument doc;
+#ifdef USE_FORMULA_SIGNAL
+    connect(&doc, SIGNAL(updatedRect(int,quint32,quint32)), this, SLOT(nodeCoordinates(int,quint32,quint32)));
+#endif //#ifdef USE_FORMULA_SIGNAL
     doc.setContent( d_formula );
     if ( d_colors )
     {
@@ -110,4 +113,14 @@ void FormulaView::renderFormula( QPainter *painter ) const
     {
         doc.paint( painter, docRect.topLeft() );
     }
+#ifdef USE_FORMULA_SIGNAL
+    disconnect(&doc, SIGNAL(updatedRect(int,quint32,quint32)), this, SLOT(nodeCoordinates(int,quint32,quint32)));
+#endif //#ifdef USE_FORMULA_SIGNAL
 }
+
+#ifdef USE_FORMULA_SIGNAL
+void FormulaView::nodeCoordinates(int node, quint32 layer, quint32 sibling/*, QRectF rect*/)
+{
+        qDebug() << node << layer << sibling;
+}
+#endif //#ifdef USE_FORMULA_SIGNAL

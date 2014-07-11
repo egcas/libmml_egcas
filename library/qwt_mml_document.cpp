@@ -167,8 +167,11 @@ class QwtMmlNode;
 
 class QwtMmlDocument : public QwtMml
 {
+        friend class QwtMmlNode;
+
 public:
     QwtMmlDocument();
+    QwtMmlDocument(QwtMathMLDocument* qwtMathMLDocument);
     ~QwtMmlDocument();
     void clear();
 
@@ -198,6 +201,7 @@ public:
     static qreal MmToPixelFactor(void) { return s_MmToPixelFactor; }
 
 private:
+    void init(void);
     void _dump( const QwtMmlNode *node, const QString &indent ) const;
     bool insertChild( QwtMmlNode *parent, QwtMmlNode *new_node,
                       QString *errorMsg );
@@ -225,6 +229,7 @@ private:
     QColor m_background_color;
     bool m_draw_frames;
     static qreal s_MmToPixelFactor;
+    QwtMathMLDocument* m_QwtMathMLDocument;
 };
 
 qreal QwtMmlDocument::s_MmToPixelFactor = 1;
@@ -1222,8 +1227,18 @@ QwtMml::NodeType domToQwtMmlNodeType( const QDomNode &dom_node )
     return mml_type;
 }
 
+QwtMmlDocument::QwtMmlDocument(QwtMathMLDocument* qwtMathMLDocument) : m_base_font_pixel_size(15)
+{
+        m_QwtMathMLDocument = qwtMathMLDocument;
+        init();
+}
 
-QwtMmlDocument::QwtMmlDocument() : m_base_font_pixel_size(15)
+QwtMmlDocument::QwtMmlDocument() : m_base_font_pixel_size(15), m_QwtMathMLDocument(NULL)
+{
+        init();
+}
+
+void QwtMmlDocument::init()
 {
     m_root_node = 0;
 
@@ -2142,6 +2157,10 @@ void QwtMmlNode::paint(
 {
     if ( !m_my_rect.isValid() )
         return;
+
+#warning remove that after testing
+    emit m_document->m_QwtMathMLDocument->updatedRect(QwtMathMLDocument::UnknownNode,0,0);
+
 
     painter->save();
 
@@ -4362,7 +4381,7 @@ static QFont mmlInterpretMathSize(const QString &value, QFont &fn, qreal em, qre
 */
 QwtMathMLDocument::QwtMathMLDocument() : m_size(QSizeF(0.0, 0.0))
 {
-        m_doc = new QwtMmlDocument;
+        m_doc = new QwtMmlDocument(this);
 }
 
 /*!
