@@ -4,6 +4,7 @@ TARGET   = mathmlview
 CONFIG += qt 
 #CONFIG += no_keywords
 CONFIG += warn_on
+CONFIG += c++11
 
 QT += xml
 QT += widgets

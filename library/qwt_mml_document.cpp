@@ -96,15 +96,6 @@ static QwtMMLEntityTable mmlEntityTable;
 
 struct QwtMml
 {
-    enum NodeType
-    {
-        NoNode = 0, MiNode, MnNode, MfracNode, MrowNode, MsqrtNode,
-        MrootNode, MsupNode, MsubNode, MsubsupNode, MoNode,
-        MstyleNode, TextNode, MphantomNode, MfencedNode,
-        MtableNode, MtrNode, MtdNode, MoverNode, MunderNode,
-        MunderoverNode, MerrorNode, MtextNode, MpaddedNode,
-        MspaceNode, MalignMarkNode, UnknownNode
-    };
 
     enum MathVariant
     {
@@ -147,7 +138,7 @@ struct QwtMmlOperSpec
 
 struct QwtMmlNodeSpec
 {
-    QwtMml::NodeType type;
+    QwtMathMlNodeType type;
     const char *tag;
     const char *type_str;
     int child_spec;
@@ -208,7 +199,7 @@ private:
 
     QwtMmlNode *domToMml( const QDomNode &dom_node, bool *ok,
                           QString *errorMsg );
-    QwtMmlNode *createNode( NodeType type,
+    QwtMmlNode *createNode( QwtMathMlNodeType type,
                             const QwtMmlAttributeMap &mml_attr,
                             const QString &mml_value, QString *errorMsg );
     QwtMmlNode *createImplicitMrowNode( const QDomNode &dom_node, bool *ok,
@@ -239,12 +230,12 @@ class QwtMmlNode : public QwtMml
     friend class QwtMmlDocument;
 
 public:
-    QwtMmlNode( NodeType type, QwtMmlDocument *document,
+    QwtMmlNode( QwtMathMlNodeType type, QwtMmlDocument *document,
                 const QwtMmlAttributeMap &attribute_map );
     virtual ~QwtMmlNode();
 
     // Mml stuff
-    NodeType nodeType() const { return m_node_type; }
+    QwtMathMlNodeType nodeType() const { return m_node_type; }
 
     virtual QString toStr() const;
 
@@ -295,7 +286,7 @@ protected:
     virtual void paintSymbol( QPainter *painter, qreal, qreal ) const;
     virtual QRectF symbolRect() const { return QRectF( 0.0, 0.0, 0.0, 0.0 ); }
 
-    QwtMmlNode *parentWithExplicitAttribute( const QString &name, NodeType type = NoNode );
+    QwtMmlNode *parentWithExplicitAttribute( const QString &name, QwtMathMlNodeType type = QwtMathMlNodeType::NoNode );
     qreal interpretSpacing( const QString &value, bool *ok ) const;
 
     qreal lineWidth() const;
@@ -306,7 +297,7 @@ private:
     QRectF m_my_rect, m_parent_rect;
     QPointF m_rel_origin;
 
-    NodeType m_node_type;
+    QwtMathMlNodeType m_node_type;
     QwtMmlDocument *m_document;
 
     QwtMmlNode *m_parent,
@@ -318,7 +309,7 @@ private:
 class QwtMmlTokenNode : public QwtMmlNode
 {
 public:
-    QwtMmlTokenNode( NodeType type, QwtMmlDocument *document,
+    QwtMmlTokenNode( QwtMathMlNodeType type, QwtMmlDocument *document,
                   const QwtMmlAttributeMap &attribute_map )
         : QwtMmlNode( type, document, attribute_map ) {}
 
@@ -330,7 +321,7 @@ class QwtMmlMphantomNode : public QwtMmlNode
 public:
     QwtMmlMphantomNode( QwtMmlDocument *document,
                      const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlNode( MphantomNode, document, attribute_map ) {}
+        : QwtMmlNode( QwtMathMlNodeType::MphantomNode, document, attribute_map ) {}
 
     virtual void paint( QPainter *, qreal, qreal ) {}
 };
@@ -340,7 +331,7 @@ class QwtMmlUnknownNode : public QwtMmlNode
 public:
     QwtMmlUnknownNode( QwtMmlDocument *document,
                     const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlNode( UnknownNode, document, attribute_map ) {}
+        : QwtMmlNode( QwtMathMlNodeType::UnknownNode, document, attribute_map ) {}
 };
 
 class QwtMmlMfencedNode : public QwtMmlNode
@@ -348,21 +339,21 @@ class QwtMmlMfencedNode : public QwtMmlNode
 public:
     QwtMmlMfencedNode( QwtMmlDocument *document,
                     const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlNode( MfencedNode, document, attribute_map ) {}
+        : QwtMmlNode( QwtMathMlNodeType::MfencedNode, document, attribute_map ) {}
 };
 
 class QwtMmlMalignMarkNode : public QwtMmlNode
 {
 public:
     QwtMmlMalignMarkNode( QwtMmlDocument *document )
-        : QwtMmlNode( MalignMarkNode, document, QwtMmlAttributeMap() ) {}
+        : QwtMmlNode( QwtMathMlNodeType::MalignMarkNode, document, QwtMmlAttributeMap() ) {}
 };
 
 class QwtMmlMfracNode : public QwtMmlNode
 {
 public:
     QwtMmlMfracNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlNode( MfracNode, document, attribute_map ) {}
+        : QwtMmlNode( QwtMathMlNodeType::MfracNode, document, attribute_map ) {}
 
     QwtMmlNode *numerator() const;
     QwtMmlNode *denominator() const;
@@ -380,13 +371,13 @@ class QwtMmlMrowNode : public QwtMmlNode
 {
 public:
     QwtMmlMrowNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlNode( MrowNode, document, attribute_map ) {}
+        : QwtMmlNode( QwtMathMlNodeType::MrowNode, document, attribute_map ) {}
 };
 
 class QwtMmlRootBaseNode : public QwtMmlNode
 {
 public:
-    QwtMmlRootBaseNode( NodeType type, QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
+    QwtMmlRootBaseNode( QwtMathMlNodeType type, QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
         : QwtMmlNode( type, document, attribute_map ) {}
 
     QwtMmlNode *base() const;
@@ -410,14 +401,14 @@ class QwtMmlMrootNode : public QwtMmlRootBaseNode
 {
 public:
     QwtMmlMrootNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlRootBaseNode( MrootNode, document, attribute_map ) {}
+        : QwtMmlRootBaseNode( QwtMathMlNodeType::MrootNode, document, attribute_map ) {}
 };
 
 class QwtMmlMsqrtNode : public QwtMmlRootBaseNode
 {
 public:
     QwtMmlMsqrtNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlRootBaseNode( MsqrtNode, document, attribute_map ) {}
+        : QwtMmlRootBaseNode( QwtMathMlNodeType::MsqrtNode, document, attribute_map ) {}
 
 };
 
@@ -451,20 +442,20 @@ class QwtMmlMiNode : public QwtMmlTokenNode
 {
 public:
     QwtMmlMiNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlTokenNode( MiNode, document, attribute_map ) {}
+        : QwtMmlTokenNode( QwtMathMlNodeType::MiNode, document, attribute_map ) {}
 };
 
 class QwtMmlMnNode : public QwtMmlTokenNode
 {
 public:
     QwtMmlMnNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlTokenNode( MnNode, document, attribute_map ) {}
+        : QwtMmlTokenNode( QwtMathMlNodeType::MnNode, document, attribute_map ) {}
 };
 
 class QwtMmlSubsupBaseNode : public QwtMmlNode
 {
 public:
-    QwtMmlSubsupBaseNode( NodeType type, QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
+    QwtMmlSubsupBaseNode( QwtMathMlNodeType type, QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
         : QwtMmlNode( type, document, attribute_map ) {}
 
     QwtMmlNode *base() const;
@@ -477,7 +468,7 @@ class QwtMmlMsupNode : public QwtMmlSubsupBaseNode
 {
 public:
     QwtMmlMsupNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlSubsupBaseNode( MsupNode, document, attribute_map ) {}
+        : QwtMmlSubsupBaseNode( QwtMathMlNodeType::MsupNode, document, attribute_map ) {}
 
 protected:
     virtual void layoutSymbol();
@@ -487,7 +478,7 @@ class QwtMmlMsubNode : public QwtMmlSubsupBaseNode
 {
 public:
     QwtMmlMsubNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlSubsupBaseNode( MsubNode, document, attribute_map ) {}
+        : QwtMmlSubsupBaseNode( QwtMathMlNodeType::MsubNode, document, attribute_map ) {}
 
 protected:
     virtual void layoutSymbol();
@@ -497,7 +488,7 @@ class QwtMmlMsubsupNode : public QwtMmlNode
 {
 public:
     QwtMmlMsubsupNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlNode( MsubsupNode, document, attribute_map ) {}
+        : QwtMmlNode( QwtMathMlNodeType::MsubsupNode, document, attribute_map ) {}
 
     QwtMmlNode *base() const;
     QwtMmlNode *superscript() const;
@@ -535,13 +526,13 @@ class QwtMmlMstyleNode : public QwtMmlNode
 {
 public:
     QwtMmlMstyleNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlNode( MstyleNode, document, attribute_map ) {}
+        : QwtMmlNode( QwtMathMlNodeType::MstyleNode, document, attribute_map ) {}
 };
 
 class QwtMmlTableBaseNode : public QwtMmlNode
 {
 public:
-    QwtMmlTableBaseNode( NodeType type, QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
+    QwtMmlTableBaseNode( QwtMathMlNodeType type, QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
         : QwtMmlNode( type, document, attribute_map ) {}
 };
 
@@ -549,7 +540,7 @@ class QwtMmlMtableNode : public QwtMmlTableBaseNode
 {
 public:
     QwtMmlMtableNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlTableBaseNode( MtableNode, document, attribute_map ) {}
+        : QwtMmlTableBaseNode( QwtMathMlNodeType::MtableNode, document, attribute_map ) {}
 
     qreal rowspacing() const;
     qreal columnspacing() const;
@@ -583,7 +574,7 @@ class QwtMmlMtrNode : public QwtMmlTableBaseNode
 {
 public:
     QwtMmlMtrNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlTableBaseNode( MtrNode, document, attribute_map ) {}
+        : QwtMmlTableBaseNode( QwtMathMlNodeType::MtrNode, document, attribute_map ) {}
     void layoutCells( const QList<qreal> &col_widths, qreal col_spc );
 };
 
@@ -591,7 +582,7 @@ class QwtMmlMtdNode : public QwtMmlTableBaseNode
 {
 public:
     QwtMmlMtdNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlTableBaseNode( MtdNode, document, attribute_map ) { m_scriptlevel_adjust = 0; }
+        : QwtMmlTableBaseNode( QwtMathMlNodeType::MtdNode, document, attribute_map ) { m_scriptlevel_adjust = 0; }
     virtual void setMyRect( const QRectF &rect );
 
     ColAlign columnalign();
@@ -609,7 +600,7 @@ class QwtMmlMoverNode : public QwtMmlNode
 {
 public:
     QwtMmlMoverNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlNode( MoverNode, document, attribute_map ) {}
+        : QwtMmlNode( QwtMathMlNodeType::MoverNode, document, attribute_map ) {}
     virtual int scriptlevel( const QwtMmlNode *node = 0 ) const;
 
 protected:
@@ -620,7 +611,7 @@ class QwtMmlMunderNode : public QwtMmlNode
 {
 public:
     QwtMmlMunderNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlNode( MunderNode, document, attribute_map ) {}
+        : QwtMmlNode( QwtMathMlNodeType::MunderNode, document, attribute_map ) {}
     virtual int scriptlevel( const QwtMmlNode *node = 0 ) const;
 
 protected:
@@ -631,7 +622,7 @@ class QwtMmlMunderoverNode : public QwtMmlNode
 {
 public:
     QwtMmlMunderoverNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlNode( MunderoverNode, document, attribute_map ) {}
+        : QwtMmlNode( QwtMathMlNodeType::MunderoverNode, document, attribute_map ) {}
     virtual int scriptlevel( const QwtMmlNode *node = 0 ) const;
 
 protected:
@@ -642,20 +633,20 @@ class QwtMmlMerrorNode : public QwtMmlNode
 {
 public:
     QwtMmlMerrorNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlNode( MerrorNode, document, attribute_map ) {}
+        : QwtMmlNode( QwtMathMlNodeType::MerrorNode, document, attribute_map ) {}
 };
 
 class QwtMmlMtextNode : public QwtMmlNode
 {
 public:
     QwtMmlMtextNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlNode( MtextNode, document, attribute_map ) {}
+        : QwtMmlNode( QwtMathMlNodeType::MtextNode, document, attribute_map ) {}
 };
 
 class QwtMmlSpacingNode : public QwtMmlNode
 {
 public:
-    QwtMmlSpacingNode( const NodeType &node_type, QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
+    QwtMmlSpacingNode( const QwtMathMlNodeType &node_type, QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
         : QwtMmlNode( node_type, document, attribute_map ) {}
 
 public:
@@ -674,7 +665,7 @@ class QwtMmlMpaddedNode : public QwtMmlSpacingNode
 {
 public:
     QwtMmlMpaddedNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlSpacingNode( MpaddedNode, document, attribute_map ) {}
+        : QwtMmlSpacingNode( QwtMathMlNodeType::MpaddedNode, document, attribute_map ) {}
 
 public:
     virtual qreal lspace() const;
@@ -687,14 +678,14 @@ class QwtMmlMspaceNode : public QwtMmlSpacingNode
 {
 public:
     QwtMmlMspaceNode( QwtMmlDocument *document, const QwtMmlAttributeMap &attribute_map )
-        : QwtMmlSpacingNode( MspaceNode, document, attribute_map ) {}
+        : QwtMmlSpacingNode( QwtMathMlNodeType::MspaceNode, document, attribute_map ) {}
 };
 
-static const QwtMmlNodeSpec *mmlFindNodeSpec( QwtMml::NodeType type );
+static const QwtMmlNodeSpec *mmlFindNodeSpec( QwtMathMlNodeType type );
 static const QwtMmlNodeSpec *mmlFindNodeSpec( const QString &tag );
-static bool mmlCheckChildType( QwtMml::NodeType parent_type,
-                               QwtMml::NodeType child_type, QString *error_str );
-static bool mmlCheckAttributes( QwtMml::NodeType child_type,
+static bool mmlCheckChildType( QwtMathMlNodeType parent_type,
+                               QwtMathMlNodeType child_type, QString *error_str );
+static bool mmlCheckAttributes( QwtMathMlNodeType child_type,
                                 const QwtMmlAttributeMap &attr, QString *error_str );
 static QString mmlDictAttribute( const QString &name, const QwtMmlOperSpec *spec );
 static const QwtMmlOperSpec *mmlFindOperSpec( const QString &name, QwtMml::FormType form );
@@ -741,33 +732,33 @@ static const QwtMmlNodeSpec g_node_spec_data[] =
 {
 //    type                    tag           type_str          child_spec                    child_types              attributes ""=none, 0=any
 //    ----------------------- ------------- ----------------- ----------------------------- ------------------------ ---------------------------------------------------------------------
-    { QwtMml::MiNode,         "mi",         "MiNode",         QwtMmlNodeSpec::ChildAny,     " TextNode MalignMark ", MML_ATT_COMMON MML_ATT_FONTINFO                                       },
-    { QwtMml::MnNode,         "mn",         "MnNode",         QwtMmlNodeSpec::ChildAny,     " TextNode MalignMark ", MML_ATT_COMMON MML_ATT_FONTINFO                                       },
-    { QwtMml::MfracNode,      "mfrac",      "MfracNode",      2,                            0,                       MML_ATT_COMMON MML_ATT_MFRAC                                          },
-    { QwtMml::MrowNode,       "mrow",       "MrowNode",       QwtMmlNodeSpec::ChildAny,     0,                       MML_ATT_COMMON " display mode "                                       },
-    { QwtMml::MsqrtNode,      "msqrt",      "MsqrtNode",      QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON                                                        },
-    { QwtMml::MrootNode,      "mroot",      "MrootNode",      2,                            0,                       MML_ATT_COMMON                                                        },
-    { QwtMml::MsupNode,       "msup",       "MsupNode",       2,                            0,                       MML_ATT_COMMON " subscriptshift "                                     },
-    { QwtMml::MsubNode,       "msub",       "MsubNode",       2,                            0,                       MML_ATT_COMMON " superscriptshift "                                   },
-    { QwtMml::MsubsupNode,    "msubsup",    "MsubsupNode",    3,                            0,                       MML_ATT_COMMON " subscriptshift superscriptshift "                    },
-    { QwtMml::MoNode,         "mo",         "MoNode",         QwtMmlNodeSpec::ChildAny,     " TextNode MalignMark ", MML_ATT_COMMON MML_ATT_FONTINFO MML_ATT_OPINFO                        },
-    { QwtMml::MstyleNode,     "mstyle",     "MstyleNode",     QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON MML_ATT_MSTYLE                                         },
-    { QwtMml::MphantomNode,   "mphantom",   "MphantomNode",   QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON                                                        },
-    { QwtMml::MalignMarkNode, "malignmark", "MalignMarkNode", 0,                            0,                       ""                                                                    },
-    { QwtMml::MfencedNode,    "mfenced",    "MfencedNode",    QwtMmlNodeSpec::ChildAny,     0,                       MML_ATT_COMMON " open close separators "                              },
-    { QwtMml::MtableNode,     "mtable",     "MtableNode",     QwtMmlNodeSpec::ChildAny,     " MtrNode ",             MML_ATT_COMMON MML_ATT_MTABLE                                         },
-    { QwtMml::MtrNode,        "mtr",        "MtrNode",        QwtMmlNodeSpec::ChildAny,     " MtdNode ",             MML_ATT_COMMON " rowalign columnalign groupalign "                    },
-    { QwtMml::MtdNode,        "mtd",        "MtdNode",        QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON " rowspan columnspan rowalign columnalign groupalign " },
-    { QwtMml::MoverNode,      "mover",      "MoverNode",      2,                            0,                       MML_ATT_COMMON " accent align "                                       },
-    { QwtMml::MunderNode,     "munder",     "MunderNode",     2,                            0,                       MML_ATT_COMMON " accentunder align "                                  },
-    { QwtMml::MunderoverNode, "munderover", "MunderoverNode", 3,                            0,                       MML_ATT_COMMON " accentunder accent align "                           },
-    { QwtMml::MerrorNode,     "merror",     "MerrorNode",     QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON                                                        },
-    { QwtMml::MtextNode,      "mtext",      "MtextNode",      1,                            " TextNode ",            MML_ATT_COMMON " width height depth linebreak "                       },
-    { QwtMml::MpaddedNode,    "mpadded",    "MpaddedNode",    QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON " width height depth lspace "                          },
-    { QwtMml::MspaceNode,     "mspace",     "MspaceNode",     QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON " width height depth linebreak "                       },
-    { QwtMml::TextNode,       0,            "TextNode",       QwtMmlNodeSpec::ChildIgnore,  0,                       ""                                                                    },
-    { QwtMml::UnknownNode,    0,            "UnknownNode",    QwtMmlNodeSpec::ChildAny,     0,                       0                                                                     },
-    { QwtMml::NoNode,         0,            0,                0,                            0,                       0                                                                     }
+    { QwtMathMlNodeType::MiNode,         "mi",         "MiNode",         QwtMmlNodeSpec::ChildAny,     " TextNode MalignMark ", MML_ATT_COMMON MML_ATT_FONTINFO                                       },
+    { QwtMathMlNodeType::MnNode,         "mn",         "MnNode",         QwtMmlNodeSpec::ChildAny,     " TextNode MalignMark ", MML_ATT_COMMON MML_ATT_FONTINFO                                       },
+    { QwtMathMlNodeType::MfracNode,      "mfrac",      "MfracNode",      2,                            0,                       MML_ATT_COMMON MML_ATT_MFRAC                                          },
+    { QwtMathMlNodeType::MrowNode,       "mrow",       "MrowNode",       QwtMmlNodeSpec::ChildAny,     0,                       MML_ATT_COMMON " display mode "                                       },
+    { QwtMathMlNodeType::MsqrtNode,      "msqrt",      "MsqrtNode",      QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON                                                        },
+    { QwtMathMlNodeType::MrootNode,      "mroot",      "MrootNode",      2,                            0,                       MML_ATT_COMMON                                                        },
+    { QwtMathMlNodeType::MsupNode,       "msup",       "MsupNode",       2,                            0,                       MML_ATT_COMMON " subscriptshift "                                     },
+    { QwtMathMlNodeType::MsubNode,       "msub",       "MsubNode",       2,                            0,                       MML_ATT_COMMON " superscriptshift "                                   },
+    { QwtMathMlNodeType::MsubsupNode,    "msubsup",    "MsubsupNode",    3,                            0,                       MML_ATT_COMMON " subscriptshift superscriptshift "                    },
+    { QwtMathMlNodeType::MoNode,         "mo",         "MoNode",         QwtMmlNodeSpec::ChildAny,     " TextNode MalignMark ", MML_ATT_COMMON MML_ATT_FONTINFO MML_ATT_OPINFO                        },
+    { QwtMathMlNodeType::MstyleNode,     "mstyle",     "MstyleNode",     QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON MML_ATT_MSTYLE                                         },
+    { QwtMathMlNodeType::MphantomNode,   "mphantom",   "MphantomNode",   QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON                                                        },
+    { QwtMathMlNodeType::MalignMarkNode, "malignmark", "MalignMarkNode", 0,                            0,                       ""                                                                    },
+    { QwtMathMlNodeType::MfencedNode,    "mfenced",    "MfencedNode",    QwtMmlNodeSpec::ChildAny,     0,                       MML_ATT_COMMON " open close separators "                              },
+    { QwtMathMlNodeType::MtableNode,     "mtable",     "MtableNode",     QwtMmlNodeSpec::ChildAny,     " MtrNode ",             MML_ATT_COMMON MML_ATT_MTABLE                                         },
+    { QwtMathMlNodeType::MtrNode,        "mtr",        "MtrNode",        QwtMmlNodeSpec::ChildAny,     " MtdNode ",             MML_ATT_COMMON " rowalign columnalign groupalign "                    },
+    { QwtMathMlNodeType::MtdNode,        "mtd",        "MtdNode",        QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON " rowspan columnspan rowalign columnalign groupalign " },
+    { QwtMathMlNodeType::MoverNode,      "mover",      "MoverNode",      2,                            0,                       MML_ATT_COMMON " accent align "                                       },
+    { QwtMathMlNodeType::MunderNode,     "munder",     "MunderNode",     2,                            0,                       MML_ATT_COMMON " accentunder align "                                  },
+    { QwtMathMlNodeType::MunderoverNode, "munderover", "MunderoverNode", 3,                            0,                       MML_ATT_COMMON " accentunder accent align "                           },
+    { QwtMathMlNodeType::MerrorNode,     "merror",     "MerrorNode",     QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON                                                        },
+    { QwtMathMlNodeType::MtextNode,      "mtext",      "MtextNode",      1,                            " TextNode ",            MML_ATT_COMMON " width height depth linebreak "                       },
+    { QwtMathMlNodeType::MpaddedNode,    "mpadded",    "MpaddedNode",    QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON " width height depth lspace "                          },
+    { QwtMathMlNodeType::MspaceNode,     "mspace",     "MspaceNode",     QwtMmlNodeSpec::ImplicitMrow, 0,                       MML_ATT_COMMON " width height depth linebreak "                       },
+    { QwtMathMlNodeType::TextNode,       0,            "TextNode",       QwtMmlNodeSpec::ChildIgnore,  0,                       ""                                                                    },
+    { QwtMathMlNodeType::UnknownNode,    0,            "UnknownNode",    QwtMmlNodeSpec::ChildAny,     0,                       0                                                                     },
+    { QwtMathMlNodeType::NoNode,         0,            0,                0,                            0,                       0                                                                     }
 };
 
 static const char *g_oper_spec_names[g_oper_spec_rows] =
@@ -1178,9 +1169,9 @@ void QwtMmlDocument::setFontName( QwtMathMLDocument::MmlFont type,
     };
 }
 
-QwtMml::NodeType domToQwtMmlNodeType( const QDomNode &dom_node )
+QwtMathMlNodeType domToQwtMmlNodeType( const QDomNode &dom_node )
 {
-    QwtMml::NodeType mml_type = QwtMml::NoNode;
+    QwtMathMlNodeType mml_type = QwtMathMlNodeType::NoNode;
 
     switch ( dom_node.nodeType() )
     {
@@ -1191,18 +1182,18 @@ QwtMml::NodeType domToQwtMmlNodeType( const QDomNode &dom_node )
 
             // treat urecognised tags as mrow
             if ( spec == 0 )
-                mml_type = QwtMml::UnknownNode;
+                mml_type = QwtMathMlNodeType::UnknownNode;
             else
                 mml_type = spec->type;
 
             break;
         }
         case QDomNode::TextNode:
-            mml_type = QwtMml::TextNode;
+            mml_type = QwtMathMlNodeType::TextNode;
             break;
 
         case QDomNode::DocumentNode:
-            mml_type = QwtMml::UnknownNode;
+            mml_type = QwtMathMlNodeType::UnknownNode;
             break;
 
         case QDomNode::EntityReferenceNode:
@@ -1404,12 +1395,12 @@ bool QwtMmlDocument::insertChild( QwtMmlNode *parent, QwtMmlNode *new_node,
     return true;
 }
 
-QwtMmlNode *QwtMmlDocument::createNode( NodeType type,
+QwtMmlNode *QwtMmlDocument::createNode( QwtMathMlNodeType type,
                                         const QwtMmlAttributeMap &mml_attr,
                                         const QString &mml_value,
                                         QString *errorMsg )
 {
-    Q_ASSERT( type != NoNode );
+    Q_ASSERT( type != QwtMathMlNodeType::NoNode );
 
     QwtMmlNode *mml_node = 0;
 
@@ -1418,85 +1409,85 @@ QwtMmlNode *QwtMmlDocument::createNode( NodeType type,
 
     switch ( type )
     {
-        case MiNode:
+        case QwtMathMlNodeType::MiNode:
             mml_node = new QwtMmlMiNode( this, mml_attr );
             break;
-        case MnNode:
+        case QwtMathMlNodeType::MnNode:
             mml_node = new QwtMmlMnNode( this, mml_attr );
             break;
-        case MfracNode:
+        case QwtMathMlNodeType::MfracNode:
             mml_node = new QwtMmlMfracNode( this, mml_attr );
             break;
-        case MrowNode:
+        case QwtMathMlNodeType::MrowNode:
             mml_node = new QwtMmlMrowNode( this, mml_attr );
             break;
-        case MsqrtNode:
+        case QwtMathMlNodeType::MsqrtNode:
             mml_node = new QwtMmlMsqrtNode( this, mml_attr );
             break;
-        case MrootNode:
+        case QwtMathMlNodeType::MrootNode:
             mml_node = new QwtMmlMrootNode( this, mml_attr );
             break;
-        case MsupNode:
+        case QwtMathMlNodeType::MsupNode:
             mml_node = new QwtMmlMsupNode( this, mml_attr );
             break;
-        case MsubNode:
+        case QwtMathMlNodeType::MsubNode:
             mml_node = new QwtMmlMsubNode( this, mml_attr );
             break;
-        case MsubsupNode:
+        case QwtMathMlNodeType::MsubsupNode:
             mml_node = new QwtMmlMsubsupNode( this, mml_attr );
             break;
-        case MoNode:
+        case QwtMathMlNodeType::MoNode:
             mml_node = new QwtMmlMoNode( this, mml_attr );
             break;
-        case MstyleNode:
+        case QwtMathMlNodeType::MstyleNode:
             mml_node = new QwtMmlMstyleNode( this, mml_attr );
             break;
-        case TextNode:
+        case QwtMathMlNodeType::TextNode:
             mml_node = new QwtMmlTextNode( mml_value, this );
             break;
-        case MphantomNode:
+        case QwtMathMlNodeType::MphantomNode:
             mml_node = new QwtMmlMphantomNode( this, mml_attr );
             break;
-        case MfencedNode:
+        case QwtMathMlNodeType::MfencedNode:
             mml_node = new QwtMmlMfencedNode( this, mml_attr );
             break;
-        case MtableNode:
+        case QwtMathMlNodeType::MtableNode:
             mml_node = new QwtMmlMtableNode( this, mml_attr );
             break;
-        case MtrNode:
+        case QwtMathMlNodeType::MtrNode:
             mml_node = new QwtMmlMtrNode( this, mml_attr );
             break;
-        case MtdNode:
+        case QwtMathMlNodeType::MtdNode:
             mml_node = new QwtMmlMtdNode( this, mml_attr );
             break;
-        case MoverNode:
+        case QwtMathMlNodeType::MoverNode:
             mml_node = new QwtMmlMoverNode( this, mml_attr );
             break;
-        case MunderNode:
+        case QwtMathMlNodeType::MunderNode:
             mml_node = new QwtMmlMunderNode( this, mml_attr );
             break;
-        case MunderoverNode:
+        case QwtMathMlNodeType::MunderoverNode:
             mml_node = new QwtMmlMunderoverNode( this, mml_attr );
             break;
-        case MalignMarkNode:
+        case QwtMathMlNodeType::MalignMarkNode:
             mml_node = new QwtMmlMalignMarkNode( this );
             break;
-        case MerrorNode:
+        case QwtMathMlNodeType::MerrorNode:
             mml_node = new QwtMmlMerrorNode( this, mml_attr );
             break;
-        case MtextNode:
+        case QwtMathMlNodeType::MtextNode:
             mml_node = new QwtMmlMtextNode( this, mml_attr );
             break;
-        case MpaddedNode:
+        case QwtMathMlNodeType::MpaddedNode:
             mml_node = new QwtMmlMpaddedNode( this, mml_attr );
             break;
-        case MspaceNode:
+        case QwtMathMlNodeType::MspaceNode:
             mml_node = new QwtMmlMspaceNode( this, mml_attr );
             break;
-        case UnknownNode:
+        case QwtMathMlNodeType::UnknownNode:
             mml_node = new QwtMmlUnknownNode( this, mml_attr );
             break;
-        case NoNode:
+        case QwtMathMlNodeType::NoNode:
             mml_node = 0;
             break;
     }
@@ -1506,8 +1497,8 @@ QwtMmlNode *QwtMmlDocument::createNode( NodeType type,
 
 void QwtMmlDocument::insertOperator( QwtMmlNode *node, const QString &text )
 {
-    QwtMmlNode *text_node = createNode( TextNode, QwtMmlAttributeMap(), text, 0 );
-    QwtMmlNode *mo_node = createNode( MoNode, QwtMmlAttributeMap(), QString::null, 0 );
+    QwtMmlNode *text_node = createNode( QwtMathMlNodeType::TextNode, QwtMmlAttributeMap(), text, 0 );
+    QwtMmlNode *mo_node = createNode( QwtMathMlNodeType::MoNode, QwtMmlAttributeMap(), QString::null, 0 );
 
     bool ok = insertChild( node, mo_node, 0 );
     Q_ASSERT( ok );
@@ -1523,9 +1514,9 @@ QwtMmlNode *QwtMmlDocument::domToMml( const QDomNode &dom_node, bool *ok,
 
     Q_ASSERT( ok != 0 );
 
-    NodeType mml_type = domToQwtMmlNodeType( dom_node );
+    QwtMathMlNodeType mml_type = domToQwtMmlNodeType( dom_node );
 
-    if ( mml_type == NoNode )
+    if ( mml_type == QwtMathMlNodeType::NoNode )
     {
         *ok = true;
         return 0;
@@ -1542,7 +1533,7 @@ QwtMmlNode *QwtMmlDocument::domToMml( const QDomNode &dom_node, bool *ok,
     }
 
     QString mml_value;
-    if ( mml_type == TextNode )
+    if ( mml_type == QwtMathMlNodeType::TextNode )
         mml_value = dom_node.nodeValue();
     QwtMmlNode *mml_node = createNode( mml_type, mml_attr, mml_value, errorMsg );
     if ( mml_node == 0 )
@@ -1559,7 +1550,7 @@ QwtMmlNode *QwtMmlDocument::domToMml( const QDomNode &dom_node, bool *ok,
     QwtMmlNode *mml_child = 0;
 
     QString separator_list;
-    if ( mml_type == MfencedNode )
+    if ( mml_type == QwtMathMlNodeType::MfencedNode )
         separator_list = mml_node->explicitAttribute( "separators", "," );
 
     switch ( spec->child_spec )
@@ -1608,7 +1599,7 @@ QwtMmlNode *QwtMmlDocument::domToMml( const QDomNode &dom_node, bool *ok,
             // ...and continue just as in ChildAny
 
         case QwtMmlNodeSpec::ChildAny:
-            if ( mml_type == MfencedNode )
+            if ( mml_type == QwtMathMlNodeType::MfencedNode )
                 insertOperator( mml_node, mml_node->explicitAttribute( "open", "(" ) );
 
             for ( int i = 0; i < child_cnt; ++i )
@@ -1622,9 +1613,9 @@ QwtMmlNode *QwtMmlDocument::domToMml( const QDomNode &dom_node, bool *ok,
                     return 0;
                 }
 
-                if ( mml_type == MtableNode && mml_child->nodeType() != MtrNode )
+                if ( mml_type == QwtMathMlNodeType::MtableNode && mml_child->nodeType() != QwtMathMlNodeType::MtrNode )
                 {
-                    QwtMmlNode *mtr_node = createNode( MtrNode, QwtMmlAttributeMap(), QString::null, 0 );
+                    QwtMmlNode *mtr_node = createNode( QwtMathMlNodeType::MtrNode, QwtMmlAttributeMap(), QString::null, 0 );
                     insertChild( mml_node, mtr_node, 0 );
                     if ( !insertChild( mtr_node, mml_child, errorMsg ) )
                     {
@@ -1634,9 +1625,9 @@ QwtMmlNode *QwtMmlDocument::domToMml( const QDomNode &dom_node, bool *ok,
                         return 0;
                     }
                 }
-                else if ( mml_type == MtrNode && mml_child->nodeType() != MtdNode )
+                else if ( mml_type == QwtMathMlNodeType::MtrNode && mml_child->nodeType() != QwtMathMlNodeType::MtdNode )
                 {
-                    QwtMmlNode *mtd_node = createNode( MtdNode, QwtMmlAttributeMap(), QString::null, 0 );
+                    QwtMmlNode *mtd_node = createNode( QwtMathMlNodeType::MtdNode, QwtMmlAttributeMap(), QString::null, 0 );
                     insertChild( mml_node, mtd_node, 0 );
                     if ( !insertChild( mtd_node, mml_child, errorMsg ) )
                     {
@@ -1657,7 +1648,7 @@ QwtMmlNode *QwtMmlDocument::domToMml( const QDomNode &dom_node, bool *ok,
                     }
                 }
 
-                if ( i < child_cnt - 1 && mml_type == MfencedNode && !separator_list.isEmpty() )
+                if ( i < child_cnt - 1 && mml_type == QwtMathMlNodeType::MfencedNode && !separator_list.isEmpty() )
                 {
                     QChar separator;
                     if ( i >= separator_list.length() )
@@ -1668,7 +1659,7 @@ QwtMmlNode *QwtMmlDocument::domToMml( const QDomNode &dom_node, bool *ok,
                 }
             }
 
-            if ( mml_type == MfencedNode )
+            if ( mml_type == QwtMathMlNodeType::MfencedNode )
                 insertOperator( mml_node, mml_node->explicitAttribute( "close", ")" ) );
 
             break;
@@ -1694,7 +1685,7 @@ QwtMmlNode *QwtMmlDocument::createImplicitMrowNode( const QDomNode &dom_node,
     if ( child_cnt == 1 )
         return domToMml( dom_child_list.item( 0 ), ok, errorMsg );
 
-    QwtMmlNode *mml_node = createNode( MrowNode, QwtMmlAttributeMap(),
+    QwtMmlNode *mml_node = createNode( QwtMathMlNodeType::MrowNode, QwtMmlAttributeMap(),
                                        QString::null, errorMsg );
     Q_ASSERT( mml_node != 0 ); // there is no reason in heaven or hell for this to fail
 
@@ -1741,7 +1732,7 @@ QSizeF QwtMmlDocument::size() const
 // QwtMmlNode
 // *******************************************************************
 
-QwtMmlNode::QwtMmlNode( NodeType type, QwtMmlDocument *document,
+QwtMmlNode::QwtMmlNode( QwtMathMlNodeType type, QwtMmlDocument *document,
                         const QwtMmlAttributeMap &attribute_map )
 {
     m_parent = 0;
@@ -1901,7 +1892,7 @@ QString QwtMmlNode::inheritAttributeFromMrow( const QString &name,
     const QwtMmlNode *p = this;
     for ( ; p != 0; p = p->parent() )
     {
-        if ( p == this || p->nodeType() == MstyleNode )
+        if ( p == this || p->nodeType() == QwtMathMlNodeType::MstyleNode )
         {
             QString value = p->explicitAttribute( name );
             if ( !value.isNull() )
@@ -1918,7 +1909,7 @@ QColor QwtMmlNode::color() const
     const QwtMmlNode *p = this;
     for ( ; p != 0; p = p->parent() )
     {
-        if ( p->nodeType() == MerrorNode )
+        if ( p->nodeType() == QwtMathMlNodeType::MerrorNode )
             return QColor( "red" );
     }
 
@@ -1959,7 +1950,7 @@ static QwtMmlAttributeMap collectFontAttributes( const QwtMmlNode *node )
 
     for ( const QwtMmlNode *n = node; n != 0; n = n->parent() )
     {
-        if ( n == node || n->nodeType() == QwtMml::MstyleNode )
+        if ( n == node || n->nodeType() == QwtMathMlNodeType::MstyleNode )
         {
             updateFontAttr( font_attr, n, "mathvariant" );
             updateFontAttr( font_attr, n, "mathsize" );
@@ -2041,7 +2032,7 @@ QFont QwtMmlNode::font() const
 
     fn = mmlInterpretDepreciatedFontAttr( font_attr, fn, em, ex, baseFontPixelSize() );
 
-    if ( m_node_type == MiNode
+    if ( m_node_type == QwtMathMlNodeType::MiNode
             && !font_attr.contains( "mathvariant" )
             && !font_attr.contains( "fontstyle" ) )
     {
@@ -2050,7 +2041,7 @@ QFont QwtMmlNode::font() const
             fn.setItalic( true );
     }
 
-    if ( m_node_type == MoNode )
+    if ( m_node_type == QwtMathMlNodeType::MoNode )
     {
         fn.setItalic( false );
         fn.setBold( false );
@@ -2160,7 +2151,7 @@ void QwtMmlNode::paint(
 
 #warning remove that after testing    
     QRectF test;
-    emit m_document->m_QwtMathMLDocument->updatedRect(QwtMathMLDocument::UnknownNode,0,0, test);
+    emit m_document->m_QwtMathMLDocument->updatedRect(static_cast<int>(QwtMathMlNodeType::UnknownNode),0,0, test);
 
 
     painter->save();
@@ -2173,7 +2164,7 @@ void QwtMmlNode::paint(
         y_scaling *= d_rect.height() / m_my_rect.height();
     }
 
-    if ( m_node_type != UnknownNode )
+    if ( m_node_type != QwtMathMlNodeType::UnknownNode )
     {
         const QColor bg = background();
         if ( bg.isValid() )
@@ -2192,7 +2183,7 @@ void QwtMmlNode::paint(
     for ( ; child != 0; child = child->nextSibling() )
         child->paint( painter, x_scaling, y_scaling );
 
-    if ( m_node_type != UnknownNode )
+    if ( m_node_type != QwtMathMlNodeType::UnknownNode )
         paintSymbol( painter, x_scaling, y_scaling );
 
     painter->restore();
@@ -2236,7 +2227,7 @@ QString QwtMmlTokenNode::text() const
     const QwtMmlNode *child = firstChild();
     for ( ; child != 0; child = child->nextSibling() )
     {
-        if ( child->nodeType() != TextNode ) continue;
+        if ( child->nodeType() != QwtMathMlNodeType::TextNode ) continue;
         if ( !result.isEmpty() )
             result += ' ';
         result += static_cast<const QwtMmlTextNode *>( child )->text();
@@ -2477,7 +2468,7 @@ void QwtMmlRootBaseNode::paintSymbol(
 }
 
 QwtMmlTextNode::QwtMmlTextNode( const QString &text, QwtMmlDocument *document )
-    : QwtMmlNode( TextNode, document, QwtMmlAttributeMap() )
+    : QwtMmlNode( QwtMathMlNodeType::TextNode, document, QwtMmlAttributeMap() )
 {
     m_text = text;
     // Trim whitespace from ends, but keep nbsp and thinsp
@@ -2648,7 +2639,7 @@ void QwtMmlMoNode::layoutSymbol()
 
 QwtMmlMoNode::QwtMmlMoNode( QwtMmlDocument *document,
                             const QwtMmlAttributeMap &attribute_map )
-    : QwtMmlTokenNode( MoNode, document, attribute_map )
+    : QwtMmlTokenNode( QwtMathMlNodeType::MoNode, document, attribute_map )
 {
     m_oper_spec = 0;
 }
@@ -2658,7 +2649,7 @@ QString QwtMmlMoNode::dictionaryAttribute( const QString &name ) const
     const QwtMmlNode *p = this;
     for ( ; p != 0; p = p->parent() )
     {
-        if ( p == this || p->nodeType() == MstyleNode )
+        if ( p == this || p->nodeType() == QwtMathMlNodeType::MstyleNode )
         {
             QString expl_attr = p->explicitAttribute( name );
             if ( !expl_attr.isNull() )
@@ -2700,7 +2691,7 @@ void QwtMmlMoNode::stretch()
         return;
 
     if ( m_oper_spec->stretch_dir == QwtMmlOperSpec::HStretch
-            && parent()->nodeType() == MrowNode
+            && parent()->nodeType() == QwtMathMlNodeType::MrowNode
             && ( previousSibling() != 0 || nextSibling() != 0) )
         return;
 
@@ -2727,9 +2718,9 @@ qreal QwtMmlMoNode::lspace() const
 {
     Q_ASSERT( m_oper_spec != 0 );
     if ( parent() == 0
-            || ( parent()->nodeType() != MrowNode
-                 && parent()->nodeType() != MfencedNode
-                 && parent()->nodeType() != UnknownNode )
+            || ( parent()->nodeType() != QwtMathMlNodeType::MrowNode
+                 && parent()->nodeType() != QwtMathMlNodeType::MfencedNode
+                 && parent()->nodeType() != QwtMathMlNodeType::UnknownNode )
             || previousSibling() == 0
             || ( previousSibling() == 0 && nextSibling() == 0 ) )
         return 0.0;
@@ -2741,9 +2732,9 @@ qreal QwtMmlMoNode::rspace() const
 {
     Q_ASSERT( m_oper_spec != 0 );
     if ( parent() == 0
-            || ( parent()->nodeType() != MrowNode
-                 && parent()->nodeType() != MfencedNode
-                 && parent()->nodeType() != UnknownNode )
+            || ( parent()->nodeType() != QwtMathMlNodeType::MrowNode
+                 && parent()->nodeType() != QwtMathMlNodeType::MfencedNode
+                 && parent()->nodeType() != QwtMathMlNodeType::UnknownNode )
             || nextSibling() == 0
             || ( previousSibling() == 0 && nextSibling() == 0 ) )
         return 0.0;
@@ -2814,13 +2805,13 @@ void QwtMmlMtableNode::CellSizeData::init( const QwtMmlNode *first_row )
     const QwtMmlNode *mtr = first_row;
     for ( ; mtr != 0; mtr = mtr->nextSibling() )
     {
-        Q_ASSERT( mtr->nodeType() == MtrNode );
+        Q_ASSERT( mtr->nodeType() == QwtMathMlNodeType::MtrNode );
 
         int col_cnt = 0;
         const QwtMmlNode *mtd = mtr->firstChild();
         for ( ; mtd != 0; mtd = mtd->nextSibling(), ++col_cnt )
         {
-            Q_ASSERT( mtd->nodeType() == MtdNode );
+            Q_ASSERT( mtd->nodeType() == QwtMathMlNodeType::MtdNode );
 
             QRectF mtdmr = mtd->myRect();
 
@@ -2989,7 +2980,7 @@ void QwtMmlMtableNode::layoutSymbol()
     QwtMmlNode *child = firstChild();
     for ( ; child != 0; child = child->nextSibling() )
     {
-        Q_ASSERT( child->nodeType() == MtrNode );
+        Q_ASSERT( child->nodeType() == QwtMathMlNodeType::MtrNode );
         QwtMmlMtrNode *row = ( QwtMmlMtrNode* ) child;
 
         row->layoutCells( m_cell_size_data.col_widths, col_spc );
@@ -3139,7 +3130,7 @@ void QwtMmlMtrNode::layoutCells( const QList<qreal> &col_widths,
     int colnum = 0;
     for ( ; child != 0; child = child->nextSibling(), ++colnum )
     {
-        Q_ASSERT( child->nodeType() == MtdNode );
+        Q_ASSERT( child->nodeType() == QwtMathMlNodeType::MtdNode );
         QwtMmlMtdNode *mtd = ( QwtMmlMtdNode* ) child;
 
         QRectF rect = QRectF( 0.0, mr.top(), col_widths[colnum], mr.height() );
@@ -3815,10 +3806,10 @@ static qreal mmlInterpretPixelSize( QString value, bool *ok )
     return 0.0;
 }
 
-static const QwtMmlNodeSpec *mmlFindNodeSpec( QwtMml::NodeType type )
+static const QwtMmlNodeSpec *mmlFindNodeSpec( QwtMathMlNodeType type )
 {
     const QwtMmlNodeSpec *spec = g_node_spec_data;
-    for ( ; spec->type != QwtMml::NoNode; ++spec )
+    for ( ; spec->type != QwtMathMlNodeType::NoNode; ++spec )
     {
         if ( type == spec->type ) return spec;
     }
@@ -3828,18 +3819,18 @@ static const QwtMmlNodeSpec *mmlFindNodeSpec( QwtMml::NodeType type )
 static const QwtMmlNodeSpec *mmlFindNodeSpec( const QString &tag )
 {
     const QwtMmlNodeSpec *spec = g_node_spec_data;
-    for ( ; spec->type != QwtMml::NoNode; ++spec )
+    for ( ; spec->type != QwtMathMlNodeType::NoNode; ++spec )
     {
         if ( tag == spec->tag ) return spec;
     }
     return 0;
 }
 
-static bool mmlCheckChildType( QwtMml::NodeType parent_type,
-                               QwtMml::NodeType child_type,
+static bool mmlCheckChildType( QwtMathMlNodeType parent_type,
+                               QwtMathMlNodeType child_type,
                                QString *error_str )
 {
-    if ( parent_type == QwtMml::UnknownNode || child_type == QwtMml::UnknownNode )
+    if ( parent_type == QwtMathMlNodeType::UnknownNode || child_type == QwtMathMlNodeType::UnknownNode )
         return true;
 
     const QwtMmlNodeSpec *child_spec = mmlFindNodeSpec( child_type );
@@ -3867,7 +3858,7 @@ static bool mmlCheckChildType( QwtMml::NodeType parent_type,
     return true;
 }
 
-static bool mmlCheckAttributes( QwtMml::NodeType child_type,
+static bool mmlCheckAttributes( QwtMathMlNodeType child_type,
                                 const QwtMmlAttributeMap &attr,
                                 QString *error_str )
 {

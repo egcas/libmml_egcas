@@ -3,6 +3,7 @@ TARGET   = egcas
 
 CONFIG += qt 
 CONFIG += warn_on
+CONFIG += c++11
 #CONFIG += sharedlib
 CONFIG += staticlib
 

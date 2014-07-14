@@ -63,6 +63,15 @@ class QPointF;
 
 class QwtMmlDocument;
 
+enum class QwtMathMlNodeType
+{
+    NoNode = 0, MiNode, MnNode, MfracNode, MrowNode, MsqrtNode,
+    MrootNode, MsupNode, MsubNode, MsubsupNode, MoNode,
+    MstyleNode, TextNode, MphantomNode, MfencedNode,
+    MtableNode, MtrNode, MtdNode, MoverNode, MunderNode,
+    MunderoverNode, MerrorNode, MtextNode, MpaddedNode,
+    MspaceNode, MalignMarkNode, UnknownNode
+};
 
 
 class QwtMathMLDocument : public QObject
@@ -70,18 +79,6 @@ class QwtMathMLDocument : public QObject
         Q_OBJECT
 
 public:
-        /**
-         * @brief The QwtMathMLNodeType enum to be able to export the type of the node via signals
-         */
-        enum QwtMathMLNodeType
-        {
-            NoNode = 0, MiNode, MnNode, MfracNode, MrowNode, MsqrtNode,
-            MrootNode, MsupNode, MsubNode, MsubsupNode, MoNode,
-            MstyleNode, TextNode, MphantomNode, MfencedNode,
-            MtableNode, MtrNode, MtdNode, MoverNode, MunderNode,
-            MunderoverNode, MerrorNode, MtextNode, MpaddedNode,
-            MspaceNode, MalignMarkNode, UnknownNode
-        };
 
     enum MmlFont
     {
