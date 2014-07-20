@@ -75,7 +75,7 @@ void FormulaView::renderFormula( QPainter *painter ) const
 {
     QwtMathMLDocument doc;
 #ifdef USE_FORMULA_SIGNAL
-    connect(&doc, SIGNAL(updatedRect(const int&, const quint32&, const quint32&, const QRectF&)), this, SLOT(nodeCoordinates(const int&, const quint32&, const quint32&, const QRectF&)));
+    connect(&doc, SIGNAL(updatedRect(const QwtMathMlNodeType&, const quint32&, const quint32&, const QRectF&)), this, SLOT(nodeCoordinates(const QwtMathMlNodeType&, const quint32&, const quint32&, const QRectF&)));
 #endif //#ifdef USE_FORMULA_SIGNAL
     doc.setContent( d_formula );
     if ( d_colors )
@@ -114,13 +114,13 @@ void FormulaView::renderFormula( QPainter *painter ) const
         doc.paint( painter, docRect.topLeft() );
     }
 #ifdef USE_FORMULA_SIGNAL
-    disconnect(&doc, SIGNAL(updatedRect(const int&, const quint32&, const quint32&, const QRectF&)), this, SLOT(nodeCoordinates(const int&, const quint32&, const quint32&, const QRectF&)));
+    disconnect(&doc, SIGNAL(updatedRect(const QwtMathMlNodeType&, const quint32&, const quint32&, const QRectF&)), this, SLOT(nodeCoordinates(const QwtMathMlNodeType&, const quint32&, const quint32&, const QRectF&)));
 #endif //#ifdef USE_FORMULA_SIGNAL
 }
 
 #ifdef USE_FORMULA_SIGNAL
-void FormulaView::nodeCoordinates(const int&node, const quint32&layer, const quint32&sibling, const QRectF& rect)
+void FormulaView::nodeCoordinates(const QwtMathMlNodeType&node, const quint32&layer, const quint32&sibling, const QRectF& rect)
 {
-        qDebug() << node << layer << sibling << rect;
+        qDebug() << static_cast<int>(node) << layer << sibling << rect;
 }
 #endif //#ifdef USE_FORMULA_SIGNAL

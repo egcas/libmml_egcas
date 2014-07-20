@@ -280,6 +280,11 @@ public:
     bool isLastSibling() const { return m_next_sibling == 0; }
     bool isFirstSibling() const { return m_previous_sibling == 0; }
     bool hasChildNodes() const { return m_first_child != 0; }
+    /**
+     * @brief balanceTree balances the tree so that the layer and siblings numbers are correct
+     * @param rootNode the root node of the tree
+     */
+    void renumberTreeLayers(QwtMmlNode*rootNode);
 
 protected:
     virtual void layoutSymbol();
@@ -304,6 +309,10 @@ private:
                *m_first_child,
                *m_next_sibling,
                *m_previous_sibling;
+
+    int m_layer;        ///< the layer number inside the tree (starts with 0)
+    int m_sibling;      ///< the sibling number inside the tree (starts with 0)
+    bool m_signalNode;    ///< this is a node to be signaled (layer count is taken into account)
 };
 
 class QwtMmlTokenNode : public QwtMmlNode
@@ -1336,6 +1345,8 @@ bool QwtMmlDocument::setContent(
     insertChild( 0, root_node, 0 );
     layout();
 
+    m_root_node->renumberTreeLayers(m_root_node);
+
     return true;
 }
 
@@ -1747,6 +1758,9 @@ QwtMmlNode::QwtMmlNode( QwtMathMlNodeType type, QwtMmlDocument *document,
     m_my_rect = m_parent_rect = QRectF( 0.0, 0.0, 0.0, 0.0 );
     m_rel_origin = QPointF( 0.0, 0.0 );
     m_stretched = false;
+    m_layer = -1; //set to invalid
+    m_sibling = -1; //set to invalid
+    m_signalNode = true;
 }
 
 QwtMmlNode::~QwtMmlNode()
@@ -1931,6 +1945,39 @@ QColor QwtMmlNode::background() const
         return QColor();
 
     return QColor( value_str );
+}
+
+void QwtMmlNode::renumberTreeLayers(QwtMmlNode *rootNode)
+{
+        //count all layers but not those nodes that are of unknown type
+        if (rootNode == this) {
+                //the first node that is signaled shall always start with 0, but if the root node is an unknown node
+                //(that is not signaled), set the layer to -1 that the layer count is correct upon the first incrementation
+                if (rootNode->m_node_type == QwtMathMlNodeType::UnknownNode) {
+                        m_layer = -1;
+                        m_signalNode = false;
+                } else {
+                        m_layer = 0;
+                }
+        } else if (m_node_type == QwtMathMlNodeType::UnknownNode) {
+                m_layer = m_parent->m_layer;
+                m_signalNode = false;
+        } else {
+                m_layer = m_parent->m_layer + 1;
+        }
+
+        //count all siblings but not those nodes that are of unknown type
+        if (m_previous_sibling == 0)
+                m_sibling = 0;
+        else if (m_node_type == QwtMathMlNodeType::UnknownNode)
+                m_sibling = m_previous_sibling->m_sibling;
+        else
+                m_sibling = m_previous_sibling->m_sibling + 1;
+
+        QwtMmlNode *child = m_first_child;
+        for ( ; child != 0; child = child->m_next_sibling ) {
+                child->renumberTreeLayers(rootNode);
+        }
 }
 
 static void updateFontAttr( QwtMmlAttributeMap &font_attr, const QwtMmlNode *n,
@@ -2145,18 +2192,17 @@ void QwtMmlNode::layoutSymbol()
 
 void QwtMmlNode::paint(
     QPainter *painter, qreal x_scaling, qreal y_scaling )
-{
+{    
     if ( !m_my_rect.isValid() )
         return;
-
-#warning remove that after testing    
-    QRectF test;
-    emit m_document->m_QwtMathMLDocument->updatedRect(static_cast<int>(QwtMathMlNodeType::UnknownNode),0,0, test);
-
 
     painter->save();
 
     QRectF d_rect = deviceRect();
+
+    //emit the positioning information for the MathML elements
+    if (m_signalNode)
+            emit m_document->m_QwtMathMLDocument->updatedRect(m_node_type, m_layer, m_sibling, d_rect);
 
     if ( m_stretched )
     {
@@ -2180,8 +2226,9 @@ void QwtMmlNode::paint(
     }
 
     QwtMmlNode *child = m_first_child;
-    for ( ; child != 0; child = child->nextSibling() )
-        child->paint( painter, x_scaling, y_scaling );
+    for ( ; child != 0; child = child->nextSibling() ) {
+            child->paint( painter, x_scaling, y_scaling );
+    }
 
     if ( m_node_type != QwtMathMlNodeType::UnknownNode )
         paintSymbol( painter, x_scaling, y_scaling );
@@ -2192,7 +2239,7 @@ void QwtMmlNode::paint(
 void QwtMmlNode::paintSymbol( QPainter *painter, qreal, qreal ) const
 {
     QRectF d_rect = deviceRect();
-    if ( m_document->drawFrames() && d_rect.isValid() )
+    if ( m_document->drawFrames() && d_rect.isValid() && m_signalNode )
     {
         painter->save();
 

@@ -3,6 +3,7 @@
 
 #include <qwidget.h>
 #include <QRectF>
+#include "../library/qwt_mml_document.h"
 
 class QPainter;
 
@@ -26,7 +27,7 @@ public Q_SLOTS:
     void setDrawFrames( const bool &drawFrames );
     void setColors( const bool &colors );
 #ifdef USE_FORMULA_SIGNAL
-    void nodeCoordinates(const int& node, const quint32& layer, const quint32& sibling, const QRectF& rect);
+    void nodeCoordinates(const QwtMathMlNodeType& node, const quint32& layer, const quint32& sibling, const QRectF& rect);
 #endif //#ifdef USE_FORMULA_SIGNAL
 
 protected:
