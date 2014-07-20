@@ -51,21 +51,21 @@
 */
 
 
-#include "qwt_mml_entity_table.h"
+#include "eg_mml_entity_table.h"
 
 #include <qdebug.h>
 
-QHash<QString, QString> QwtMMLEntityTable::valueLookup = QwtMMLEntityTable::initValueLookup();
-QMultiHash<QString,QString> QwtMMLEntityTable::nameLookup = QwtMMLEntityTable::initNameLookup();
+QHash<QString, QString> EgMMLEntityTable::valueLookup = EgMMLEntityTable::initValueLookup();
+QMultiHash<QString,QString> EgMMLEntityTable::nameLookup = EgMMLEntityTable::initNameLookup();
 
 
 static QString mmlDecodeEntityValue( QString literal );
 
-QwtMMLEntityTable::QwtMMLEntityTable()
+EgMMLEntityTable::EgMMLEntityTable()
 {
 }
 
-QHash< QString, QString> QwtMMLEntityTable::initNameLookup(void)
+QHash< QString, QString> EgMMLEntityTable::initNameLookup(void)
 {
     QHash< QString, QString> hash;
 
@@ -76,7 +76,7 @@ QHash< QString, QString> QwtMMLEntityTable::initNameLookup(void)
     return hash;
 }
 
-QHash<QString, QString> QwtMMLEntityTable::initValueLookup(void)
+QHash<QString, QString> EgMMLEntityTable::initValueLookup(void)
 {
     QHash<QString, QString> hash;
 
@@ -2086,7 +2086,7 @@ QString mmlDecodeEntityValue( QString literal )
     return result;
 }
 
-QString QwtMMLEntityTable::entities(QString text, uint &prefix_lines)
+QString EgMMLEntityTable::entities(QString text, uint &prefix_lines)
 {
 
 
@@ -2124,7 +2124,7 @@ QString QwtMMLEntityTable::entities(QString text, uint &prefix_lines)
     return result;
 }
 
-QList<QString> QwtMMLEntityTable::search(
+QList<QString> EgMMLEntityTable::search(
     const QString &value) const
 {
     QList<QString> list = nameLookup.values(value);

@@ -58,14 +58,14 @@
 #include <QHash>
 
 /**
- * @brief The QwtMMLEntityTable class implements some hash lists for searching
+ * @brief The EgMMLEntityTable class implements some hash lists for searching
  * for MathMl spec names and their character representation
  */
-class QwtMMLEntityTable
+class EgMMLEntityTable
 {
 public:
-    QwtMMLEntityTable();
-    virtual ~QwtMMLEntityTable() {}
+    EgMMLEntityTable();
+    virtual ~EgMMLEntityTable() {}
     /**
      * @brief setup the document with all character entities in the mathml code
      * @param text the mathml text
