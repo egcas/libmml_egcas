@@ -285,6 +285,18 @@ public:
      * @param rootNode the root node of the tree
      */
     void renumberTreeLayers(QwtMmlNode*rootNode);
+    /**
+     * @brief incrementLayer tests if the current node is a node that the layer counter shall cause to be increased
+     * @param node the node to test against
+     * @return true if current node is a node that the layer counter shall cause to be increased
+     */
+    inline bool incrementLayer(QwtMathMlNodeType &type) const;
+    /**
+     * @brief incrementSibling tests if the current node is a node that the sibling counter shall cause to be increased
+     * @param node the node to test against
+     * @return true if current node is a node that the sibling counter shall cause to be increased
+     */
+    inline bool incrementSibling(QwtMathMlNodeType &type) const;
 
 protected:
     virtual void layoutSymbol();
@@ -1947,21 +1959,53 @@ QColor QwtMmlNode::background() const
     return QColor( value_str );
 }
 
+inline bool QwtMmlNode::incrementLayer(QwtMathMlNodeType &type) const
+{
+        if (    type == QwtMathMlNodeType::UnknownNode
+             || type == QwtMathMlNodeType::NoNode)
+                return false;
+        else
+                return true;
+}
+
+inline bool QwtMmlNode::incrementSibling(QwtMathMlNodeType &type) const
+{
+        if (    type == QwtMathMlNodeType::UnknownNode
+             || type == QwtMathMlNodeType::NoNode)
+                return false;
+        else
+                return true;
+}
+
 void QwtMmlNode::renumberTreeLayers(QwtMmlNode *rootNode)
 {
+        /*NoNode = 0, MiNode = 1, MnNode = 2, MfracNode = 3, MrowNode = 4, MsqrtNode = 5,
+        MrootNode = 6, MsupNode = 7, MsubNode = 8, MsubsupNode = 9, MoNode = 10,
+        MstyleNode = 11, TextNode = 12, MphantomNode = 13, MfencedNode = 14,
+        MtableNode = 15, MtrNode = 16, MtdNode = 17, MoverNode = 18, MunderNode = 19,
+        MunderoverNode = 20, MerrorNode = 21, MtextNode = 22, MpaddedNode = 23,
+        MspaceNode = 24, MalignMarkNode = 25, UnknownNode = 26*/
+        if (    m_node_type == QwtMathMlNodeType::UnknownNode
+             || m_node_type == QwtMathMlNodeType::MphantomNode
+             || m_node_type == QwtMathMlNodeType::MpaddedNode
+             || m_node_type == QwtMathMlNodeType::MspaceNode
+             || m_node_type == QwtMathMlNodeType::MalignMarkNode
+             || m_node_type == QwtMathMlNodeType::NoNode
+             || m_node_type == QwtMathMlNodeType::MoNode)
+                m_signalNode = false;
+
+
         //count all layers but not those nodes that are of unknown type
         if (rootNode == this) {
                 //the first node that is signaled shall always start with 0, but if the root node is an unknown node
                 //(that is not signaled), set the layer to -1 that the layer count is correct upon the first incrementation
-                if (rootNode->m_node_type == QwtMathMlNodeType::UnknownNode) {
-                        m_layer = -1;
-                        m_signalNode = false;
-                } else {
+                if (incrementLayer(rootNode->m_node_type)) {
                         m_layer = 0;
+                } else {
+                        m_layer = -1;
                 }
-        } else if (m_node_type == QwtMathMlNodeType::UnknownNode) {
+        } else if (!incrementLayer(m_node_type)) {
                 m_layer = m_parent->m_layer;
-                m_signalNode = false;
         } else {
                 m_layer = m_parent->m_layer + 1;
         }
@@ -1969,7 +2013,7 @@ void QwtMmlNode::renumberTreeLayers(QwtMmlNode *rootNode)
         //count all siblings but not those nodes that are of unknown type
         if (m_previous_sibling == 0)
                 m_sibling = 0;
-        else if (m_node_type == QwtMathMlNodeType::UnknownNode)
+        else if (!incrementSibling(m_node_type))
                 m_sibling = m_previous_sibling->m_sibling;
         else
                 m_sibling = m_previous_sibling->m_sibling + 1;
