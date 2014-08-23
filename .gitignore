@@ -13,3 +13,4 @@
 *.a
 
 qwt-mml.pro.user
+*.pro.user
