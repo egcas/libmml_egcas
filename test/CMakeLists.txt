@@ -24,12 +24,8 @@ endif(${CMAKE_COMPILER_IS_GNUCXX})
 
 # Widgets finds its own dependencies.
 find_package(Qt5 COMPONENTS Widgets Xml)
-find_library(LIBMMLEGCAS_LIBRARY mmlegcas ${CMAKE_CURRENT_BINARY_DIR})
-
-target_link_libraries(mathmlview ${LIBMMLEGCAS_LIBRARY} Qt5::Xml Qt5::Widgets)
+target_link_libraries(mathmlview mmlegcas Qt5::Xml Qt5::Widgets)
 include_directories(../library)
-
-
   
 #if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 #    set_target_properties(target PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")

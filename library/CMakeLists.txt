@@ -27,6 +27,9 @@ find_package(Qt5 COMPONENTS Widgets Xml)
 set_target_properties(mmlegcas PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_link_libraries(mmlegcas Qt5::Xml Qt5::Widgets)
 
+install (TARGETS mmlegcas DESTINATION lib)
+install (FILES eg_mml_document.h  eg_mml_entity_table.h DESTINATION include/mmlegcas)
+
 #add_definitions(-DMML_TEST)
   
 #if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
