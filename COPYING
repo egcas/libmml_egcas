@@ -1,18 +1,21 @@
-Different Licenses apply for some parts of the code for this library. The licenses are as follows:
 
-the following are under the Nokia LGPL, GPL, or commercial license.
+This library is under the LGPL License.
+
+
+====================================================================================
+History: 
+
+the following files had originally been under the Nokia LGPL, GPL, or commercial license.
 qwt_mml_document.cpp
 qwt_mml_document.h
 qwt_mml_entity_table.cpp
 qwt_mml_entity_table.h
 
-All other files are under Qwt License.
-
+Some improvements had been made under the Qwt License.
 
 To have a lowest common denominator - and to comply with the terms of the original 
-License of the package (GPL/LGPL) - you can choose to use the whole library 
+License of the package (GPL/LGPL with exceptions) - you can choose to use the whole library 
 under the GPL or under the LGPL.
-
 
 ====================================================================================
 
