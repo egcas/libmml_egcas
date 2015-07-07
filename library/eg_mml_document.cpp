@@ -193,6 +193,7 @@ public:
 
 private:
     void init(void);
+    static void static_init(void);
     void _dump( const EgMmlNode *node, const QString &indent ) const;
     bool insertChild( EgMmlNode *parent, EgMmlNode *new_node,
                       QString *errorMsg );
@@ -209,21 +210,30 @@ private:
 
     EgMmlNode *m_root_node;
 
-    QString m_normal_font_name;
-    QString m_fraktur_font_name;
-    QString m_sans_serif_font_name;
-    QString m_script_font_name;
-    QString m_monospace_font_name;
-    QString m_doublestruck_font_name;
+    static QString s_normal_font_name;
+    static QString s_fraktur_font_name;
+    static QString s_sans_serif_font_name;
+    static QString s_script_font_name;
+    static QString s_monospace_font_name;
+    static QString s_doublestruck_font_name;
     qreal m_base_font_pixel_size;
     QColor m_foreground_color;
     QColor m_background_color;
     bool m_draw_frames;
     static qreal s_MmToPixelFactor;
+    static bool s_initialized;
     EgMathMLDocument* m_EgMathMLDocument;
 };
 
 qreal EgMmlDocument::s_MmToPixelFactor = 1;
+QString EgMmlDocument::s_normal_font_name = "";
+QString EgMmlDocument::s_fraktur_font_name = "Fraktur";
+QString EgMmlDocument::s_sans_serif_font_name = "Luxi Sans";
+QString EgMmlDocument::s_script_font_name = "Urw Chancery L";
+QString EgMmlDocument::s_monospace_font_name = "Luxi Mono";
+QString EgMmlDocument::s_doublestruck_font_name = "Doublestruck";
+bool EgMmlDocument::s_initialized = false;
+
 
 class EgMmlNode : public EgMml
 {
@@ -1148,17 +1158,17 @@ QString EgMmlDocument::fontName( EgMathMLDocument::MmlFont type ) const
     switch ( type )
     {
         case EgMathMLDocument::NormalFont:
-            return m_normal_font_name;
+            return s_normal_font_name;
         case EgMathMLDocument::FrakturFont:
-            return m_fraktur_font_name;
+            return s_fraktur_font_name;
         case EgMathMLDocument::SansSerifFont:
-            return m_sans_serif_font_name;
+            return s_sans_serif_font_name;
         case EgMathMLDocument::ScriptFont:
-            return m_script_font_name;
+            return s_script_font_name;
         case EgMathMLDocument::MonospaceFont:
-            return m_monospace_font_name;
+            return s_monospace_font_name;
         case EgMathMLDocument::DoublestruckFont:
-            return m_doublestruck_font_name;
+            return s_doublestruck_font_name;
     };
 
     return QString::null;
@@ -1170,22 +1180,22 @@ void EgMmlDocument::setFontName( EgMathMLDocument::MmlFont type,
     switch ( type )
     {
         case EgMathMLDocument::NormalFont:
-            m_normal_font_name = name;
+            s_normal_font_name = name;
             break;
         case EgMathMLDocument::FrakturFont:
-            m_fraktur_font_name = name;
+            s_fraktur_font_name = name;
             break;
         case EgMathMLDocument::SansSerifFont:
-            m_sans_serif_font_name = name;
+            s_sans_serif_font_name = name;
             break;
         case EgMathMLDocument::ScriptFont:
-            m_script_font_name = name;
+            s_script_font_name = name;
             break;
         case EgMathMLDocument::MonospaceFont:
-            m_monospace_font_name = name;
+            s_monospace_font_name = name;
             break;
         case EgMathMLDocument::DoublestruckFont:
-            m_doublestruck_font_name = name;
+            s_doublestruck_font_name = name;
             break;
     };
 }
@@ -1253,42 +1263,44 @@ EgMmlDocument::EgMmlDocument() : m_base_font_pixel_size(15), m_EgMathMLDocument(
 void EgMmlDocument::init()
 {
     m_root_node = 0;
-
-    // We set m_normal_font_name based on the information available at
-    // https://vismor.com/documents/site_implementation/viewing_mathematics/S7.php
-    // Note: on Linux, the Ubuntu, DejaVu Serif, FreeSerif and Liberation Serif
-    //       either don't look that great or have rendering problems (e.g.
-    //       FreeSerif doesn't render 0 properly!), so we simply use Century
-    //       Schoolbook L...
-
-    QFontDatabase font_database;
-
-#if defined( Q_OS_WIN )
-    if ( font_database.hasFamily( "Cambria" ) )
-        m_normal_font_name = "Cambria";
-    else if ( font_database.hasFamily( "Lucida Sans Unicode" ) )
-        m_normal_font_name = "Lucida Sans Unicode";
-    else
-        m_normal_font_name = "Times New Roman";
-#elif defined( Q_OS_LINUX )
-    m_normal_font_name = "Century Schoolbook L";
-#elif defined( Q_OS_MAC )
-    if ( font_database.hasFamily( "STIXGeneral" ) )
-        m_normal_font_name = "STIXGeneral";
-    else
-        m_normal_font_name = "Times New Roman";
-#else
-    m_normal_font_name = "Times New Roman";
-#endif
-    m_fraktur_font_name = "Fraktur";
-    m_sans_serif_font_name = "Luxi Sans";
-    m_script_font_name = "Urw Chancery L";
-    m_monospace_font_name = "Luxi Mono";
-    m_doublestruck_font_name = "Doublestruck";
     m_foreground_color = Qt::black;
     m_background_color = Qt::transparent;
-
     m_draw_frames = false;
+
+    if (!s_initialized)
+            static_init();
+}
+
+void EgMmlDocument::static_init(void)
+{
+        // We set s_normal_font_name based on the information available at
+        // https://vismor.com/documents/site_implementation/viewing_mathematics/S7.php
+        // Note: on Linux, the Ubuntu, DejaVu Serif, FreeSerif and Liberation Serif
+        //       either don't look that great or have rendering problems (e.g.
+        //       FreeSerif doesn't render 0 properly!), so we simply use Century
+        //       Schoolbook L...
+
+        QFontDatabase font_database;
+
+    #if defined( Q_OS_WIN )
+        if ( font_database.hasFamily( "Cambria" ) )
+            s_normal_font_name = "Cambria";
+        else if ( font_database.hasFamily( "Lucida Sans Unicode" ) )
+            s_normal_font_name = "Lucida Sans Unicode";
+        else
+            s_normal_font_name = "Times New Roman";
+    #elif defined( Q_OS_LINUX )
+        s_normal_font_name = "Century Schoolbook L";
+    #elif defined( Q_OS_MAC )
+        if ( font_database.hasFamily( "STIXGeneral" ) )
+            s_normal_font_name = "STIXGeneral";
+        else
+            s_normal_font_name = "Times New Roman";
+    #else
+        s_normal_font_name = "Times New Roman";
+    #endif
+
+        s_initialized = true;
 }
 
 EgMmlDocument::~EgMmlDocument()
