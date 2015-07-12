@@ -27,6 +27,11 @@ find_package(Qt5 COMPONENTS Widgets Xml)
 set_target_properties(mmlegcas PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_link_libraries(mmlegcas Qt5::Xml Qt5::Widgets)
 
+#for in-tree build (publish API headers in binary dir)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/libegcas)
+file(COPY eg_mml_document.h DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/libegcas)
+file(COPY eg_mml_entity_table.h DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/libegcas)
+
 install (TARGETS mmlegcas LIBRARY DESTINATION lib )
 install (FILES eg_mml_document.h  eg_mml_entity_table.h DESTINATION include/mmlegcas )
 
