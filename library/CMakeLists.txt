@@ -37,7 +37,7 @@ add_custom_command(TARGET mmlegcas
         COMMENT "copy the mmlegcas library headers to the include directory"
 )
 
-install (TARGETS mmlegcas LIBRARY DESTINATION lib )
+install (TARGETS mmlegcas ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
 install (FILES eg_mml_document.h  eg_mml_entity_table.h DESTINATION include/mmlegcas )
 
 #add_definitions(-DMML_TEST)
