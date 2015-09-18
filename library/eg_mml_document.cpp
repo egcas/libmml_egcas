@@ -223,6 +223,8 @@ private:
     static qreal s_MmToPixelFactor;
     static bool s_initialized;
     EgMathMLDocument* m_EgMathMLDocument;
+    QHash<quint32, int> m_nodeIdLookup;         ///< lookup if any node id has already been handled
+    QVector<EgRenderingData> m_renderingData;   ///< rendering and dimension data of current formula document
 };
 
 qreal EgMmlDocument::s_MmToPixelFactor = 1;
@@ -335,6 +337,7 @@ private:
     int m_layer;        ///< the layer number inside the tree (starts with 0)
     int m_sibling;      ///< the sibling number inside the tree (starts with 0)
     bool m_signalNode;    ///< this is a node to be signaled (layer count is taken into account)
+    quint32 m_nodeId;   ///< the node id given with attribute id
 };
 
 class EgMmlTokenNode : public EgMmlNode
@@ -467,6 +470,13 @@ protected:
 
 private:
     bool isInvisibleOperator() const;
+    /**
+     * @brief generateTxtRenderingData generates position data from text node during rendering
+     * @param metrics the font metrics to use
+     * @param basePos the base positon to use for correction
+     * @param m_text the text to generate position data from
+     */
+    void generateTxtRenderingData(QFontMetricsF metrics, qreal basePosition, QString m_text);
 };
 
 class EgMmlMiNode : public EgMmlTokenNode
@@ -1266,6 +1276,8 @@ void EgMmlDocument::init()
     m_foreground_color = Qt::black;
     m_background_color = Qt::transparent;
     m_draw_frames = false;
+    m_nodeIdLookup.clear();
+    m_renderingData.clear();
 
     if (!s_initialized)
             static_init();
@@ -1339,6 +1351,8 @@ bool EgMmlDocument::setContent(
     const QString &text, QString *errorMsg, int *errorLine, int *errorColumn )
 {
     clear();
+    m_renderingData.clear();
+    m_nodeIdLookup.clear();
 
     uint prefix_lines;
     QString prefix = mmlEntityTable.entities(text, prefix_lines);
@@ -1525,6 +1539,11 @@ EgMmlNode *EgMmlDocument::createNode( EgMathMlNodeType type,
         case EgMathMlNodeType::NoNode:
             mml_node = 0;
             break;
+    }
+
+    if (mml_node) {
+            if (mml_attr.contains("id"))
+                    mml_node->m_nodeId = mml_attr.value("id").toUInt();
     }
 
     return mml_node;
@@ -1785,6 +1804,7 @@ EgMmlNode::EgMmlNode( EgMathMlNodeType type, EgMmlDocument *document,
     m_layer = -1; //set to invalid
     m_sibling = -1; //set to invalid
     m_signalNode = true;
+    m_nodeId = 0;
 }
 
 EgMmlNode::~EgMmlNode()
@@ -2193,20 +2213,40 @@ void EgMmlNode::updateMyRect()
 
 void EgMmlNode::layout()
 {
-    m_parent_rect = QRectF( 0.0, 0.0, 0.0, 0.0 );
-    m_stretched = false;
-    m_rel_origin = QPointF( 0.0, 0.0 );
-
-    EgMmlNode *child = m_first_child;
-    for ( ; child != 0; child = child->nextSibling() )
-        child->layout();
-
-    layoutSymbol();
-
-    updateMyRect();
-
-    if ( m_parent == 0 )
+        m_parent_rect = QRectF( 0.0, 0.0, 0.0, 0.0 );
+        m_stretched = false;
         m_rel_origin = QPointF( 0.0, 0.0 );
+
+        //add node id to vector
+        if (m_nodeId != 0) {
+                if (!m_document->m_nodeIdLookup.contains(m_nodeId)) {
+                        int index = m_document->m_renderingData.size();
+                        EgRenderingData renderingData;
+                        renderingData.m_nodeId = m_nodeId;
+                        renderingData.m_index = 0;
+                        m_document->m_renderingData.append(renderingData);
+                        m_document->m_nodeIdLookup.insert(m_nodeId, index);
+                }
+        }
+
+        EgMmlNode *child = m_first_child;
+        for ( ; child != 0; child = child->nextSibling() )
+                child->layout();
+
+        layoutSymbol();
+
+        updateMyRect();
+
+        //update node id position data
+        if (m_nodeId != 0) {
+                if (m_document->m_nodeIdLookup.contains(m_nodeId)) {
+                        int index = m_document->m_nodeIdLookup.value(m_nodeId);
+                        m_document->m_renderingData[index].m_itemRect = myRect();
+                }
+        }
+
+        if ( m_parent == 0 )
+                m_rel_origin = QPointF( 0.0, 0.0 );
 }
 
 
@@ -2604,6 +2644,8 @@ void EgMmlTextNode::paintSymbol(
 
     QPointF d_pos = devicePoint( QPointF() );
     QPointF s_pos = symbolRect().topLeft();
+#warning change this function
+    //generateTxtRenderingData(metrics, basePos(), m_text);
 
     painter->translate( d_pos + s_pos );
     painter->scale( x_scaling, y_scaling );
@@ -2616,10 +2658,22 @@ void EgMmlTextNode::paintSymbol(
 
 QRectF EgMmlTextNode::symbolRect() const
 {
-    QRectF br = isInvisibleOperator() ? QRectF() : QFontMetricsF( font() ).tightBoundingRect( m_text );
+    QRectF br;
+    if (isInvisibleOperator()) {
+            br = QRectF();
+    } else {
+            QFontMetricsF metrics = QFontMetricsF( font() );
+            br = metrics.tightBoundingRect( m_text );
+    }
+
     br.translate( 0.0, basePos() );
 
     return br;
+}
+
+void EgMmlTextNode::generateTxtRenderingData(QFontMetricsF metrics, qreal basePosition, QString m_text)
+{
+#warning implement this function
 }
 
 EgMmlNode *EgMmlSubsupBaseNode::base() const

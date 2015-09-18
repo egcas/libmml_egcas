@@ -57,6 +57,7 @@
 #include <qstring.h>
 #include <qsize.h>
 #include <QObject>
+#include <QRectF>
 
 class QPainter;
 class QPointF;
@@ -73,6 +74,17 @@ enum class EgMathMlNodeType
     MspaceNode, MalignMarkNode, UnknownNode
 };
 
+/**
+ * @brief The EgRenderingData class that encapsulates all dimension data that is calculated during rendering.
+ * With this data it is possible to calculate where the formula characters are shown on the screen.
+ */
+class EgRenderingData {
+public:
+        EgRenderingData(): m_nodeId{0}, m_index{0}, m_itemRect{QRectF()} {}
+        quint32 m_nodeId;       ///< the node id that is extracted from the mathml node (id attribute of the node)
+        quint32 m_index;        ///< usually 0, is incremented with each character (if there are more) within one malthml node
+        QRectF m_itemRect;      ///< the rectangle that surrounds a item shown on the screen
+};
 
 class EgMathMLDocument : public QObject
 {

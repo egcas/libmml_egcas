@@ -77,6 +77,8 @@ void FormulaView::renderFormula( QPainter *painter ) const
 #ifdef USE_FORMULA_SIGNAL
     connect(&doc, SIGNAL(updatedRect(const EgMathMlNodeType&, const quint32&, const quint32&, const QRectF&)), this, SLOT(nodeCoordinates(const EgMathMlNodeType&, const quint32&, const quint32&, const QRectF&)));
 #endif //#ifdef USE_FORMULA_SIGNAL
+    doc.setBaseFontPixelSize( d_fontSize );
+    doc.setDrawFrames( d_drawFrames );
     doc.setContent( d_formula );
     if ( d_colors )
     {
@@ -88,8 +90,6 @@ void FormulaView::renderFormula( QPainter *painter ) const
         doc.setBackgroundColor( Qt::white );
         doc.setForegroundColor( Qt::black );
     }
-    doc.setBaseFontPixelSize( d_fontSize );
-    doc.setDrawFrames( d_drawFrames );
 
     QRectF docRect;
     docRect.setSize( doc.size() );
