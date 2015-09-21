@@ -192,6 +192,11 @@ public:
     static void setMmToPixelFactor(qreal factor) { s_MmToPixelFactor = factor; g_min_font_pixel_size_calc = factor * g_min_font_pixel_size; }
     static qreal MmToPixelFactor(void) { return s_MmToPixelFactor; }
 
+    /**
+     * @brief adjustCharPositions corrects the char positions inside m_renderingData after rendering
+     */
+    void adjustCharPositions(void);
+
 private:
     void init(void);
     static void static_init(void);
@@ -1791,6 +1796,22 @@ QSizeF EgMmlDocument::size() const
     return m_root_node->deviceRect().size();
 }
 
+void EgMmlDocument::adjustCharPositions(void)
+{
+        int i;
+        QRectF rect;
+        EgRenderingData data;
+        for (i = 0; i < m_renderingData.size(); i++) {
+                data = m_renderingData[i];
+                if (data.m_index != 0) {
+                        m_renderingData[i].m_itemRect.translate(rect.x(), rect.y());
+                }
+
+                if (data.m_index == 0)
+                        rect = data.m_itemRect;
+        }
+}
+
 // *******************************************************************
 // EgMmlNode
 // *******************************************************************
@@ -2688,7 +2709,7 @@ void EgMmlTextNode::generateTxtRenderingData(QRectF rect) const
 
         int size = m_text.size();
 
-        if (size <= 1)
+        if (size <= 0)
                 return;
         if (!m_parent)
                 return;
@@ -4631,6 +4652,7 @@ bool EgMathMLDocument::setContent( const QString &text, QString *errorMsg,
 void EgMathMLDocument::paint( QPainter *painter, const QPointF &pos ) const
 {
         m_doc->paint( painter, pos );
+        m_doc->adjustCharPositions();
 }
 
 /*!
