@@ -159,6 +159,7 @@ class EgMmlNode;
 class EgMmlDocument : public EgMml
 {
         friend class EgMmlNode;
+        friend class EgMmlTextNode;
 
 public:
     EgMmlDocument();
@@ -223,7 +224,7 @@ private:
     static qreal s_MmToPixelFactor;
     static bool s_initialized;
     EgMathMLDocument* m_EgMathMLDocument;
-    QHash<quint32, int> m_nodeIdLookup;         ///< lookup if any node id has already been handled
+    QHash<quint64, int> m_nodeIdLookup;         ///< lookup if any node id has already been handled
     QVector<EgRenderingData> m_renderingData;   ///< rendering and dimension data of current formula document
 };
 
@@ -309,35 +310,36 @@ public:
      * @return true if current node is a node that the sibling counter shall cause to be increased
      */
     inline bool incrementSibling(EgMathMlNodeType &type) const;
+    /**
+     * @brief getNodeId returns the node id of the current node
+     * @return the node id of the current node
+     */
+    quint32 getNodeId(void) const {return m_nodeId;}
 
 protected:
     virtual void layoutSymbol();
     virtual void paintSymbol( QPainter *painter, qreal, qreal ) const;
     virtual QRectF symbolRect() const { return QRectF( 0.0, 0.0, 0.0, 0.0 ); }
-
     EgMmlNode *parentWithExplicitAttribute( const QString &name, EgMathMlNodeType type = EgMathMlNodeType::NoNode );
     qreal interpretSpacing( const QString &value, bool *ok ) const;
-
     qreal lineWidth() const;
+
+    quint32 m_nodeId;   ///< the node id given with attribute id
+    EgMmlDocument *m_document;
+    EgMmlNode *m_parent,
+               *m_first_child,
+               *m_next_sibling,
+               *m_previous_sibling;
 
 private:
     EgMmlAttributeMap m_attribute_map;
     bool m_stretched;
     QRectF m_my_rect, m_parent_rect;
     QPointF m_rel_origin;
-
     EgMathMlNodeType m_node_type;
-    EgMmlDocument *m_document;
-
-    EgMmlNode *m_parent,
-               *m_first_child,
-               *m_next_sibling,
-               *m_previous_sibling;
-
     int m_layer;        ///< the layer number inside the tree (starts with 0)
     int m_sibling;      ///< the sibling number inside the tree (starts with 0)
     bool m_signalNode;    ///< this is a node to be signaled (layer count is taken into account)
-    quint32 m_nodeId;   ///< the node id given with attribute id
 };
 
 class EgMmlTokenNode : public EgMmlNode
@@ -472,11 +474,18 @@ private:
     bool isInvisibleOperator() const;
     /**
      * @brief generateTxtRenderingData generates position data from text node during rendering
-     * @param metrics the font metrics to use
-     * @param basePos the base positon to use for correction
-     * @param m_text the text to generate position data from
+     * @param rect the rectangle that surrounds the complete text
      */
-    void generateTxtRenderingData(QFontMetricsF metrics, qreal basePosition, QString m_text);
+    void generateTxtRenderingData(QRectF rect) const;
+    /**
+     * @brief TxtRenderingDataHelper calculates the new width of the text given and sets the position rectangles in the
+     * document
+     * @param parentRect the parent rectangle containing the char rectangle to calculate
+     * @param text the text to calculate (usually with one char more than in the previous run)
+     * @param previousWidth the previous width of the text from the previous run
+     * @return the with calculated this time
+     */
+    qreal TxtRenderingDataHelper(QRectF parentRect, QString text, qreal previousWidth) const;
 };
 
 class EgMmlMiNode : public EgMmlTokenNode
@@ -2644,8 +2653,6 @@ void EgMmlTextNode::paintSymbol(
 
     QPointF d_pos = devicePoint( QPointF() );
     QPointF s_pos = symbolRect().topLeft();
-#warning change this function
-    //generateTxtRenderingData(metrics, basePos(), m_text);
 
     painter->translate( d_pos + s_pos );
     painter->scale( x_scaling, y_scaling );
@@ -2667,13 +2674,61 @@ QRectF EgMmlTextNode::symbolRect() const
     }
 
     br.translate( 0.0, basePos() );
+    generateTxtRenderingData(br);
 
     return br;
 }
 
-void EgMmlTextNode::generateTxtRenderingData(QFontMetricsF metrics, qreal basePosition, QString m_text)
+void EgMmlTextNode::generateTxtRenderingData(QRectF rect) const
 {
-#warning implement this function
+        if (isInvisibleOperator())
+                return;
+
+        qreal previousWidth = 0.0;
+
+        int size = m_text.size();
+
+        if (size <= 1)
+                return;
+        if (!m_parent)
+                return;
+        if (m_parent->getNodeId() == 0)
+                return;
+
+        int i;
+        for(i = 1; i <= size; i++) {
+                previousWidth = TxtRenderingDataHelper(rect, m_text.left(i), previousWidth);
+        }
+}
+
+qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qreal previousWidth) const
+{
+        QFontMetricsF metrics = QFontMetricsF(font());
+        int index;
+        quint32 parentId = 0;
+        if (m_parent)
+                parentId = m_parent->getNodeId();
+        quint64 i = text.size();
+        if (m_document->m_nodeIdLookup.contains((i << 32) | parentId)) {
+                index = m_document->m_nodeIdLookup.value((i << 32) | parentId);
+        } else {
+                index = m_document->m_renderingData.size();
+                m_document->m_nodeIdLookup.insert((i << 32) | parentId, index);
+                EgRenderingData renderingData;
+                renderingData.m_index = i;
+                renderingData.m_nodeId = parentId;
+                m_document->m_renderingData.append(renderingData);
+        }
+        qreal width = metrics.width(text);
+
+        QRectF newRect = parentRect;
+        parentRect.moveRight(previousWidth);
+        newRect.setWidth(width - previousWidth);
+
+        //width - previousWidth
+        m_document->m_renderingData[index].m_itemRect = newRect;
+
+        return width;
 }
 
 EgMmlNode *EgMmlSubsupBaseNode::base() const
