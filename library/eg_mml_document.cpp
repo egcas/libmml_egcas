@@ -2246,14 +2246,6 @@ void EgMmlNode::layout()
 
         updateMyRect();
 
-        //update node id position data
-        if (m_nodeId != 0) {
-                if (m_document->m_nodeIdLookup.contains(m_nodeId)) {
-                        int index = m_document->m_nodeIdLookup.value(m_nodeId);
-                        m_document->m_renderingData[index].m_itemRect = myRect();
-                }
-        }
-
         if ( m_parent == 0 )
                 m_rel_origin = QPointF( 0.0, 0.0 );
 }
@@ -2304,6 +2296,14 @@ void EgMmlNode::paint(
     painter->save();
 
     QRectF d_rect = deviceRect();
+
+    //update node id position data
+    if (m_nodeId != 0) {
+            if (m_document->m_nodeIdLookup.contains(m_nodeId)) {
+                    int index = m_document->m_nodeIdLookup.value(m_nodeId);
+                    m_document->m_renderingData[index].m_itemRect = d_rect;
+            }
+    }
 
     //emit the positioning information for the MathML elements
     if (m_signalNode)
@@ -2696,8 +2696,9 @@ void EgMmlTextNode::generateTxtRenderingData(QRectF rect) const
                 return;
 
         int i;
+        QRectF parentRect = QRectF(QPointF(0.0, 0.0), rect.size());
         for(i = 1; i <= size; i++) {
-                previousWidth = TxtRenderingDataHelper(rect, m_text.left(i), previousWidth);
+                previousWidth = TxtRenderingDataHelper(parentRect, m_text.left(i), previousWidth);
         }
 }
 
@@ -2722,7 +2723,7 @@ qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qre
         qreal width = metrics.width(text);
 
         QRectF newRect = parentRect;
-        parentRect.moveRight(previousWidth);
+        newRect.translate(previousWidth, 0.0);
         newRect.setWidth(width - previousWidth);
 
         //width - previousWidth
