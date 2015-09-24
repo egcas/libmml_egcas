@@ -196,6 +196,13 @@ public:
      * @brief adjustCharPositions corrects the char positions inside m_renderingData after rendering
      */
     void adjustCharPositions(void);
+    /**
+     * @brief getRenderingPositions returns the rendering positions (and dimensions) of any symbol rendered that has an
+     * id as MathMl attribute. The id given must be a number.
+     * @return the rendering position and dimension, along with the id information given with the mathml code as
+     * attribute
+     */
+    QVector<EgRenderingPosition> getRenderingPositions(void);
 
 private:
     void init(void);
@@ -230,7 +237,7 @@ private:
     static bool s_initialized;
     EgMathMLDocument* m_EgMathMLDocument;
     QHash<quint64, int> m_nodeIdLookup;         ///< lookup if any node id has already been handled
-    QVector<EgRenderingData> m_renderingData;   ///< rendering and dimension data of current formula document
+    QVector<EgRenderingPosition> m_renderingData;   ///< rendering and dimension data of current formula document
 };
 
 qreal EgMmlDocument::s_MmToPixelFactor = 1;
@@ -1800,7 +1807,7 @@ void EgMmlDocument::adjustCharPositions(void)
 {
         int i;
         QRectF rect;
-        EgRenderingData data;
+        EgRenderingPosition data;
         for (i = 0; i < m_renderingData.size(); i++) {
                 data = m_renderingData[i];
                 if (data.m_index != 0) {
@@ -1810,6 +1817,11 @@ void EgMmlDocument::adjustCharPositions(void)
                 if (data.m_index == 0)
                         rect = data.m_itemRect;
         }
+}
+
+QVector<EgRenderingPosition> EgMmlDocument::getRenderingPositions(void)
+{
+        return m_renderingData;
 }
 
 // *******************************************************************
@@ -2251,7 +2263,7 @@ void EgMmlNode::layout()
         if (m_nodeId != 0) {
                 if (!m_document->m_nodeIdLookup.contains(m_nodeId)) {
                         int index = m_document->m_renderingData.size();
-                        EgRenderingData renderingData;
+                        EgRenderingPosition renderingData;
                         renderingData.m_nodeId = m_nodeId;
                         renderingData.m_index = 0;
                         m_document->m_renderingData.append(renderingData);
@@ -2736,12 +2748,12 @@ qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qre
         } else {
                 index = m_document->m_renderingData.size();
                 m_document->m_nodeIdLookup.insert((i << 32) | parentId, index);
-                EgRenderingData renderingData;
+                EgRenderingPosition renderingData;
                 renderingData.m_index = i;
                 renderingData.m_nodeId = parentId;
                 m_document->m_renderingData.append(renderingData);
         }
-        qreal width = metrics.width(text);
+        qreal width = metrics.boundingRect(text).width();
 
         QRectF newRect = parentRect;
         newRect.translate(previousWidth, 0.0);
@@ -4779,4 +4791,9 @@ void EgMathMLDocument::setDrawFrames( bool drawFrames )
         return;
 
         m_doc->setDrawFrames( drawFrames );
+}
+
+QVector<EgRenderingPosition> EgMathMLDocument::getRenderingPositions(void)
+{
+        return m_doc->getRenderingPositions();
 }

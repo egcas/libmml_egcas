@@ -78,9 +78,9 @@ enum class EgMathMlNodeType
  * @brief The EgRenderingData class that encapsulates all dimension data that is calculated during rendering.
  * With this data it is possible to calculate where the formula characters are shown on the screen.
  */
-class EgRenderingData {
+class EgRenderingPosition {
 public:
-        EgRenderingData(): m_nodeId{0}, m_index{0}, m_itemRect{QRectF()} {}
+        EgRenderingPosition(): m_nodeId{0}, m_index{0}, m_itemRect{QRectF()} {}
         quint32 m_nodeId;       ///< the node id that is extracted from the mathml node (id attribute of the node)
         quint32 m_index;        ///< usually 0, is incremented with each character (if there are more) within one malthml node
         QRectF m_itemRect;      ///< the rectangle that surrounds a item shown on the screen
@@ -138,6 +138,13 @@ public:
      * @return
      */
     static qreal MmToPixelFactor(void);
+    /**
+     * @brief getRenderingPositions returns the rendering positions (and dimensions) of any symbol rendered that has an
+     * id as MathMl attribute. The id given must be a number.
+     * @return the rendering position and dimension, along with the id information given with the mathml code as
+     * attribute
+     */
+    QVector<EgRenderingPosition> getRenderingPositions(void);
 
 signals:
     /**
