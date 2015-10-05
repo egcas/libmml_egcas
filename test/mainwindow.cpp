@@ -58,6 +58,10 @@ MainWindow::MainWindow()
     checkColors->setText( "Colors" );
     toolBar->addWidget( checkColors );
 
+    QCheckBox *checkRenderingRects = new QCheckBox( toolBar );
+    checkRenderingRects->setText( "Id Rectangles" );
+    toolBar->addWidget( checkRenderingRects );
+
     addToolBar( toolBar );
 
     connect( btnLoad, SIGNAL( clicked() ), this, SLOT( load() ) );
@@ -67,6 +71,7 @@ MainWindow::MainWindow()
     connect( d_comboRotations, SIGNAL( currentIndexChanged( const QString & ) ), this, SLOT( updateRotation( const QString & ) ) );
     connect( checkDrawFrames, SIGNAL( toggled( bool ) ), this, SLOT( updateDrawFrames( const bool & ) ) );
     connect( checkColors, SIGNAL( toggled( bool ) ), this, SLOT( updateColors( const bool & ) ) );
+    connect( checkRenderingRects, SIGNAL( toggled( bool ) ), this, SLOT( updateRects( const bool & ) ) );
 
     updateFontSize( comboFontSizes->currentText() );
     updateTransformation( checkTransformation->isChecked() );
@@ -161,3 +166,9 @@ void MainWindow::updateColors( const bool &colors )
 {
     d_view->setColors( colors );
 }
+
+void MainWindow::updateRects( const bool &idRects )
+{
+    d_view->setIdRects( idRects );
+}
+

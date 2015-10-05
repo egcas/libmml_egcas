@@ -30,6 +30,7 @@ private Q_SLOTS:
     void updateRotation( const QString & );
     void updateDrawFrames( const bool & );
     void updateColors( const bool & );
+    void updateRects( const bool & );
 
 private:
     FormulaView *d_view;

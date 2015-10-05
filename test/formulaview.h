@@ -26,6 +26,7 @@ public Q_SLOTS:
     void setRotation( const qreal & );
     void setDrawFrames( const bool &drawFrames );
     void setColors( const bool &colors );
+    void setIdRects( const bool &idRects );
 #ifdef USE_FORMULA_SIGNAL
     void nodeCoordinates(const EgMathMlNodeType& node, const quint32& layer, const quint32& sibling, const QRectF& rect);
 #endif //#ifdef USE_FORMULA_SIGNAL
@@ -44,6 +45,7 @@ private:
     qreal d_rotation;
     bool d_drawFrames;
     bool d_colors;
+    bool d_idRects;
 };
 
 #endif

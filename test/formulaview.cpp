@@ -8,9 +8,10 @@
 FormulaView::FormulaView( QWidget *parent ):
     QWidget( parent ),
     d_fontSize( 8 ),
-    d_transformation( true ),
+    d_transformation( false ),
     d_scale( false ),
-    d_rotation( 0 )
+    d_rotation( 0 ),
+    d_idRects( false )
 {
 }
 
@@ -60,6 +61,13 @@ void FormulaView::setColors( const bool &colors )
     d_colors = colors;
     update();
 }
+
+void FormulaView::setIdRects( const bool &idRects )
+{
+    d_idRects = idRects;
+    update();
+}
+
 
 void FormulaView::paintEvent( QPaintEvent *event )
 {
@@ -113,6 +121,34 @@ void FormulaView::renderFormula( QPainter *painter ) const
     {
         doc.paint( painter, docRect.topLeft() );
     }
+
+    QVector<EgRenderingPosition> renderingPosition = doc.getRenderingPositions();
+
+    painter->save();
+
+    if (d_idRects) {
+            EgRenderingPosition position;
+            Qt::GlobalColor color = Qt::gray;
+            static int i = 1;
+            foreach (position, renderingPosition) {
+                    if (position.m_index == 0) {
+                            painter->setPen(Qt::darkGray);
+                            painter->drawRect(position.m_itemRect);
+                    } else {
+                            painter->setPen(color);
+                            painter->drawRect(position.m_itemRect);
+                    }
+
+                    if (color == Qt::darkYellow)
+                            color = Qt::gray;
+                    else
+                            color = static_cast<Qt::GlobalColor>(static_cast<int>(color) + 1);
+            }
+    }
+
+    painter->restore();
+
+
 #ifdef USE_FORMULA_SIGNAL
     disconnect(&doc, SIGNAL(updatedRect(const EgMathMlNodeType&, const quint32&, const quint32&, const QRectF&)), this, SLOT(nodeCoordinates(const EgMathMlNodeType&, const quint32&, const quint32&, const QRectF&)));
 #endif //#ifdef USE_FORMULA_SIGNAL
