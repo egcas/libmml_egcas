@@ -319,23 +319,6 @@ public:
     bool isFirstSibling() const { return m_previous_sibling == 0; }
     bool hasChildNodes() const { return m_first_child != 0; }
     /**
-     * @brief balanceTree balances the tree so that the layer and siblings numbers are correct
-     * @param rootNode the root node of the tree
-     */
-    void renumberTreeLayers(EgMmlNode*rootNode);
-    /**
-     * @brief incrementLayer tests if the current node is a node that the layer counter shall cause to be increased
-     * @param node the node to test against
-     * @return true if current node is a node that the layer counter shall cause to be increased
-     */
-    inline bool incrementLayer(EgMathMlNodeType &type) const;
-    /**
-     * @brief incrementSibling tests if the current node is a node that the sibling counter shall cause to be increased
-     * @param node the node to test against
-     * @return true if current node is a node that the sibling counter shall cause to be increased
-     */
-    inline bool incrementSibling(EgMathMlNodeType &type) const;
-    /**
      * @brief getNodeId returns the node id of the current node
      * @return the node id of the current node
      */
@@ -362,9 +345,6 @@ private:
     QRectF m_my_rect, m_parent_rect;
     QPointF m_rel_origin;
     EgMathMlNodeType m_node_type;
-    int m_layer;        ///< the layer number inside the tree (starts with 0)
-    int m_sibling;      ///< the sibling number inside the tree (starts with 0)
-    bool m_signalNode;    ///< this is a node to be signaled (layer count is taken into account)
 };
 
 class EgMmlTokenNode : public EgMmlNode
@@ -1417,8 +1397,6 @@ bool EgMmlDocument::setContent(
     insertChild( 0, root_node, 0 );
     layout();
 
-    m_root_node->renumberTreeLayers(m_root_node);
-
     return true;
 }
 
@@ -1851,7 +1829,7 @@ bool EgMmlDocument::appendRenderingData(quint32 nodeId, quint32 index)
                 renderingData.m_nodeId = nodeId;
                 renderingData.m_index = index;
                 m_renderingData.append(renderingData);
-                m_nodeIdLookup.insert(nodeId, indPos);
+                m_nodeIdLookup.insert((static_cast<quint64>(index) << 32) | nodeId, indPos);
         }
 
         return retval;
@@ -1888,9 +1866,6 @@ EgMmlNode::EgMmlNode( EgMathMlNodeType type, EgMmlDocument *document,
     m_my_rect = m_parent_rect = QRectF( 0.0, 0.0, 0.0, 0.0 );
     m_rel_origin = QPointF( 0.0, 0.0 );
     m_stretched = false;
-    m_layer = -1; //set to invalid
-    m_sibling = -1; //set to invalid
-    m_signalNode = true;
     m_nodeId = 0;
 }
 
@@ -2076,71 +2051,6 @@ QColor EgMmlNode::background() const
         return QColor();
 
     return QColor( value_str );
-}
-
-inline bool EgMmlNode::incrementLayer(EgMathMlNodeType &type) const
-{
-        if (    type == EgMathMlNodeType::UnknownNode
-             || type == EgMathMlNodeType::NoNode)
-                return false;
-        else
-                return true;
-}
-
-inline bool EgMmlNode::incrementSibling(EgMathMlNodeType &type) const
-{
-        if (    type == EgMathMlNodeType::UnknownNode
-             || type == EgMathMlNodeType::NoNode)
-                return false;
-        else
-                return true;
-}
-
-void EgMmlNode::renumberTreeLayers(EgMmlNode *rootNode)
-{
-        /*NoNode = 0, MiNode = 1, MnNode = 2, MfracNode = 3, MrowNode = 4, MsqrtNode = 5,
-        MrootNode = 6, MsupNode = 7, MsubNode = 8, MsubsupNode = 9, MoNode = 10,
-        MstyleNode = 11, TextNode = 12, MphantomNode = 13, MfencedNode = 14,
-        MtableNode = 15, MtrNode = 16, MtdNode = 17, MoverNode = 18, MunderNode = 19,
-        MunderoverNode = 20, MerrorNode = 21, MtextNode = 22, MpaddedNode = 23,
-        MspaceNode = 24, MalignMarkNode = 25, UnknownNode = 26*/
-        if (    m_node_type == EgMathMlNodeType::UnknownNode
-             || m_node_type == EgMathMlNodeType::MphantomNode
-             || m_node_type == EgMathMlNodeType::MpaddedNode
-             || m_node_type == EgMathMlNodeType::MspaceNode
-             || m_node_type == EgMathMlNodeType::MalignMarkNode
-             || m_node_type == EgMathMlNodeType::NoNode
-             || m_node_type == EgMathMlNodeType::MoNode)
-                m_signalNode = false;
-
-
-        //count all layers but not those nodes that are of unknown type
-        if (rootNode == this) {
-                //the first node that is signaled shall always start with 0, but if the root node is an unknown node
-                //(that is not signaled), set the layer to -1 that the layer count is correct upon the first incrementation
-                if (incrementLayer(rootNode->m_node_type)) {
-                        m_layer = 0;
-                } else {
-                        m_layer = -1;
-                }
-        } else if (!incrementLayer(m_node_type)) {
-                m_layer = m_parent->m_layer;
-        } else {
-                m_layer = m_parent->m_layer + 1;
-        }
-
-        //count all siblings but not those nodes that are of unknown type
-        if (m_previous_sibling == 0)
-                m_sibling = 0;
-        else if (!incrementSibling(m_node_type))
-                m_sibling = m_previous_sibling->m_sibling;
-        else
-                m_sibling = m_previous_sibling->m_sibling + 1;
-
-        EgMmlNode *child = m_first_child;
-        for ( ; child != 0; child = child->m_next_sibling ) {
-                child->renumberTreeLayers(rootNode);
-        }
 }
 
 static void updateFontAttr( EgMmlAttributeMap &font_attr, const EgMmlNode *n,
@@ -2369,10 +2279,6 @@ void EgMmlNode::paint(
     //update node id position data
     m_document->updateRenderingData(m_nodeId, 0, d_rect);
 
-    //emit the positioning information for the MathML elements
-    if (m_signalNode)
-            emit m_document->m_EgMathMLDocument->updatedRect(m_node_type, m_layer, m_sibling, d_rect);
-
     if ( m_stretched )
     {
         x_scaling *= d_rect.width() / m_my_rect.width();
@@ -2408,7 +2314,7 @@ void EgMmlNode::paint(
 void EgMmlNode::paintSymbol( QPainter *painter, qreal, qreal ) const
 {
     QRectF d_rect = deviceRect();
-    if ( m_document->drawFrames() && d_rect.isValid() && m_signalNode )
+    if ( m_document->drawFrames() && d_rect.isValid() )
     {
         painter->save();
 

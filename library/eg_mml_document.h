@@ -146,16 +146,6 @@ public:
      */
     QVector<EgRenderingPosition> getRenderingPositions(void);
 
-signals:
-    /**
-     * @brief updatedRect defines a signal to update the surrounding rectangle and other data of a MathML math element
-     * @param node the node type that caused the signal to be emitted (enum EgMathMLNodeType)
-     * @param layer the layer number on which the current node is (starts with 0).
-     * @param sibling is the number of the current sibling inside a layer (starts with 0).
-     * @param rect the rect of the current node
-     */
-    void updatedRect(const EgMathMlNodeType& node, const quint32& layer, const quint32& sibling, const QRectF& rect);
-
 private:
 
     EgMmlDocument *m_doc;        ///< pointer to math Ml formula

@@ -27,15 +27,13 @@ public Q_SLOTS:
     void setDrawFrames( const bool &drawFrames );
     void setColors( const bool &colors );
     void setIdRects( const bool &idRects );
-#ifdef USE_FORMULA_SIGNAL
-    void nodeCoordinates(const EgMathMlNodeType& node, const quint32& layer, const quint32& sibling, const QRectF& rect);
-#endif //#ifdef USE_FORMULA_SIGNAL
 
 protected:
     virtual void paintEvent( QPaintEvent * );
 
 private:
     void renderFormula( QPainter * ) const;
+    void paintIdRects(EgMathMLDocument *doc, QPainter* painter) const;
 
 private:
     QString d_formula;

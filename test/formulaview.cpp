@@ -79,12 +79,32 @@ void FormulaView::paintEvent( QPaintEvent *event )
     renderFormula( &painter );
 }
 
+void FormulaView::paintIdRects(EgMathMLDocument *doc, QPainter *painter ) const
+{
+        QVector<EgRenderingPosition> renderingPosition = doc->getRenderingPositions();
+
+        EgRenderingPosition position;
+        Qt::GlobalColor color = Qt::gray;
+        static int i = 1;
+        foreach (position, renderingPosition) {
+                if (position.m_index == 0) {
+                        painter->setPen(Qt::darkGray);
+                        painter->drawRect(position.m_itemRect);
+                } else {
+                        painter->setPen(color);
+                        painter->drawRect(position.m_itemRect);
+                }
+
+                if (color == Qt::darkYellow)
+                        color = Qt::gray;
+                else
+                        color = static_cast<Qt::GlobalColor>(static_cast<int>(color) + 1);
+        }
+}
+
 void FormulaView::renderFormula( QPainter *painter ) const
 {
     EgMathMLDocument doc;
-#ifdef USE_FORMULA_SIGNAL
-    connect(&doc, SIGNAL(updatedRect(const EgMathMlNodeType&, const quint32&, const quint32&, const QRectF&)), this, SLOT(nodeCoordinates(const EgMathMlNodeType&, const quint32&, const quint32&, const QRectF&)));
-#endif //#ifdef USE_FORMULA_SIGNAL
     doc.setBaseFontPixelSize( d_fontSize );
     doc.setDrawFrames( d_drawFrames );
     doc.setContent( d_formula );
@@ -115,48 +135,23 @@ void FormulaView::renderFormula( QPainter *painter ) const
         painter->translate( docRect.topLeft() - docRect.center() );
         doc.paint( painter, QPointF( 0.0, 0.0 ) );
 
+        if (d_idRects) {
+                paintIdRects(&doc, painter);
+        }
+
         painter->restore();
     }
     else
     {
+        painter->save();
+
         doc.paint( painter, docRect.topLeft() );
+
+        if (d_idRects) {
+                paintIdRects(&doc, painter);
+        }
+
+        painter->restore();
     }
-
-    QVector<EgRenderingPosition> renderingPosition = doc.getRenderingPositions();
-
-    painter->save();
-
-    if (d_idRects) {
-            EgRenderingPosition position;
-            Qt::GlobalColor color = Qt::gray;
-            static int i = 1;
-            foreach (position, renderingPosition) {
-                    if (position.m_index == 0) {
-                            painter->setPen(Qt::darkGray);
-                            painter->drawRect(position.m_itemRect);
-                    } else {
-                            painter->setPen(color);
-                            painter->drawRect(position.m_itemRect);
-                    }
-
-                    if (color == Qt::darkYellow)
-                            color = Qt::gray;
-                    else
-                            color = static_cast<Qt::GlobalColor>(static_cast<int>(color) + 1);
-            }
-    }
-
-    painter->restore();
-
-
-#ifdef USE_FORMULA_SIGNAL
-    disconnect(&doc, SIGNAL(updatedRect(const EgMathMlNodeType&, const quint32&, const quint32&, const QRectF&)), this, SLOT(nodeCoordinates(const EgMathMlNodeType&, const quint32&, const quint32&, const QRectF&)));
-#endif //#ifdef USE_FORMULA_SIGNAL
 }
 
-#ifdef USE_FORMULA_SIGNAL
-void FormulaView::nodeCoordinates(const EgMathMlNodeType&node, const quint32&layer, const quint32&sibling, const QRectF& rect)
-{
-        qDebug() << static_cast<int>(node) << layer << sibling << rect;
-}
-#endif //#ifdef USE_FORMULA_SIGNAL
