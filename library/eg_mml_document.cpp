@@ -156,6 +156,26 @@ struct EgMmlNodeSpec
 typedef QMap<QString, QString> EgMmlAttributeMap;
 class EgMmlNode;
 
+/**
+ * @brief The EgRendAdjustBits enum some adjustment bits for rendering stuff
+ */
+enum class EgRendAdjustBits {
+        Nothing = 0, translateLspace = 1
+};
+
+/**
+ * @brief The EgAddRendData class provides some additional data for post calculation of the rendering data
+ */
+class EgAddRendData {
+public:
+        EgAddRendData() : m_index{0}, m_node{nullptr}, m_bits{EgRendAdjustBits::Nothing} {}
+        EgAddRendData(int index, EgMmlNode* node = nullptr, EgRendAdjustBits bits = EgRendAdjustBits::Nothing) :
+                      m_index{index}, m_node{node}, m_bits{EgRendAdjustBits::Nothing} {}
+        int m_index;                              ///< index position inside the rendering data vector
+        EgMmlNode *m_node;                        ///< pointer to the node we need for later adjustments
+        EgRendAdjustBits m_bits;                  ///< field to save what needs to be adjusted later on
+};
+
 class EgMmlDocument : public EgMml
 {
         friend class EgMmlNode;
@@ -197,6 +217,10 @@ public:
      */
     void adjustCharPositions(void);
     /**
+     * @brief optimizeSize reduces memory size of the formula data
+     */
+    void optimizeSize(void);
+    /**
      * @brief getRenderingPositions returns the rendering positions (and dimensions) of any symbol rendered that has an
      * id as MathMl attribute. The id given must be a number.
      * @return the rendering position and dimension, along with the id information given with the mathml code as
@@ -207,8 +231,10 @@ public:
      * @brief appendRenderingData append rendering data
      * @param nodeId rendering data with the node id to add
      * @param index rendering data with the index to add
+     * @param node a pointer to the node to add rendering data for
+     * @param data must a special post processing be done on the rendering data
      */
-    bool appendRenderingData(quint32 nodeId, quint32 index);
+    bool appendRenderingData(quint32 nodeId, quint32 index, EgMmlNode* node, EgRendAdjustBits data);
     /**
      * @brief updateRenderingData update rendering data
      * @param nodeId rendering data with the node id to add
@@ -249,7 +275,7 @@ private:
     static qreal s_MmToPixelFactor;
     static bool s_initialized;
     EgMathMLDocument* m_EgMathMLDocument;
-    QHash<quint64, int> m_nodeIdLookup;         ///< lookup if any node id has already been handled
+    QHash<quint64, EgAddRendData> m_nodeIdLookup;   ///< lookup if any node id has already been handled
     QVector<EgRenderingPosition> m_renderingData;   ///< rendering and dimension data of current formula document
 };
 
@@ -1803,11 +1829,15 @@ void EgMmlDocument::adjustCharPositions(void)
                 data = m_renderingData[i];
                 if (data.m_index != 0) {
                         m_renderingData[i].m_itemRect.translate(rect.x(), rect.y());
-                }
-
-                if (data.m_index == 0)
+                } else {
                         rect = data.m_itemRect;
+                }
         }
+}
+
+void EgMmlDocument::optimizeSize(void)
+{
+        m_nodeIdLookup.clear();
 }
 
 QVector<EgRenderingPosition> EgMmlDocument::getRenderingPositions(void)
@@ -1815,7 +1845,8 @@ QVector<EgRenderingPosition> EgMmlDocument::getRenderingPositions(void)
         return m_renderingData;
 }
 
-bool EgMmlDocument::appendRenderingData(quint32 nodeId, quint32 index)
+bool EgMmlDocument::appendRenderingData(quint32 nodeId, quint32 index, EgMmlNode* node,
+                                        EgRendAdjustBits data = EgRendAdjustBits::Nothing)
 {
         bool retval = false;
 
@@ -1824,7 +1855,7 @@ bool EgMmlDocument::appendRenderingData(quint32 nodeId, quint32 index)
 
         if (!m_nodeIdLookup.contains(((static_cast<quint64>(index) << 32) | nodeId))) {
                 retval = true;
-                int indPos = m_renderingData.size();
+                EgAddRendData indPos(m_renderingData.size(), node, data);
                 EgRenderingPosition renderingData;
                 renderingData.m_nodeId = nodeId;
                 renderingData.m_index = index;
@@ -1841,8 +1872,8 @@ void EgMmlDocument::updateRenderingData(quint32 nodeId, quint32 index, QRectF po
                 return;
 
         if (m_nodeIdLookup.contains(((static_cast<quint64>(index) << 32) | nodeId))) {
-                int indPos = m_nodeIdLookup.value((static_cast<quint64>(index) << 32) | nodeId);
-                m_renderingData[indPos].m_itemRect = position;
+                EgAddRendData indPos(m_nodeIdLookup.value((static_cast<quint64>(index) << 32) | nodeId));
+                m_renderingData[indPos.m_index].m_itemRect = position;
         }
 }
 
@@ -2215,7 +2246,7 @@ void EgMmlNode::layout()
         m_rel_origin = QPointF( 0.0, 0.0 );
 
         //add node id to vector
-        m_document->appendRenderingData(m_nodeId, 0);
+        m_document->appendRenderingData(m_nodeId, 0, this);
 
         EgMmlNode *child = m_first_child;
         for ( ; child != 0; child = child->nextSibling() )
@@ -2675,7 +2706,6 @@ void EgMmlTextNode::generateTxtRenderingData(QRectF rect) const
 qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qreal previousWidth) const
 {
         QFontMetricsF metrics = QFontMetricsF(font());
-        int index;
         quint32 parentId = 0;
         EgMathMlNodeType nodeType;
         if (m_parent) {
@@ -2685,18 +2715,16 @@ qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qre
                 return 0.0;
         }
 
-        quint64 i = text.size();
-        m_document->appendRenderingData(parentId, i);
-        qreal width = metrics.boundingRect(text).width();
-        qreal lspace = 0.0;
-
-/*        if (    nodeType == EgMathMlNodeType::MoNode) {
-                lspace = static_cast<EgMmlMoNode*>(m_parent)->lspace();
+        EgRendAdjustBits adjBits = EgRendAdjustBits::Nothing;
+        if (    nodeType == EgMathMlNodeType::MoNode
+             || nodeType == EgMathMlNodeType::MpaddedNode) {
+                adjBits = EgRendAdjustBits::translateLspace;
         }
 
-        if (    nodeType == EgMathMlNodeType::MpaddedNode) {
-                lspace = static_cast<EgMmlMpaddedNode*>(m_parent)->lspace();
-        }*/
+        quint64 i = text.size();
+        m_document->appendRenderingData(parentId, i, m_parent, adjBits);
+        qreal width = metrics.boundingRect(text).width();
+        qreal lspace = 0.0;
 
         QRectF newRect = parentRect;
         newRect.translate(previousWidth + lspace, 0.0);
@@ -4608,6 +4636,8 @@ void EgMathMLDocument::paint( QPainter *painter, const QPointF &pos ) const
 {
         m_doc->paint( painter, pos );
         m_doc->adjustCharPositions();
+        //clear temporary rendering infos, since they are not needed anymore
+        m_doc->optimizeSize();
 }
 
 /*!
