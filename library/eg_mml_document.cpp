@@ -170,7 +170,7 @@ class EgAddRendData {
 public:
         EgAddRendData() : m_index{0}, m_node{nullptr}, m_bits{EgRendAdjustBits::Nothing} {}
         EgAddRendData(int index, EgMmlNode* node = nullptr, EgRendAdjustBits bits = EgRendAdjustBits::Nothing) :
-                      m_index{index}, m_node{node}, m_bits{EgRendAdjustBits::Nothing} {}
+                      m_index{index}, m_node{node}, m_bits{bits} {}
         int m_index;                              ///< index position inside the rendering data vector
         EgMmlNode *m_node;                        ///< pointer to the node we need for later adjustments
         EgRendAdjustBits m_bits;                  ///< field to save what needs to be adjusted later on
@@ -216,6 +216,10 @@ public:
      * @brief adjustCharPositions corrects the char positions inside m_renderingData after rendering
      */
     void adjustCharPositions(void);
+    /**
+     * @brief doPostProcessing do some post processing of the rendering data
+     */
+    void doPostProcessing(void);
     /**
      * @brief optimizeSize reduces memory size of the formula data
      */
@@ -1834,6 +1838,30 @@ void EgMmlDocument::adjustCharPositions(void)
                 }
         }
 }
+void EgMmlDocument::doPostProcessing(void)
+{
+        QHashIterator<quint64, EgAddRendData> i(m_nodeIdLookup);
+        qreal lspace = 0.0;
+
+        while (i.hasNext()) {
+                i.next();
+                EgAddRendData data = i.value();
+                if (data.m_bits == EgRendAdjustBits::Nothing)
+                        continue;
+                if (!data.m_node) //no pointer, so we can't do anything
+                        continue;
+
+                switch (data.m_bits) { //correction of lspace stuff
+                case EgRendAdjustBits::translateLspace:
+                        if (data.m_node->nodeType() == EgMathMlNodeType::MoNode)
+                                lspace = static_cast<EgMmlMoNode*>(data.m_node)->lspace();
+                        if (data.m_node->nodeType() == EgMathMlNodeType::MpaddedNode)
+                                lspace = static_cast<EgMmlMpaddedNode*>(data.m_node)->lspace();
+                        m_renderingData[data.m_index].m_itemRect.translate(lspace, 0.0);
+                        break;
+                }
+        }
+}
 
 void EgMmlDocument::optimizeSize(void)
 {
@@ -2724,10 +2752,9 @@ qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qre
         quint64 i = text.size();
         m_document->appendRenderingData(parentId, i, m_parent, adjBits);
         qreal width = metrics.boundingRect(text).width();
-        qreal lspace = 0.0;
 
         QRectF newRect = parentRect;
-        newRect.translate(previousWidth + lspace, 0.0);
+        newRect.translate(previousWidth, 0.0);
         newRect.setWidth(width - previousWidth);
 
         //width - previousWidth
@@ -4636,6 +4663,7 @@ void EgMathMLDocument::paint( QPainter *painter, const QPointF &pos ) const
 {
         m_doc->paint( painter, pos );
         m_doc->adjustCharPositions();
+        m_doc->doPostProcessing();
         //clear temporary rendering infos, since they are not needed anymore
         m_doc->optimizeSize();
 }
