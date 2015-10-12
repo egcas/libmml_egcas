@@ -160,8 +160,24 @@ class EgMmlNode;
  * @brief The EgRendAdjustBits enum some adjustment bits for rendering stuff
  */
 enum class EgRendAdjustBits {
-        Nothing = 0, translateLspace = 1
+        Nothing = 0, translateLspace = 1, translateTxt = 2
 };
+
+/**
+ * @brief operator| operator overloading for EgRendAdjustBits
+ */
+inline EgRendAdjustBits operator|(EgRendAdjustBits a, EgRendAdjustBits b)
+{
+  return EgRendAdjustBits(static_cast<int>(a) | static_cast<int>(b));
+}
+
+/**
+ * @brief operator| operator overloading for EgRendAdjustBits
+ */
+inline EgRendAdjustBits operator&(EgRendAdjustBits a, EgRendAdjustBits b)
+{
+  return EgRendAdjustBits(static_cast<int>(a) & static_cast<int>(b));
+}
 
 /**
  * @brief The EgAddRendData class provides some additional data for post calculation of the rendering data
@@ -321,6 +337,12 @@ public:
 
     virtual void stretch();
     virtual void layout();
+    /**
+     * @brief layoutHook is called before layout function of each child is called. Subclasses can therefore intercept
+     * the layout functions of their the childs
+     * @param childIndex the child index of the childs
+     */
+    virtual void layoutHook(quint32 childIndex) {}
     virtual void paint( QPainter *painter, qreal x_scaling, qreal y_scaling );
 
     qreal basePos() const;
@@ -428,6 +450,12 @@ public:
 
     EgMmlNode *numerator() const;
     EgMmlNode *denominator() const;
+    /**
+     * @brief layoutHook is called before layout function of each child is called. Subclasses can therefore intercept
+     * the layout functions of their the childs
+     * @param childIndex the child index of the childs
+     */
+    virtual void layoutHook(quint32 childIndex);
 
 protected:
     virtual void layoutSymbol();
@@ -1827,12 +1855,17 @@ QSizeF EgMmlDocument::size() const
 void EgMmlDocument::adjustCharPositions(void)
 {
         int i;
+        quint64 key;
         QRectF rect;
         EgRenderingPosition data;
         for (i = 0; i < m_renderingData.size(); i++) {
                 data = m_renderingData[i];
-                if (data.m_index != 0) {
-                        m_renderingData[i].m_itemRect.translate(rect.x(), rect.y());
+                key = (static_cast<quint64>(data.m_index) << 32) | data.m_nodeId;
+                if (    data.m_index != 0
+                     && m_nodeIdLookup.contains(key)) {
+                        if ( ((m_nodeIdLookup.value(key).m_bits) & EgRendAdjustBits::translateTxt) != EgRendAdjustBits::Nothing) {
+                                m_renderingData[i].m_itemRect.translate(rect.x(), rect.y());
+                        }
                 } else {
                         rect = data.m_itemRect;
                 }
@@ -1851,14 +1884,12 @@ void EgMmlDocument::doPostProcessing(void)
                 if (!data.m_node) //no pointer, so we can't do anything
                         continue;
 
-                switch (data.m_bits) { //correction of lspace stuff
-                case EgRendAdjustBits::translateLspace:
+                if ((data.m_bits & EgRendAdjustBits::translateLspace) != EgRendAdjustBits::Nothing) { //correction of lspace stuff
                         if (data.m_node->nodeType() == EgMathMlNodeType::MoNode)
                                 lspace = static_cast<EgMmlMoNode*>(data.m_node)->lspace();
                         if (data.m_node->nodeType() == EgMathMlNodeType::MpaddedNode)
                                 lspace = static_cast<EgMmlMpaddedNode*>(data.m_node)->lspace();
                         m_renderingData[data.m_index].m_itemRect.translate(lspace, 0.0);
-                        break;
                 }
         }
 }
@@ -2277,8 +2308,12 @@ void EgMmlNode::layout()
         m_document->appendRenderingData(m_nodeId, 0, this);
 
         EgMmlNode *child = m_first_child;
-        for ( ; child != 0; child = child->nextSibling() )
+        quint32 i;
+        for (i = 0 ; child != 0; child = child->nextSibling() ) {
+                layoutHook(i);
                 child->layout();
+                i++;
+        }
 
         layoutSymbol();
 
@@ -2430,6 +2465,13 @@ EgMmlNode *EgMmlMfracNode::denominator() const
     return node;
 }
 
+void EgMmlMfracNode::layoutHook(quint32 childIndex)
+{
+        if (childIndex == 1) {
+                m_document->appendRenderingData(m_nodeId, childIndex, this);
+        }
+}
+
 QRectF EgMmlMfracNode::symbolRect() const
 {
     QRectF num_rect = numerator()->myRect();
@@ -2510,6 +2552,9 @@ void EgMmlMfracNode::paintSymbol(
 
         QRectF s_rect = symbolRect();
         s_rect.moveTopLeft( devicePoint( s_rect.topLeft() ) );
+
+        QRectF rect(s_rect);
+        m_document->updateRenderingData(m_nodeId, 1, rect);
 
         painter->drawLine( QPointF( s_rect.left() + 0.5 * line_thickness, s_rect.center().y() ),
                            QPointF( s_rect.right() - 0.5 * line_thickness, s_rect.center().y() ) );
@@ -2750,7 +2795,7 @@ qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qre
         }
 
         quint64 i = text.size();
-        m_document->appendRenderingData(parentId, i, m_parent, adjBits);
+        m_document->appendRenderingData(parentId, i, m_parent, adjBits | EgRendAdjustBits::translateTxt);
         qreal width = metrics.boundingRect(text).width();
 
         QRectF newRect = parentRect;
