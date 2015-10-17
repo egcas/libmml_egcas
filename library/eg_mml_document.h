@@ -58,6 +58,7 @@
 #include <qsize.h>
 #include <QObject>
 #include <QRectF>
+#include <QVector>
 
 class QPainter;
 class QPointF;
