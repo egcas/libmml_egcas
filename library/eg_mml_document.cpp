@@ -214,7 +214,7 @@ public:
     void setFontName( EgMathMLDocument::MmlFont type, const QString &name );
 
     qreal baseFontPixelSize() const { return m_base_font_pixel_size; }
-    void setBaseFontPixelSize( qreal size ) { m_base_font_pixel_size = size;}
+    void setBaseFontPixelSize( qreal size ) { m_base_font_pixel_size = size; clearRendering();}
 
     QColor foregroundColor() const { return m_foreground_color; }
     void setForegroundColor( const QColor &color ) { m_foreground_color = color; }
@@ -262,7 +262,21 @@ public:
      * @param position position to update
      */
     void updateRenderingData(quint32 nodeId, quint32 index, QRectF position);
-
+    /**
+     * @brief clearRendering clears all rendering data
+     */
+    void clearRendering(void);
+    /**
+     * @brief renderingComplete check if rendering data has already been completed (no need to adjust positon data
+     * anymore)
+     * @return true if completed, false if not
+     */
+    bool renderingComplete(void) { return m_renderingComplete; }
+    /**
+     * @brief setRenderingComplete marks rendering as completed, subsequent calls to paint won't modify rendering
+     * positions
+     */
+    void setRenderingComplete(void) { m_renderingComplete = true; }
 private:
     void init(void);
     static void static_init(void);
@@ -297,6 +311,7 @@ private:
     EgMathMLDocument* m_EgMathMLDocument;
     QHash<quint64, EgAddRendData> m_nodeIdLookup;   ///< lookup if any node id has already been handled
     QVector<EgRenderingPosition> m_renderingData;   ///< rendering and dimension data of current formula document
+    bool m_renderingComplete;           ///< marks all rendering data as complete
 };
 
 qreal EgMmlDocument::s_MmToPixelFactor = 1;
@@ -1259,6 +1274,9 @@ QString EgMmlDocument::fontName( EgMathMLDocument::MmlFont type ) const
 void EgMmlDocument::setFontName( EgMathMLDocument::MmlFont type,
                                   const QString &name )
 {
+    //clear rendering since using a new font will break rendering positions
+    clearRendering();
+
     switch ( type )
     {
         case EgMathMLDocument::NormalFont:
@@ -1348,8 +1366,7 @@ void EgMmlDocument::init()
     m_foreground_color = Qt::black;
     m_background_color = Qt::transparent;
     m_draw_frames = false;
-    m_nodeIdLookup.clear();
-    m_renderingData.clear();
+    clearRendering();
 
     if (!s_initialized)
             static_init();
@@ -1396,6 +1413,7 @@ void EgMmlDocument::clear()
 {
     delete m_root_node;
     m_root_node = 0;
+    clearRendering();
 }
 
 void EgMmlDocument::dump() const
@@ -1423,8 +1441,6 @@ bool EgMmlDocument::setContent(
     const QString &text, QString *errorMsg, int *errorLine, int *errorColumn )
 {
     clear();
-    m_renderingData.clear();
-    m_nodeIdLookup.clear();
 
     uint prefix_lines;
     QString prefix = mmlEntityTable.entities(text, prefix_lines);
@@ -1861,13 +1877,14 @@ void EgMmlDocument::adjustCharPositions(void)
         for (i = 0; i < m_renderingData.size(); i++) {
                 data = m_renderingData[i];
                 key = (static_cast<quint64>(data.m_index) << 32) | data.m_nodeId;
-                if (    data.m_index != 0
-                     && m_nodeIdLookup.contains(key)) {
-                        if ( ((m_nodeIdLookup.value(key).m_bits) & EgRendAdjustBits::translateTxt) != EgRendAdjustBits::Nothing) {
-                                m_renderingData[i].m_itemRect.translate(rect.x(), rect.y());
-                        }
-                } else {
+                if (data.m_index == 0) {
                         rect = data.m_itemRect;
+                } else {
+                        if (m_nodeIdLookup.contains(key)) {
+                                if ( ((m_nodeIdLookup.value(key).m_bits) & EgRendAdjustBits::translateTxt) != EgRendAdjustBits::Nothing) {
+                                        m_renderingData[i].m_itemRect.translate(rect.x(), rect.y());
+                                }
+                        }
                 }
         }
 }
@@ -1912,7 +1929,8 @@ bool EgMmlDocument::appendRenderingData(quint32 nodeId, quint32 index, EgMmlNode
         if (nodeId == 0)
                 return retval;
 
-        if (!m_nodeIdLookup.contains(((static_cast<quint64>(index) << 32) | nodeId))) {
+        if (    !m_nodeIdLookup.contains(((static_cast<quint64>(index) << 32) | nodeId))
+             && !m_renderingComplete) {
                 retval = true;
                 EgAddRendData indPos(m_renderingData.size(), node, data);
                 EgRenderingPosition renderingData;
@@ -1934,6 +1952,13 @@ void EgMmlDocument::updateRenderingData(quint32 nodeId, quint32 index, QRectF po
                 EgAddRendData indPos(m_nodeIdLookup.value((static_cast<quint64>(index) << 32) | nodeId));
                 m_renderingData[indPos.m_index].m_itemRect = position;
         }
+}
+
+void EgMmlDocument::clearRendering(void)
+{
+        m_renderingData.clear();
+        m_nodeIdLookup.clear();
+        m_renderingComplete = false;
 }
 
 
@@ -4707,10 +4732,13 @@ bool EgMathMLDocument::setContent( const QString &text, QString *errorMsg,
 void EgMathMLDocument::paint( QPainter *painter, const QPointF &pos ) const
 {
         m_doc->paint( painter, pos );
-        m_doc->adjustCharPositions();
-        m_doc->doPostProcessing();
+        if (!m_doc->renderingComplete()) {
+                m_doc->adjustCharPositions();
+                m_doc->doPostProcessing();
+        }
         //clear temporary rendering infos, since they are not needed anymore
         m_doc->optimizeSize();
+        m_doc->setRenderingComplete();
 }
 
 /*!
