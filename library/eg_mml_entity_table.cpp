@@ -2090,7 +2090,7 @@ QString EgMMLEntityTable::entities(QString text, uint &prefix_lines)
 {
 
 
-    QRegExp rx(">&([a-zA-Z]{1}[a-zA-Z0-9]*);<");
+    QRegExp rx("&([a-zA-Z]{1}[a-zA-Z0-9]*);");
     QStringList list;
     int pos = 0;
     while((pos = rx.indexIn(text, pos)) != -1) {
