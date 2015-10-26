@@ -1883,6 +1883,7 @@ void EgMmlDocument::adjustCharPositions(void)
                         if (m_nodeIdLookup.contains(key)) {
                                 if ( ((m_nodeIdLookup.value(key).m_bits) & EgRendAdjustBits::translateTxt) != EgRendAdjustBits::Nothing) {
                                         m_renderingData[i].m_itemRect.translate(rect.x(), rect.y());
+                                        m_renderingData[i].m_itemRect.moveBottom(rect.bottom());
                                 }
                         }
                 }
@@ -2806,6 +2807,7 @@ qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qre
         QFontMetricsF metrics = QFontMetricsF(font());
         quint32 parentId = 0;
         EgMathMlNodeType nodeType;
+        qreal newWidth;
         if (m_parent) {
                 parentId = m_parent->getNodeId();
                 nodeType = m_parent->nodeType();
@@ -2821,16 +2823,23 @@ qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qre
 
         quint64 i = text.size();
         m_document->appendRenderingData(parentId, i, m_parent, adjBits | EgRendAdjustBits::translateTxt);
-        qreal width = metrics.boundingRect(text).width();
 
         QRectF newRect = parentRect;
         newRect.translate(previousWidth, 0.0);
-        newRect.setWidth(width - previousWidth);
+        newRect.setWidth(metrics.width(text.right(1)));
+        newRect.setHeight(qMax(metrics.boundingRect('X').height(), parentRect.height()));
+
+        if (newRect.width() + previousWidth > parentRect.width()) {
+                newWidth = qMin(newRect.width() + previousWidth, parentRect.width());
+                newRect.setWidth(parentRect.width() - previousWidth);
+        } else {
+                newWidth = newRect.width() + previousWidth;
+        }
 
         //width - previousWidth
         m_document->updateRenderingData(parentId, i, newRect);
 
-        return width;
+        return newWidth;
 }
 
 EgMmlNode *EgMmlSubsupBaseNode::base() const
