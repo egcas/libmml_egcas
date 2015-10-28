@@ -1883,7 +1883,6 @@ void EgMmlDocument::adjustCharPositions(void)
                         if (m_nodeIdLookup.contains(key)) {
                                 if ( ((m_nodeIdLookup.value(key).m_bits) & EgRendAdjustBits::translateTxt) != EgRendAdjustBits::Nothing) {
                                         m_renderingData[i].m_itemRect.translate(rect.x(), rect.y());
-                                        m_renderingData[i].m_itemRect.moveBottom(rect.bottom());
                                 }
                         }
                 }
@@ -2796,9 +2795,8 @@ void EgMmlTextNode::generateTxtRenderingData(QRectF rect) const
                 return;
 
         int i;
-        QRectF parentRect = QRectF(QPointF(0.0, 0.0), rect.size());
         for(i = 1; i <= size; i++) {
-                previousWidth = TxtRenderingDataHelper(parentRect, m_text.left(i), previousWidth);
+                previousWidth = TxtRenderingDataHelper(rect, m_text.left(i), previousWidth);
         }
 }
 
@@ -2824,10 +2822,10 @@ qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qre
         quint64 i = text.size();
         m_document->appendRenderingData(parentId, i, m_parent, adjBits | EgRendAdjustBits::translateTxt);
 
-        QRectF newRect = parentRect;
+        QRectF newRect = QRectF(QPointF(0.0, 0.0), parentRect.size());;
         newRect.translate(previousWidth, 0.0);
         newRect.setWidth(metrics.width(text.right(1)));
-        newRect.setHeight(qMax(metrics.boundingRect('X').height(), parentRect.height()));
+        newRect.setHeight(metrics.boundingRect('X').height());
 
         if (newRect.width() + previousWidth > parentRect.width()) {
                 newWidth = qMin(newRect.width() + previousWidth, parentRect.width());
@@ -2835,6 +2833,8 @@ qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qre
         } else {
                 newWidth = newRect.width() + previousWidth;
         }
+
+        newRect.moveBottom(basePos() - parentRect.top());
 
         //width - previousWidth
         m_document->updateRenderingData(parentId, i, newRect);
