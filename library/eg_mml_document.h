@@ -81,9 +81,9 @@ enum class EgMathMlNodeType
  */
 class EgRenderingPosition {
 public:
-        EgRenderingPosition(): m_nodeId{0}, m_index{0}, m_itemRect{QRectF()} {}
+        EgRenderingPosition(): m_nodeId{0}, m_subPos{0}, m_itemRect{QRectF()} {}
         quint32 m_nodeId;       ///< the node id that is extracted from the mathml node (id attribute of the node)
-        quint32 m_index;        ///< usually 0, is incremented with each character (if there are more) within one malthml node
+        quint32 m_subPos;        ///< usually 0, is incremented with each character (if there are more) within one malthml node
         QRectF m_itemRect;      ///< the rectangle that surrounds a item shown on the screen
 };
 

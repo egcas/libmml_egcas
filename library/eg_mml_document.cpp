@@ -1876,8 +1876,8 @@ void EgMmlDocument::adjustCharPositions(void)
         EgRenderingPosition data;
         for (i = 0; i < m_renderingData.size(); i++) {
                 data = m_renderingData[i];
-                key = (static_cast<quint64>(data.m_index) << 32) | data.m_nodeId;
-                if (data.m_index == 0) {
+                key = (static_cast<quint64>(data.m_subPos) << 32) | data.m_nodeId;
+                if (data.m_subPos == 0) {
                         rect = data.m_itemRect;
                 } else {
                         if (m_nodeIdLookup.contains(key)) {
@@ -1935,7 +1935,7 @@ bool EgMmlDocument::appendRenderingData(quint32 nodeId, quint32 index, EgMmlNode
                 EgAddRendData indPos(m_renderingData.size(), node, data);
                 EgRenderingPosition renderingData;
                 renderingData.m_nodeId = nodeId;
-                renderingData.m_index = index;
+                renderingData.m_subPos = index;
                 m_renderingData.append(renderingData);
                 m_nodeIdLookup.insert((static_cast<quint64>(index) << 32) | nodeId, indPos);
         }

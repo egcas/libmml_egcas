@@ -87,7 +87,7 @@ void FormulaView::paintIdRects(EgMathMLDocument *doc, QPainter *painter ) const
         Qt::GlobalColor color = Qt::gray;
         static int i = 1;
         foreach (position, renderingPosition) {
-                if (position.m_index == 0) {
+                if (position.m_subPos == 0) {
                         painter->setPen(Qt::darkGray);
                         painter->drawRect(position.m_itemRect);
                 } else {
