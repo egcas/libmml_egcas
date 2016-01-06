@@ -60,6 +60,7 @@
 /**
  * @brief The EgMMLEntityTable class implements some hash lists for searching
  * for MathMl spec names and their character representation
+ * ATTENTION: as of now libmml_egcas and even Qt does not support non bmp characters (unicode caracters > 0xFFFF)
  */
 class EgMMLEntityTable
 {

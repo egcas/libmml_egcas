@@ -1,0 +1,20 @@
+<math>
+    <mrow  id="22" >
+        <mfrac  id="19" >
+            <mrow  id="13" >
+                <mn id="6" >1</mn>
+                <mo id="14" >+</mo>
+                <mroot id="12" >
+                    <mrow>
+                        <mn id="9" >5</mn>
+                    </mrow>
+                    <mrow>
+                    </mrow>
+                </mroot>
+            </mrow> 
+            <mn id="18" >2</mn>
+        </mfrac>
+        <mo id="23" >=</mo>
+        <mn id="21" >1.618</mn>
+    </mrow>
+</math>
