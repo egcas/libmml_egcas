@@ -14,14 +14,9 @@ add_library(mmlegcas SHARED
 )
 
 #only for cmake >= 3.1
-#set_property(TARGET mmlegcas PROPERTY CXX_STANDARD 11)
-#set_property(TARGET mmlegcas PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET mmlegcas PROPERTY CXX_STANDARD 11)
+set_property(TARGET mmlegcas PROPERTY CXX_STANDARD_REQUIRED ON)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        add_definitions(-std=c++11)
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        add_definitions(-std=c++11)
-endif()
 
 # Widgets finds its own dependencies.
 find_package(Qt5 COMPONENTS Widgets Xml)
@@ -30,14 +25,13 @@ set_target_properties(mmlegcas PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_link_libraries(mmlegcas Qt5::Xml Qt5::Widgets)
 
 #for in-tree build (publish API headers in binary dir)
-add_custom_command(TARGET mmlegcas
-        PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/libegcas
-        COMMAND ${CMAKE_COMMAND} -E copy eg_mml_document.h ${CMAKE_CURRENT_BINARY_DIR}/libegcas
-        COMMAND ${CMAKE_COMMAND} -E copy eg_mml_entity_table.h ${CMAKE_CURRENT_BINARY_DIR}/libegcas
+add_custom_target(mmlegcas_header
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/include/libegcas
+        COMMAND ${CMAKE_COMMAND} -E copy eg_mml_document.h ${CMAKE_BINARY_DIR}/include/libegcas
+        COMMAND ${CMAKE_COMMAND} -E copy eg_mml_entity_table.h ${CMAKE_BINARY_DIR}/include/libegcas
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "copy the mmlegcas library headers to the include directory"
-)
+        COMMENT "copy the mmlegcas library headers to the include directory" VERBATIM)
+add_dependencies(mmlegcas mmlegcas_header)
 
 install (TARGETS mmlegcas ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
 install (FILES eg_mml_document.h  eg_mml_entity_table.h DESTINATION include/mmlegcas )

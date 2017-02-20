@@ -15,14 +15,14 @@ add_executable(mathmlview
 )
 
 #only for cmake >= 3.1
-#set_property(TARGET mathmlview PROPERTY CXX_STANDARD 11)
-#set_property(TARGET mathmlview PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET mathmlview PROPERTY CXX_STANDARD 11)
+set_property(TARGET mathmlview PROPERTY CXX_STANDARD_REQUIRED ON)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        add_definitions(-std=c++11)
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        add_definitions(-std=c++11)
-endif()
+#if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+#        add_definitions(-std=c++11)
+#elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+#        add_definitions(-std=c++11)
+#endif()
 
 # Widgets finds its own dependencies.
 find_package(Qt5 COMPONENTS Widgets Xml)
