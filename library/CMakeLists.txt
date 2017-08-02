@@ -33,8 +33,13 @@ add_custom_target(mmlegcas_header
         COMMENT "copy the mmlegcas library headers to the include directory" VERBATIM)
 add_dependencies(mmlegcas mmlegcas_header)
 
-install (TARGETS mmlegcas ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
-install (FILES eg_mml_document.h  eg_mml_entity_table.h DESTINATION include/mmlegcas )
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        install (TARGETS mmlegcas ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
+        install (FILES eg_mml_document.h  eg_mml_entity_table.h DESTINATION include/mmlegcas )
+else()
+        install (TARGETS mmlegcas RUNTIME DESTINATION bin )
+endif()
+
 
 #add_definitions(-DMML_TEST)
   
