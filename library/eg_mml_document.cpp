@@ -184,10 +184,9 @@ inline EgRendAdjustBits operator&(EgRendAdjustBits a, EgRendAdjustBits b)
  */
 class EgAddRendData {
 public:
-        EgAddRendData() : m_index{0}, m_node{nullptr}, m_bits{EgRendAdjustBits::Nothing} {}
-        EgAddRendData(int index, EgMmlNode* node = nullptr, EgRendAdjustBits bits = EgRendAdjustBits::Nothing) :
-                      m_index{index}, m_node{node}, m_bits{bits} {}
-        int m_index;                              ///< index position inside the rendering data vector
+        EgAddRendData() : m_node{nullptr}, m_bits{EgRendAdjustBits::Nothing} {}
+        EgAddRendData(EgMmlNode* node = nullptr, EgRendAdjustBits bits = EgRendAdjustBits::Nothing) :
+                      m_node{node}, m_bits{bits} {}
         EgMmlNode *m_node;                        ///< pointer to the node we need for later adjustments
         EgRendAdjustBits m_bits;                  ///< field to save what needs to be adjusted later on
 };
@@ -1936,10 +1935,11 @@ bool EgMmlDocument::appendRenderingData(quint32 nodeId, quint32 index, EgMmlNode
         if (    !m_nodeIdLookup.contains(((static_cast<quint64>(index) << 32) | nodeId))
              && !m_renderingComplete) {
                 retval = true;
-                EgAddRendData indPos(m_renderingData.size(), node, data);
-                EgRenderingPosition renderingData;
-                renderingData.m_nodeId = nodeId;
-                renderingData.m_subPos = index;
+                EgAddRendData indPos(node, data);
+                Subindexes renderingData;
+                renderingData.resize(index + 1);
+                renderingData[index].m_nodeId = nodeId;
+                renderingData[index].m_subPos = index;
                 m_renderingData.insert(nodeId, renderingData);
                 m_nodeIdLookup.insert((static_cast<quint64>(index) << 32) | nodeId, indPos);
         }
@@ -1952,9 +1952,12 @@ void EgMmlDocument::updateRenderingData(quint32 nodeId, quint32 index, QRectF po
         if (nodeId == 0)
                 return;
 
-        if (m_nodeIdLookup.contains(((static_cast<quint64>(index) << 32) | nodeId))) {
-                EgAddRendData indPos(m_nodeIdLookup.value((static_cast<quint64>(index) << 32) | nodeId));
-                m_renderingData[indPos.m_index].m_itemRect = position;
+        if (m_renderingData.contains(nodeId)) {
+                Subindexes renderingData = m_renderingData.value(nodeId);
+                if (index >= renderingData.size())
+                        renderingData.resize(index + 1);
+                renderingData[index].m_itemRect = position;
+                m_renderingData.insert(nodeId, renderingData);
         }
 }
 
