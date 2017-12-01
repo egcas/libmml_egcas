@@ -229,10 +229,6 @@ public:
     static qreal MmToPixelFactor(void) { return s_MmToPixelFactor; }
 
     /**
-     * @brief adjustCharPositions corrects the char positions inside m_renderingData after rendering
-     */
-    void adjustCharPositions(void);
-    /**
      * @brief doPostProcessing do some post processing of the rendering data
      */
     void doPostProcessing(void);
@@ -310,7 +306,8 @@ private:
     static bool s_initialized;
     EgMathMLDocument* m_EgMathMLDocument;
     QHash<quint64, EgAddRendData> m_nodeIdLookup;   ///< lookup if any node id has already been handled
-    QVector<EgRenderingPosition> m_renderingData;   ///< rendering and dimension data of current formula document
+    QHash <quint32, QVector<EgRenderingPosition>> m_renderingData;   ///< rendering and dimension data of current formula document
+
     bool m_renderingComplete;           ///< marks all rendering data as complete
 };
 
@@ -1868,47 +1865,47 @@ QSizeF EgMmlDocument::size() const
     return m_root_node->deviceRect().size();
 }
 
-void EgMmlDocument::adjustCharPositions(void)
-{
-        int i;
-        quint64 key;
-        QRectF rect;
-        EgRenderingPosition data;
-        for (i = 0; i < m_renderingData.size(); i++) {
-                data = m_renderingData[i];
-                key = (static_cast<quint64>(data.m_subPos) << 32) | data.m_nodeId;
-                if (data.m_subPos == 0) {
-                        rect = data.m_itemRect;
-                } else {
-                        if (m_nodeIdLookup.contains(key)) {
-                                if ( ((m_nodeIdLookup.value(key).m_bits) & EgRendAdjustBits::translateTxt) != EgRendAdjustBits::Nothing) {
-                                        m_renderingData[i].m_itemRect.translate(rect.x(), rect.y());
-                                }
-                        }
-                }
-        }
-}
 void EgMmlDocument::doPostProcessing(void)
 {
-        QHashIterator<quint64, EgAddRendData> i(m_nodeIdLookup);
-        qreal lspace = 0.0;
+        int n;
+        Subindexes data;
+        QMutableHashIterator<quint32, Subindexes> i(m_renderingData);
+        QRectF rect;
 
         while (i.hasNext()) {
-                i.next();
-                EgAddRendData data = i.value();
-                if (data.m_bits == EgRendAdjustBits::Nothing)
-                        continue;
-                if (!data.m_node) //no pointer, so we can't do anything
-                        continue;
+             i.next();
+             data = i.value();
 
-                if ((data.m_bits & EgRendAdjustBits::translateLspace) != EgRendAdjustBits::Nothing) { //correction of lspace stuff
-                        if (data.m_node->nodeType() == EgMathMlNodeType::MoNode)
-                                lspace = static_cast<EgMmlMoNode*>(data.m_node)->lspace();
-                        if (data.m_node->nodeType() == EgMathMlNodeType::MpaddedNode)
-                                lspace = static_cast<EgMmlMpaddedNode*>(data.m_node)->lspace();
-                        m_renderingData[data.m_index].m_itemRect.translate(lspace, 0.0);
-                }
-        }
+             for (n = 0; n < data.size(); n++) {
+                     quint64 key;
+
+                     key = (static_cast<quint64>(n) << 32) | i.key();
+                     if (m_nodeIdLookup.contains(key)) {
+                             EgAddRendData add_data = m_nodeIdLookup.value(key);
+
+                             //adjust char positions
+                             if (n == 0) {
+                                     rect = data[0].m_itemRect;
+                             } else {
+                                     if ( ((add_data.m_bits) & EgRendAdjustBits::translateTxt) != EgRendAdjustBits::Nothing) {
+                                             data[n].m_itemRect.translate(rect.x(), rect.y());
+                                     }
+                             }
+
+                             //adjust lspaces
+                             if ( ((add_data.m_bits) & EgRendAdjustBits::translateLspace) != EgRendAdjustBits::Nothing) {
+                                     qreal lspace = 0.0;
+
+                                     if (add_data.m_node->nodeType() == EgMathMlNodeType::MoNode)
+                                             lspace = static_cast<EgMmlMoNode*>(add_data.m_node)->lspace();
+                                     if (add_data.m_node->nodeType() == EgMathMlNodeType::MpaddedNode)
+                                             lspace = static_cast<EgMmlMpaddedNode*>(add_data.m_node)->lspace();
+                                     data[n].m_itemRect.translate(lspace, 0.0);
+                             }
+                     }
+             }
+             i.setValue(data);
+         }
 }
 
 void EgMmlDocument::optimizeSize(void)
@@ -1918,7 +1915,14 @@ void EgMmlDocument::optimizeSize(void)
 
 QVector<EgRenderingPosition> EgMmlDocument::getRenderingPositions(void)
 {
-        return m_renderingData;
+        QVector<EgRenderingPosition> tmp;
+        QVector<EgRenderingPosition> i;
+
+        foreach (i, m_renderingData) {
+                tmp.append(i);
+        }
+
+        return tmp;
 }
 
 bool EgMmlDocument::appendRenderingData(quint32 nodeId, quint32 index, EgMmlNode* node,
@@ -1936,7 +1940,7 @@ bool EgMmlDocument::appendRenderingData(quint32 nodeId, quint32 index, EgMmlNode
                 EgRenderingPosition renderingData;
                 renderingData.m_nodeId = nodeId;
                 renderingData.m_subPos = index;
-                m_renderingData.append(renderingData);
+                m_renderingData.insert(nodeId, renderingData);
                 m_nodeIdLookup.insert((static_cast<quint64>(index) << 32) | nodeId, indPos);
         }
 
@@ -4742,7 +4746,6 @@ void EgMathMLDocument::paint( QPainter *painter, const QPointF &pos ) const
 {
         m_doc->paint( painter, pos );
         if (!m_doc->renderingComplete()) {
-                m_doc->adjustCharPositions();
                 m_doc->doPostProcessing();
         }
         //clear temporary rendering infos, since they are not needed anymore

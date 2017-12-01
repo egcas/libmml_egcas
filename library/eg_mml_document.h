@@ -87,6 +87,11 @@ public:
         QRectF m_itemRect;      ///< the rectangle that surrounds a item shown on the screen
 };
 
+/**
+ * @brief subindexes is a new type to hold all subindexes of a node id
+ */
+typedef QVector<EgRenderingPosition> Subindexes;
+
 class EgMathMLDocument : public QObject
 {
         Q_OBJECT
