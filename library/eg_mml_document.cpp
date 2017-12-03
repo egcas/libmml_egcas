@@ -1955,13 +1955,15 @@ void EgMmlDocument::updateRenderingData(quint32 nodeId, quint32 index, QRectF po
         if (nodeId == 0)
                 return;
 
-        if (m_renderingData.contains(nodeId)) {
-                Subindexes& subind = m_renderingData[nodeId];
-                if (index >= subind.size())
-                        subind.resize(index + 1);
-                subind[index].m_itemRect = position;
-                subind[index].m_nodeId = nodeId;
-                subind[index].m_subPos = index;
+        if (m_nodeIdLookup.contains(((static_cast<quint64>(index) << 32) | nodeId))) {
+                if (m_renderingData.contains(nodeId)) {
+                        Subindexes& subind = m_renderingData[nodeId];
+                        if (index >= subind.size())
+                                subind.resize(index + 1);
+                        subind[index].m_itemRect = position;
+                        subind[index].m_nodeId = nodeId;
+                        subind[index].m_subPos = index;
+                }
         }
 }
 
