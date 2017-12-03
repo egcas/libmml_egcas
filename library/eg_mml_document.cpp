@@ -185,7 +185,7 @@ inline EgRendAdjustBits operator&(EgRendAdjustBits a, EgRendAdjustBits b)
 class EgAddRendData {
 public:
         EgAddRendData() : m_node{nullptr}, m_bits{EgRendAdjustBits::Nothing} {}
-        EgAddRendData(EgMmlNode* node = nullptr, EgRendAdjustBits bits = EgRendAdjustBits::Nothing) :
+        EgAddRendData(EgMmlNode* node, EgRendAdjustBits bits = EgRendAdjustBits::Nothing) :
                       m_node{node}, m_bits{bits} {}
         EgMmlNode *m_node;                        ///< pointer to the node we need for later adjustments
         EgRendAdjustBits m_bits;                  ///< field to save what needs to be adjusted later on
@@ -1879,13 +1879,16 @@ void EgMmlDocument::doPostProcessing(void)
                      quint64 key;
 
                      key = (static_cast<quint64>(n) << 32) | i.key();
+
+
+                     if (n == 0)
+                             rect = data[0].m_itemRect;
+
                      if (m_nodeIdLookup.contains(key)) {
                              EgAddRendData add_data = m_nodeIdLookup.value(key);
 
                              //adjust char positions
-                             if (n == 0) {
-                                     rect = data[0].m_itemRect;
-                             } else {
+                             if (n > 0) {
                                      if ( ((add_data.m_bits) & EgRendAdjustBits::translateTxt) != EgRendAdjustBits::Nothing) {
                                              data[n].m_itemRect.translate(rect.x(), rect.y());
                                      }
@@ -1936,11 +1939,11 @@ bool EgMmlDocument::appendRenderingData(quint32 nodeId, quint32 index, EgMmlNode
              && !m_renderingComplete) {
                 retval = true;
                 EgAddRendData indPos(node, data);
-                Subindexes renderingData;
-                renderingData.resize(index + 1);
-                renderingData[index].m_nodeId = nodeId;
-                renderingData[index].m_subPos = index;
-                m_renderingData.insert(nodeId, renderingData);
+                Subindexes subind;
+                subind.resize(index + 1);
+                subind[index].m_nodeId = nodeId;
+                subind[index].m_subPos = index;
+                m_renderingData.insert(nodeId, subind);
                 m_nodeIdLookup.insert((static_cast<quint64>(index) << 32) | nodeId, indPos);
         }
 
@@ -1953,11 +1956,12 @@ void EgMmlDocument::updateRenderingData(quint32 nodeId, quint32 index, QRectF po
                 return;
 
         if (m_renderingData.contains(nodeId)) {
-                Subindexes renderingData = m_renderingData.value(nodeId);
-                if (index >= renderingData.size())
-                        renderingData.resize(index + 1);
-                renderingData[index].m_itemRect = position;
-                m_renderingData.insert(nodeId, renderingData);
+                Subindexes& subind = m_renderingData[nodeId];
+                if (index >= subind.size())
+                        subind.resize(index + 1);
+                subind[index].m_itemRect = position;
+                subind[index].m_nodeId = nodeId;
+                subind[index].m_subPos = index;
         }
 }
 
