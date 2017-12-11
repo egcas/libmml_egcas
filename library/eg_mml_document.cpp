@@ -386,6 +386,22 @@ public:
      * @return the node id of the current node
      */
     quint32 getNodeId(void) const {return m_nodeId;}
+    /**
+     * @brief setNodeId sets the node id of the current node
+     * @param nodeId the node id to set for the current node
+     */
+    void setNodeId(quint32 nodeId) {m_nodeId = nodeId;}
+    /**
+     * @brief getNodeWithInheritedNodeId returns the node the id of this node is inherited from
+     * @return pointer to node from which id of current node is inherited
+     */
+    EgMmlNode* getNodeWithInheritedNodeId(void) const {return m_nodeWithInheritedNodeId;}
+    /**
+     * @brief getNodeWithInheritedNodeId returns the node the id of this node is inherited from
+     * @param nodeWithInheritedNodeId pointer to node from which id of current node is inherited
+     */
+    void setNodeWithInheritedNodeId(EgMmlNode* nodeWithInheritedNodeId) {m_nodeWithInheritedNodeId = nodeWithInheritedNodeId;}
+
 
 protected:
     virtual void layoutSymbol();
@@ -395,12 +411,13 @@ protected:
     qreal interpretSpacing( const QString &value, bool *ok ) const;
     qreal lineWidth() const;
 
-    quint32 m_nodeId;   ///< the node id given with attribute id
     EgMmlDocument *m_document;
     EgMmlNode *m_parent,
                *m_first_child,
                *m_next_sibling,
                *m_previous_sibling;
+    quint32 m_nodeId;                           ///< the node id given with attribute id (eventually inherited from parent)
+    EgMmlNode *m_nodeWithInheritedNodeId;       ///< pointer to node which the node id is associated with (eventually pointer to ourselfs or pointer to any parent from which id is inherited)
 
 private:
     EgMmlAttributeMap m_attribute_map;
@@ -554,12 +571,13 @@ private:
     /**
      * @brief TxtRenderingDataHelper calculates the new width of the text given and sets the position rectangles in the
      * document
+     * @param parentIdNode the parent node that contains the parent id the text rendering information shall be appended to
      * @param parentRect the parent rectangle containing the char rectangle to calculate
      * @param text the text to calculate (usually with one char more than in the previous run)
      * @param previousWidth the previous width of the text from the previous run
      * @return the with calculated this time
      */
-    qreal TxtRenderingDataHelper(QRectF parentRect, QString text, qreal previousWidth) const;
+    qreal TxtRenderingDataHelper(EgMmlNode* parentIdNode, QRectF parentRect, QString text, qreal previousWidth) const;
 };
 
 class EgMmlMiNode : public EgMmlTokenNode
@@ -1521,6 +1539,10 @@ bool EgMmlDocument::insertChild( EgMmlNode *parent, EgMmlNode *new_node,
         {
             parent->m_first_child = new_node;
         }
+        if (new_node->getNodeId() == 0) {
+                new_node->setNodeId(parent->getNodeId());
+                new_node->setNodeWithInheritedNodeId(parent->getNodeWithInheritedNodeId());
+        }
     }
 
     return true;
@@ -1624,8 +1646,10 @@ EgMmlNode *EgMmlDocument::createNode( EgMathMlNodeType type,
     }
 
     if (mml_node) {
-            if (mml_attr.contains("id"))
+            if (mml_attr.contains("id")) {
                     mml_node->m_nodeId = mml_attr.value("id").toUInt();
+                    mml_node->m_nodeWithInheritedNodeId = mml_node;
+            }
     }
 
     return mml_node;
@@ -1939,11 +1963,15 @@ bool EgMmlDocument::appendRenderingData(quint32 nodeId, quint32 index, EgMmlNode
              && !m_renderingComplete) {
                 retval = true;
                 EgAddRendData indPos(node, data);
-                Subindexes subind;
-                subind.resize(index + 1);
-                subind[index].m_nodeId = nodeId;
-                subind[index].m_subPos = index;
-                m_renderingData.insert(nodeId, subind);
+                if (m_renderingData.contains(nodeId)) {
+                        updateRenderingData(nodeId, index, QRectF());
+                } else {
+                        Subindexes subind;
+                        subind.resize(index + 1);
+                        subind[index].m_nodeId = nodeId;
+                        subind[index].m_subPos = index;
+                        m_renderingData.insert(nodeId, subind);
+                }
                 m_nodeIdLookup.insert((static_cast<quint64>(index) << 32) | nodeId, indPos);
         }
 
@@ -1995,6 +2023,7 @@ EgMmlNode::EgMmlNode( EgMathMlNodeType type, EgMmlDocument *document,
     m_rel_origin = QPointF( 0.0, 0.0 );
     m_stretched = false;
     m_nodeId = 0;
+    m_nodeWithInheritedNodeId = nullptr;
 }
 
 EgMmlNode::~EgMmlNode()
@@ -2802,26 +2831,22 @@ void EgMmlTextNode::generateTxtRenderingData(QRectF rect) const
 
         if (size <= 0)
                 return;
-        if (!m_parent)
-                return;
-        if (m_parent->getNodeId() == 0)
-                return;
 
         int i;
         for(i = 1; i <= size; i++) {
-                previousWidth = TxtRenderingDataHelper(rect, m_text.left(i), previousWidth);
+                previousWidth = TxtRenderingDataHelper(m_nodeWithInheritedNodeId, rect, m_text.left(i), previousWidth);
         }
 }
 
-qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qreal previousWidth) const
+qreal EgMmlTextNode::TxtRenderingDataHelper(EgMmlNode* parentIdNode, QRectF parentRect, QString text, qreal previousWidth) const
 {
         QFontMetricsF metrics = QFontMetricsF(font());
         quint32 parentId = 0;
         EgMathMlNodeType nodeType;
         qreal newWidth;
-        if (m_parent) {
-                parentId = m_parent->getNodeId();
-                nodeType = m_parent->nodeType();
+        if (parentIdNode) {
+                parentId = parentIdNode->getNodeId();
+                nodeType = parentIdNode->nodeType();
         } else {
                 return 0.0;
         }
@@ -2833,7 +2858,7 @@ qreal EgMmlTextNode::TxtRenderingDataHelper(QRectF parentRect, QString text, qre
         }
 
         quint64 i = text.size();
-        m_document->appendRenderingData(parentId, i, m_parent, adjBits | EgRendAdjustBits::translateTxt);
+        m_document->appendRenderingData(parentId, i, parentIdNode, adjBits | EgRendAdjustBits::translateTxt);
 
         QRectF newRect = QRectF(QPointF(0.0, 0.0), parentRect.size());;
         newRect.translate(previousWidth, 0.0);
