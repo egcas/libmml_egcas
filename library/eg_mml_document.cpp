@@ -387,11 +387,6 @@ public:
      */
     quint32 getNodeId(void) const {return m_nodeId;}
     /**
-     * @brief setNodeId sets the node id of the current node
-     * @param nodeId the node id to set for the current node
-     */
-    void setNodeId(quint32 nodeId) {m_nodeId = nodeId;}
-    /**
      * @brief getNodeWithInheritedNodeId returns the node the id of this node is inherited from
      * @return pointer to node from which id of current node is inherited
      */
@@ -1539,10 +1534,9 @@ bool EgMmlDocument::insertChild( EgMmlNode *parent, EgMmlNode *new_node,
         {
             parent->m_first_child = new_node;
         }
-        if (new_node->getNodeId() == 0) {
-                new_node->setNodeId(parent->getNodeId());
+        if (new_node->getNodeId() == 0)
                 new_node->setNodeWithInheritedNodeId(parent->getNodeWithInheritedNodeId());
-        }
+
     }
 
     return true;
@@ -2838,15 +2832,15 @@ void EgMmlTextNode::generateTxtRenderingData(QRectF rect) const
         }
 }
 
-qreal EgMmlTextNode::TxtRenderingDataHelper(EgMmlNode* parentIdNode, QRectF parentRect, QString text, qreal previousWidth) const
+qreal EgMmlTextNode::TxtRenderingDataHelper(EgMmlNode* nodeId, QRectF parentRect, QString text, qreal previousWidth) const
 {
         QFontMetricsF metrics = QFontMetricsF(font());
         quint32 parentId = 0;
         EgMathMlNodeType nodeType;
         qreal newWidth;
-        if (parentIdNode) {
-                parentId = parentIdNode->getNodeId();
-                nodeType = parentIdNode->nodeType();
+        if (nodeId) {
+                parentId = nodeId->getNodeId();
+                nodeType = nodeId->nodeType();
         } else {
                 return 0.0;
         }
@@ -2858,7 +2852,7 @@ qreal EgMmlTextNode::TxtRenderingDataHelper(EgMmlNode* parentIdNode, QRectF pare
         }
 
         quint64 i = text.size();
-        m_document->appendRenderingData(parentId, i, parentIdNode, adjBits | EgRendAdjustBits::translateTxt);
+        m_document->appendRenderingData(parentId, i, nodeId, adjBits | EgRendAdjustBits::translateTxt);
 
         QRectF newRect = QRectF(QPointF(0.0, 0.0), parentRect.size());;
         newRect.translate(previousWidth, 0.0);
