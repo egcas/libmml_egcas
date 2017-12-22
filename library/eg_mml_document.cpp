@@ -342,12 +342,6 @@ public:
 
     virtual void stretch();
     virtual void layout();
-    /**
-     * @brief layoutHook is called before layout function of each child is called. Subclasses can therefore intercept
-     * the layout functions of their the childs
-     * @param childIndex the child index of the childs
-     */
-    virtual void layoutHook(quint32 childIndex) {}
     virtual void paint( QPainter *painter, qreal x_scaling, qreal y_scaling );
 
     qreal basePos() const;
@@ -467,12 +461,6 @@ public:
 
     EgMmlNode *numerator() const;
     EgMmlNode *denominator() const;
-    /**
-     * @brief layoutHook is called before layout function of each child is called. Subclasses can therefore intercept
-     * the layout functions of their the childs
-     * @param childIndex the child index of the childs
-     */
-    virtual void layoutHook(quint32 childIndex);
 
 protected:
     virtual void layoutSymbol();
@@ -2308,7 +2296,6 @@ void EgMmlNode::layout()
         EgMmlNode *child = m_first_child;
         quint32 i;
         for (i = 0 ; child != 0; child = child->nextSibling() ) {
-                layoutHook(i);
                 child->layout();
                 i++;
         }
@@ -2469,13 +2456,6 @@ EgMmlNode *EgMmlMfracNode::denominator() const
     return node;
 }
 
-void EgMmlMfracNode::layoutHook(quint32 childIndex)
-{
-        if (childIndex == 1) {
-                //m_document->appendRenderingData(m_nodeId, childIndex, this);
-        }
-}
-
 QRectF EgMmlMfracNode::symbolRect() const
 {
     QRectF num_rect = numerator()->myRect();
@@ -2561,6 +2541,10 @@ void EgMmlMfracNode::paintSymbol(
                            QPointF( s_rect.right() - 0.5 * line_thickness, s_rect.center().y() ) );
 
         painter->restore();
+
+        //add rectangle for fraction line
+        if (m_nodeId)
+                m_document->insertOrUpdate(m_nodeId, 1, s_rect);
     }
 }
 
