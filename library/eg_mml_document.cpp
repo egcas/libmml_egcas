@@ -2543,8 +2543,10 @@ void EgMmlMfracNode::paintSymbol(
         painter->restore();
 
         //add rectangle for fraction line
-        if (m_nodeId)
-                m_document->insertOrUpdate(m_nodeId, 1, s_rect);
+        if (m_nodeId) {
+                quint32 subinds = m_document->getNrSubindexes(m_nodeId);
+                m_document->insertOrUpdate(m_nodeId, subinds + 1, s_rect);
+        }
     }
 }
 
