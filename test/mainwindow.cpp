@@ -30,7 +30,7 @@ MainWindow::MainWindow()
     for ( int i = 8; i <= 128; i += 2 )
         fontSizes << QString::number( i );
     comboFontSizes->addItems( fontSizes );
-    comboFontSizes->setCurrentIndex( 5 );
+    comboFontSizes->setCurrentIndex( 20 );
     toolBar->addWidget( comboFontSizes );
 
     QCheckBox *checkTransformation = new QCheckBox( toolBar );
@@ -72,6 +72,9 @@ MainWindow::MainWindow()
     connect( checkDrawFrames, SIGNAL( toggled( bool ) ), this, SLOT( updateDrawFrames( const bool & ) ) );
     connect( checkColors, SIGNAL( toggled( bool ) ), this, SLOT( updateColors( const bool & ) ) );
     connect( checkRenderingRects, SIGNAL( toggled( bool ) ), this, SLOT( updateRects( const bool & ) ) );
+
+    checkRenderingRects->setChecked(true);
+    d_checkScale->setChecked(true);
 
     updateFontSize( comboFontSizes->currentText() );
     updateTransformation( checkTransformation->isChecked() );
