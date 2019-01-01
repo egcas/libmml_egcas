@@ -53,6 +53,12 @@
 #ifndef _QWT_MML_DOCUMENT_H_
 #define _QWT_MML_DOCUMENT_H_
 
+#ifdef _MSC_VER
+#define DllExport   __declspec( dllexport )
+#else //#ifdef _MSC_VER
+#define DllExport
+#endif //#ifdef _MSC_VER
+
 #include <qcolor.h>
 #include <qstring.h>
 #include <qsize.h>
@@ -65,7 +71,7 @@ class QPointF;
 
 class EgMmlDocument;
 
-enum class EgMathMlNodeType
+enum class DllExport EgMathMlNodeType
 {
     NoNode = 0, MiNode, MnNode, MfracNode, MrowNode, MsqrtNode,
     MrootNode, MsupNode, MsubNode, MsubsupNode, MoNode,
@@ -79,7 +85,7 @@ enum class EgMathMlNodeType
  * @brief The EgRenderingData class that encapsulates all dimension data that is calculated during rendering.
  * With this data it is possible to calculate where the formula characters are shown on the screen.
  */
-class EgRenderingPosition {
+class DllExport EgRenderingPosition {
 public:
         EgRenderingPosition(): m_nodeId{0}, m_subPos{0}, m_itemRect{QRectF()} {}
         quint32 m_nodeId;       ///< the node id that is extracted from the mathml node (id attribute of the node)
@@ -92,7 +98,7 @@ public:
  */
 typedef QVector<EgRenderingPosition> Subindexes;
 
-class EgMathMLDocument : public QObject
+class DllExport EgMathMLDocument : public QObject
 {
         Q_OBJECT
 
