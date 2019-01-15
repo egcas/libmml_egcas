@@ -25,13 +25,13 @@ set_target_properties(mmlegcas PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_link_libraries(mmlegcas Qt5::Xml Qt5::Widgets)
 
 #for in-tree build (publish API headers in binary dir)
-add_custom_target(mmlegcas_header
+add_custom_command(TARGET mmlegcas
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/include/libegcas
         COMMAND ${CMAKE_COMMAND} -E copy eg_mml_document.h ${CMAKE_BINARY_DIR}/include/libegcas
         COMMAND ${CMAKE_COMMAND} -E copy eg_mml_entity_table.h ${CMAKE_BINARY_DIR}/include/libegcas
+        DEPENDS eg_mml_document.h eg_mml_entity_table.h
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "copy the mmlegcas library headers to the include directory" VERBATIM)
-add_dependencies(mmlegcas mmlegcas_header)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         install (TARGETS mmlegcas ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
