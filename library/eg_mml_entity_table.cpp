@@ -2037,7 +2037,7 @@ QString mmlDecodeEntityValue( QString literal )
         if ( !literal.startsWith( "&#" ) )
         {
             qWarning() << "decodeEntityValue(): bad entity literal: \"" + literal + "\"";
-            return QString::null;
+            return QString();
         }
 
         literal = literal.right( literal.length() - 2 );
@@ -2046,7 +2046,7 @@ QString mmlDecodeEntityValue( QString literal )
         if ( i == -1 )
         {
             qWarning() << "decodeEntityValue(): bad entity literal: \"" + literal + "\"";
-            return QString::null;
+            return QString();
         }
 
         QString char_code = literal.left( i );
@@ -2055,7 +2055,7 @@ QString mmlDecodeEntityValue( QString literal )
         if ( char_code.isEmpty() )
         {
             qWarning() << "decodeEntityValue(): bad entity literal: \"" + literal + "\"";
-            return QString::null;
+            return QString();
         }
 
         if ( char_code.at( 0 ) == 'x' )
@@ -2066,7 +2066,7 @@ QString mmlDecodeEntityValue( QString literal )
             if ( !ok )
             {
                 qWarning() << "decodeEntityValue(): bad entity literal: \"" + literal + "\"";
-                return QString::null;
+                return QString();
             }
             result += QChar( c );
         }
@@ -2077,7 +2077,7 @@ QString mmlDecodeEntityValue( QString literal )
             if ( !ok )
             {
                 qWarning() << "decodeEntityValue(): bad entity literal: \"" + literal + "\"";
-                return QString::null;
+                return QString();
             }
             result += QChar( c );
         }

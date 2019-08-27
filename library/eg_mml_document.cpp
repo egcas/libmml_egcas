@@ -349,8 +349,8 @@ public:
     qreal em() const;
     qreal ex() const;
 
-    QString explicitAttribute( const QString &name, const QString &def = QString::null ) const;
-    QString inheritAttributeFromMrow( const QString &name, const QString &def = QString::null ) const;
+    QString explicitAttribute( const QString &name, const QString &def = QString() ) const;
+    QString inheritAttributeFromMrow( const QString &name, const QString &def = QString() ) const;
 
     virtual QFont font() const;
     virtual QColor color() const;
@@ -1260,7 +1260,7 @@ QString EgMmlDocument::fontName( EgMathMLDocument::MmlFont type ) const
             return s_doublestruck_font_name;
     };
 
-    return QString::null;
+    return QString();
 }
 
 void EgMmlDocument::setFontName( EgMathMLDocument::MmlFont type,
@@ -1635,7 +1635,7 @@ EgMmlNode *EgMmlDocument::createNode( EgMathMlNodeType type,
 void EgMmlDocument::insertOperator( EgMmlNode *node, const QString &text )
 {
     EgMmlNode *text_node = createNode( EgMathMlNodeType::TextNode, EgMmlAttributeMap(), text, 0 );
-    EgMmlNode *mo_node = createNode( EgMathMlNodeType::MoNode, EgMmlAttributeMap(), QString::null, 0 );
+    EgMmlNode *mo_node = createNode( EgMathMlNodeType::MoNode, EgMmlAttributeMap(), QString(), 0 );
 
     bool ok = insertChild( node, mo_node, 0 );
     Q_ASSERT( ok );
@@ -1752,7 +1752,7 @@ EgMmlNode *EgMmlDocument::domToMml( const QDomNode &dom_node, bool *ok,
 
                 if ( mml_type == EgMathMlNodeType::MtableNode && mml_child->nodeType() != EgMathMlNodeType::MtrNode )
                 {
-                    EgMmlNode *mtr_node = createNode( EgMathMlNodeType::MtrNode, EgMmlAttributeMap(), QString::null, 0 );
+                    EgMmlNode *mtr_node = createNode( EgMathMlNodeType::MtrNode, EgMmlAttributeMap(), QString(), 0 );
                     insertChild( mml_node, mtr_node, 0 );
                     if ( !insertChild( mtr_node, mml_child, errorMsg ) )
                     {
@@ -1764,7 +1764,7 @@ EgMmlNode *EgMmlDocument::domToMml( const QDomNode &dom_node, bool *ok,
                 }
                 else if ( mml_type == EgMathMlNodeType::MtrNode && mml_child->nodeType() != EgMathMlNodeType::MtdNode )
                 {
-                    EgMmlNode *mtd_node = createNode( EgMathMlNodeType::MtdNode, EgMmlAttributeMap(), QString::null, 0 );
+                    EgMmlNode *mtd_node = createNode( EgMathMlNodeType::MtdNode, EgMmlAttributeMap(), QString(), 0 );
                     insertChild( mml_node, mtd_node, 0 );
                     if ( !insertChild( mtd_node, mml_child, errorMsg ) )
                     {
@@ -1823,7 +1823,7 @@ EgMmlNode *EgMmlDocument::createImplicitMrowNode( const QDomNode &dom_node,
         return domToMml( dom_child_list.item( 0 ), ok, errorMsg );
 
     EgMmlNode *mml_node = createNode( EgMathMlNodeType::MrowNode, EgMmlAttributeMap(),
-                                       QString::null, errorMsg );
+                                       QString(), errorMsg );
     Q_ASSERT( mml_node != 0 ); // there is no reason in heaven or hell for this to fail
 
     for ( int i = 0; i < child_cnt; ++i )
@@ -2134,7 +2134,7 @@ QColor EgMmlNode::background() const
 
 static void updateFontAttr( EgMmlAttributeMap &font_attr, const EgMmlNode *n,
                             const QString &name,
-                            const QString &preferred_name = QString::null )
+                            const QString &preferred_name = QString() )
 {
     if ( font_attr.contains( preferred_name ) || font_attr.contains( name ) )
         return;
@@ -4342,7 +4342,7 @@ static QString mmlDictAttribute( const QString &name, const EgMmlOperSpec *spec 
 {
     int i = attributeIndex( name );
     if ( i == -1 )
-        return QString::null;
+        return QString();
     else
         return spec->attributes[i];
 }

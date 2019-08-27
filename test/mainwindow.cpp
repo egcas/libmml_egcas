@@ -115,12 +115,12 @@ void MainWindow::dropEvent(QDropEvent *event)
 void MainWindow::load()
 {
     const QString fileName = QFileDialog::getOpenFileName( NULL,
-        "Load a MathML File", QString::null, "MathML Files (*.mml)" );
+        "Load a MathML File", QString(), "MathML Files (*.mml)" );
 
     if ( !fileName.isEmpty() )
         loadFormula( fileName );
     else
-        statusBar()->showMessage( QString::null );
+        statusBar()->showMessage( QString() );
 }
 
 void MainWindow::loadFormula( const QString &fileName )
